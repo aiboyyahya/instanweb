@@ -127,7 +127,7 @@
                                 <input type="hidden" name="quantity" value="1">
 
                                 <button type="submit"
-                                    class="w-full rounded-xl bg-gray-900 py-2.5 text-sm font-semibold text-white transition hover:bg-black hover:shadow-md active:scale-95 md:text-base">
+                                    class="w-full rounded-xl bg-gray-800 py-2.5 text-sm font-semibold text-white transition hover:bg-black hover:shadow-md active:scale-95 md:text-base">
                                     Tambah ke Keranjang
                                 </button>
                             </form>
