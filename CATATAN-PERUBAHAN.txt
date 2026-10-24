@@ -1,0 +1,8 @@
+INSTANWEB - CATATAN PERUBAHAN
+
+1. Nama aplikasi diubah menjadi InstanWeb.
+2. Branding header, judul login/daftar, judul checkout, dashboard admin, dan footer diperbarui.
+3. Pesan banner beranda diarahkan ke produk UMKM dan pemasaran lintas daerah.
+4. .env tidak disertakan; buat .env dari .env.example lalu isi kredensial MySQL milik Anda.
+5. Folder vendor, node_modules, .git, database SQLite lokal, cache dan file storage private tidak disertakan.
+6. Ini tahap rebranding awal. Proyek belum menjadi marketplace multi-penjual sepenuhnya; tahap berikutnya perlu menambah profil UMKM/penjual dan relasi produk ke penjual, serta menyesuaikan checkout dan pesanan.

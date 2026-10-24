@@ -1,0 +1,1 @@
+- [x] Modify GoogleLoginController::loginform to pass 'storename' => store()->store_name ?? 'InstanWeb' to the view
