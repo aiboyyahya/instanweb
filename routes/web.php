@@ -20,7 +20,6 @@ Route::get('/google/callback', [GoogleLoginController::class, 'handleGoogleCallb
 
 Route::post('/logout', [GoogleLoginController::class, 'logout'])->name('logout');
 
-Route::post('/midtrans/webhook', [MidtransWebhookController::class, 'handleWebhook']);
 
 Route::get('/produk', [HomeController::class, 'products'])->name('products');
 
@@ -33,12 +32,7 @@ Route::get('/api/products/search', [HomeController::class, 'searchProducts'])->n
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/artikel/{article}', [ArticleController::class, 'show'])->name('articles.show');
 
-Route::get('/rajaongkir/provinces', [RajaOngkirController::class, 'getProvinces'])->name('rajaongkir.provinces');
-Route::get('/rajaongkir/cities', [RajaOngkirController::class, 'getCities'])->name('rajaongkir.cities');
-Route::get('/rajaongkir/districts', [RajaOngkirController::class, 'getDistricts'])->name('rajaongkir.districts');
-Route::post('/rajaongkir/cost', [RajaOngkirController::class, 'getShippingCost'])->name('rajaongkir.cost');
-Route::post('/rajaongkir/waybill', [RajaOngkirController::class, 'getWaybill'])->name('rajaongkir.waybill');
-Route::get('/rajaongkir/couriers', [RajaOngkirController::class, 'getCouriers'])->name('rajaongkir.couriers');
+
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/add-to-cart', [HomeController::class, 'addToCart'])->name('addToCart');

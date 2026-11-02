@@ -66,7 +66,9 @@
                         </div>
                         <div>
                             <label class="block text-sm text-gray-600 mb-2">Nomor Telepon</label>
-                            <input type="text" name="phone_number" value="{{ old('phone_number', $user->phone_number) }}"
+                            <!-- Tambahan inputmode="numeric" dan pattern untuk memicu keyboard angka di HP serta pembatasan via JS -->
+                            <input type="text" name="phone_number" id="phone_number" value="{{ old('phone_number', $user->phone_number) }}"
+                                inputmode="numeric" pattern="[0-9]*" placeholder="Contoh: 08123456789"
                                 class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div>
@@ -116,7 +118,6 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    // Find the image element and update it
                     const img = document.querySelector('img[alt="{{ $user->name }}"]');
                     if (img) {
                         img.src = event.target.result;
@@ -125,5 +126,13 @@
                 reader.readAsDataURL(file);
             }
         });
+
+        // Fungsi agar input Nomor Telepon hanya menerima angka secara real-time
+        const phoneInput = document.getElementById('phone_number');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
     </script>
 @endsection

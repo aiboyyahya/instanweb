@@ -81,12 +81,12 @@
             h1 { line-height: 1.15 !important; }
         }
     </style>
-
 </head>
 
 <body class="bg-white text-gray-800">
 
-    <nav class="px-4 py-3 shadow-sm border-b relative bg-white">
+    <!-- Tambahkan z-[9999] agar navbar dan seluruh dropdown-nya berada di lapisan teratas -->
+    <nav class="px-4 py-3 shadow-sm border-b relative bg-white z-[9999]">
         <input type="checkbox" id="menu-toggle" class="peer hidden">
         <div class="flex items-center justify-between w-full">
             <a href="{{ url('/') }}" class="flex items-center gap-3" aria-label="InstanWeb Beranda">
@@ -163,8 +163,9 @@
                             </svg>
                         </button>
 
+                        <!-- Gunakan z-[10000] agar menu profil benar-benar berada di atas slider banner home -->
                         <div
-                            class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-50">
+                            class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-[10000]">
                             <a href="{{ route('profil') }}" class="block px-4 py-2 hover:bg-gray-100 transition">Profil</a>
                             <a href="{{ url('/pesanan') }}"
                                 class="block px-4 py-2 hover:bg-gray-100 transition">Pesanan</a>
@@ -250,7 +251,7 @@
                     @endif
 
                     @if (!empty(store()->tiktok))
-                        <a href="https://www.tiktok.com/@{{ ltrim(store() - > tiktok, '@') }}" target="_blank"
+                        <a href="https://www.tiktok.com/@{{ ltrim(store()->tiktok, '@') }}" target="_blank"
                             class="flex items-center space-x-2 hover:text-gray-300 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5"
                                 fill="currentColor">

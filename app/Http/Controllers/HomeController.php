@@ -8,7 +8,6 @@ use App\Models\Rating;
 use App\Models\Store;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
-use App\Services\MidtransService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -19,12 +18,7 @@ class HomeController extends Controller
     protected $apiUrl;
     protected $token;
 
-    public function __construct(MidtransService $midtransService)
-    {
-        $this->midtransService = $midtransService;
-        $this->apiUrl = env('WA_API_URL', 'https://api.fonnte.com/send');
-        $this->token = env('WA_API_TOKEN');
-    }
+
 
     public function searchProducts(Request $request)
     {
@@ -224,18 +218,14 @@ class HomeController extends Controller
         return view('Checkout', compact('cart', 'directCheckout', 'totalWeight', 'originCityId', 'originDistrictId', 'defaultItemWeight'));
     }
 
-    public function checkout(Request $request)
+public function checkout(Request $request)
     {
         $request->validate([
             'phone_number' => 'required|string|max:20',
             'address' => 'required|string',
             'notes' => 'nullable|string',
-            'province' => 'required|string',
-            'city' => 'required|string',
-            'district' => 'required|string',
             'postal_code' => 'required|string',
             'courier' => 'required|string',
-            'courier_service' => 'required|string',
             'shipping_cost' => 'required|numeric|min:0',
         ]);
 
@@ -278,6 +268,7 @@ class HomeController extends Controller
 
         $orderCode = 'ORD-' . time() . '-' . Auth::id();
 
+        // Simpan transaksi tanpa Midtrans (Metode Pembayaran Manual / Transfer / COD)
         $transaction = Transaction::create([
             'order_code' => $orderCode,
             'customer_id' => Auth::id(),
@@ -287,14 +278,14 @@ class HomeController extends Controller
             'total' => $total,
             'shipping_cost' => $request->shipping_cost,
             'notes' => $request->notes,
-            'payment_method' => 'midtrans',
+            'payment_method' => 'manual',
             'payment_status' => 'pending',
-            'province' => $request->province,
-            'city' => $request->city,
-            'district' => $request->district,
+            'province' => '-', 
+            'city' => '-',     
+            'district' => '-', 
             'postal_code' => $request->postal_code,
             'courier' => $request->courier,
-            'courier_service' => $request->courier_service,
+            'courier_service' => 'Reguler / Manual',
         ]);
 
         foreach ($itemsToProcess as $id => $item) {
@@ -309,25 +300,7 @@ class HomeController extends Controller
             ]);
         }
 
-        try {
-            $customer = [
-                'name' => Auth::user()->name,
-                'email' => Auth::user()->email,
-                'phone' => $phone,
-            ];
-
-            $result = $this->midtransService->createTransaction($transaction, $customer);
-            $snapToken = $result['token'] ?? null;
-
-            if (!$snapToken) {
-                throw new \Exception('Snap token not found.');
-            }
-
-            $transaction->update(['snap_token' => $snapToken]);
-        } catch (\Exception $e) {
-            Log::error('Midtrans error: ' . $e->getMessage());
-        }
-
+        // Kirim konfirmasi via WhatsApp (Fonnte)
         try {
             $this->sendOrderConfirmation($transaction);
         } catch (\Exception $e) {
@@ -340,8 +313,9 @@ class HomeController extends Controller
             session()->forget('cart');
         }
 
-        return redirect()->route('checkout.payment', $transaction->id)
-            ->with('success', 'Checkout berhasil! Silakan lakukan pembayaran.');
+        // Langsung arahkan ke halaman sukses atau halaman instruksi pembayaran manual
+        return redirect()->route('checkout.success', $transaction->id)
+            ->with('success', 'Pesanan berhasil dibuat! Silakan lakukan konfirmasi pembayaran.');
     }
 
     public function checkoutPayment($id)
