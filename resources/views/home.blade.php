@@ -1,226 +1,414 @@
 @extends('layouts.app')
 
-@section('title', 'Beranda InstanWeb')
+@section('title', 'Beranda | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-    <section class="mx-4 bg-slate-950 pt-8 pb-14 md:mx-6">
-        <div class="relative w-full overflow-hidden rounded-3xl shadow-xl">
-            <div id="slider" class="slider flex transition-transform duration-700 ease-in-out">
-                <div class="slide relative w-full flex-shrink-0">
-                    <img src="{{ asset('images/gambar1.jpeg') }}"
-                        alt="Produk UMKM lokal Indonesia"
-                        class="h-64 w-full rounded-2xl object-cover md:h-80 lg:h-96">
+    @php
+        $store = store();
+        $whatsappNumber = $store && !empty($store->whatsapp) ? preg_replace('/[^0-9]/', '', $store->whatsapp) : null;
+    @endphp
 
-                    <div class="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/50 px-4 text-center text-white">
-                        <h2 class="mb-3 text-3xl font-extrabold drop-shadow-lg md:text-5xl">
-                            UMKM Lokal, Pasar Nasional
-                        </h2>
-                        <p class="text-base font-semibold opacity-90 md:text-xl">
-                            Temukan produk pilihan dari usaha kecil di berbagai daerah Indonesia.
-                        </p>
-                    </div>
-                </div>
+    <h1 class="sr-only">Belanja produk UMKM Indonesia di {{ $store->store_name ?? 'instanweb' }}</h1>
 
-                <div class="slide relative w-full flex-shrink-0">
-                    <img src="{{ asset('images/gambar2.jpeg') }}"
-                        alt="Aneka produk buatan UMKM"
-                        class="h-64 w-full rounded-2xl object-cover md:h-80 lg:h-96">
+    {{-- Hero carousel --}}
+    <section class="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8" aria-label="Sorotan toko">
+        <div data-hero-carousel class="relative overflow-hidden rounded-panel border border-line bg-inverse shadow-sm">
+            <div class="relative h-[420px] sm:h-[440px] lg:h-[480px]" aria-roledescription="carousel"
+                aria-label="Sorotan produk dan layanan">
 
-                    <div class="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/50 px-4 text-center text-white">
-                        <h2 class="mb-3 text-3xl font-extrabold drop-shadow-lg md:text-5xl">
-                            Dukung Produk Lokal
-                        </h2>
-                        <p class="text-base font-semibold opacity-90 md:text-xl">
-                            Belanja produk unik dan dukung pertumbuhan UMKM Indonesia.
-                        </p>
-                    </div>
-                </div>
+                @php
+                    $slides = [
+                        [
+                            'image' => 'images/gambar1.jpeg',
+                            'eyebrow' => 'UMKM lokal',
+                            'title' => 'UMKM Lokal, Pasar Nasional',
+                            'description' => 'Temukan produk pilihan dari usaha kecil di berbagai daerah Indonesia.',
+                            'alt' => 'Produk UMKM lokal Indonesia',
+                        ],
+                        [
+                            'image' => 'images/gambar2.jpeg',
+                            'eyebrow' => 'Dukung usaha kecil',
+                            'title' => 'Dukung Produk Lokal',
+                            'description' => 'Belanja produk unik dan dukung pertumbuhan UMKM Indonesia.',
+                            'alt' => 'Aneka produk buatan UMKM',
+                        ],
+                        [
+                            'image' => 'images/gambar3.jpeg',
+                            'eyebrow' => 'Belanja online',
+                            'title' => 'Belanja dari Mana Saja',
+                            'description' => 'Jelajahi produk daerah dan pesan dengan mudah secara online.',
+                            'alt' => 'Pengemasan produk untuk pengiriman',
+                        ],
+                    ];
+                @endphp
 
-                <div class="slide relative w-full flex-shrink-0">
-                    <img src="{{ asset('images/gambar3.jpeg') }}"
-                        alt="Pengemasan produk untuk pengiriman"
-                        class="h-64 w-full rounded-2xl object-cover md:h-80 lg:h-96">
+                @foreach ($slides as $slide)
+                    <div data-slide
+                        class="absolute inset-0 transition-opacity duration-500 {{ $loop->first ? 'opacity-100' : 'pointer-events-none opacity-0' }}"
+                        aria-hidden="{{ $loop->first ? 'false' : 'true' }}" @if (!$loop->first) inert @endif>
+                        <img src="{{ asset($slide['image']) }}" alt="{{ $slide['alt'] }}"
+                            class="absolute inset-0 h-full w-full object-cover"
+                            @if ($loop->first) fetchpriority="high" @endif>
+                        <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/20"
+                            aria-hidden="true">
+                        </div>
 
-                    <div class="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/50 px-4 text-center text-white">
-                        <h2 class="mb-3 text-3xl font-extrabold drop-shadow-lg md:text-5xl">
-                            Belanja dari Mana Saja
-                        </h2>
-                        <p class="text-base font-semibold opacity-90 md:text-xl">
-                            Jelajahi produk daerah dan pesan dengan mudah secara online.
-                        </p>
-                    </div>
-                </div>
-            </div>
+                        <div class="relative flex h-full items-end p-6 pb-16 sm:items-center sm:p-10 sm:pb-10 lg:p-14">
+                            <div class="max-w-xl">
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                                    <x-ui.icon name="sparkles" class="h-3.5 w-3.5" />
+                                    {{ $slide['eyebrow'] }}
+                                </span>
 
-            <button id="btn-prev" type="button" aria-label="Slide sebelumnya"
-                class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-3 opacity-0 shadow-md transition hover:bg-white pointer-events-none">
-                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-
-            <button id="btn-next" type="button" aria-label="Slide berikutnya"
-                class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-3 opacity-0 shadow-md transition hover:bg-white pointer-events-none">
-                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
-
-            <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                <button type="button" class="indicator h-3 w-3 rounded-full bg-white" aria-label="Tampilkan slide 1"></button>
-                <button type="button" class="indicator h-3 w-3 rounded-full bg-white/50" aria-label="Tampilkan slide 2"></button>
-                <button type="button" class="indicator h-3 w-3 rounded-full bg-white/50" aria-label="Tampilkan slide 3"></button>
-            </div>
-        </div>
-    </section>
-
-    <section class="mx-4 border-y border-slate-800 bg-slate-950 py-12 md:mx-6 md:py-16">
-        <div class="mx-auto max-w-full px-4 md:px-8 lg:px-16">
-            <h2 class="mb-10 text-center text-3xl font-extrabold tracking-tight md:mb-14 md:text-4xl">
-                Produk Pilihan UMKM
-            </h2>
-
-            <div class="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8">
-                @forelse ($products as $product)
-                    <div class="group flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-                        <a href="{{ route('product.show', $product->id) }}" class="relative block overflow-hidden">
-                            <img src="{{ $product->image ? asset('storage/' . $product->image) : asset('images/gambar3.jpeg') }}"
-                                alt="{{ $product->product_name }}"
-                                class="h-44 w-full object-cover transition duration-500 group-hover:scale-105 md:h-56">
-                        </a>
-
-                        <div class="flex flex-1 flex-col p-4 text-left md:p-5">
-                            <h3 class="mb-2 line-clamp-2 text-base font-bold text-slate-100 md:text-lg">
-                                {{ $product->product_name }}
-                            </h3>
-
-                            @if (($product->ratingCount ?? 0) > 0)
-                                <div class="mb-2 flex items-center gap-1">
-                                    @php
-                                        $avg = (int) round($product->avgRating ?? 0);
-                                    @endphp
-
-                                    @for ($i = 1; $i <= 5; $i++)
-                                        <svg class="h-4 w-4 {{ $i <= $avg ? 'text-yellow-400' : 'text-gray-300' }}"
-                                            fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148c.429 0 .81-.275.95-.69l1.286-3.947z" />
-                                        </svg>
-                                    @endfor
-
-                                    <span class="text-xs text-slate-400">({{ $product->ratingCount }})</span>
-                                </div>
-                            @endif
-
-                            @if (!empty($product->description))
-                                <p class="mb-3 line-clamp-2 text-sm text-slate-400">
-                                    {{ $product->description }}
+                                <p
+                                    class="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+                                    {{ $slide['title'] }}
                                 </p>
-                            @endif
+                                <p class="mt-3 max-w-md text-sm leading-relaxed text-white/85 sm:text-base">
+                                    {{ $slide['description'] }}
+                                </p>
 
-                            <p class="mb-5 mt-auto pt-2 text-lg font-extrabold tracking-tight text-slate-100 md:text-xl">
-                                Rp {{ number_format($product->purchase_price ?? 0, 0, ',', '.') }}
-                            </p>
+                                <div class="mt-6 flex flex-wrap items-center gap-3">
+                                    <x-ui.button :href="route('products')" size="lg">
+                                        Lihat Produk
+                                        <x-ui.icon name="arrow-right" class="h-4 w-4" />
+                                    </x-ui.button>
 
-                            <form action="{{ route('addToCart') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                <input type="hidden" name="quantity" value="1">
-
-                                <button type="submit"
-                                    class="w-full rounded-xl bg-gray-800 py-2.5 text-sm font-semibold text-white transition hover:bg-black hover:shadow-md active:scale-95 md:text-base">
-                                    Tambah ke Keranjang
-                                </button>
-                            </form>
+                                    @if ($whatsappNumber)
+                                        <a href="https://wa.me/{{ $whatsappNumber }}" target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-field border border-white/35 bg-white/10 px-5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/20">
+                                            <x-ui.icon name="chat" class="h-4 w-4" /> Hubungi Toko
+                                        </a>
+                                    @else
+                                        <x-ui.button :href="route('kontak')" variant="outline" size="lg"
+                                            class="border-white/35 bg-white/10 text-white hover:bg-white/20">
+                                            Hubungi Toko
+                                        </x-ui.button>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
-                @empty
-                    <p class="col-span-full py-10 text-center text-slate-400">
-                        Belum ada produk tersedia.
-                    </p>
-                @endforelse
+                @endforeach
+
+                {{-- Kontrol carousel --}}
+                <div class="absolute inset-x-0 bottom-0 flex items-center justify-between gap-4 p-4 sm:p-6">
+                    <div class="flex items-center gap-2" role="group" aria-label="Pilih sorotan">
+                        @foreach ($slides as $slide)
+                            <button type="button" data-slide-dot
+                                class="h-2.5 rounded-full border border-white/60 transition-all duration-200 {{ $loop->first ? 'w-7 bg-white' : 'w-2.5 bg-white/40 hover:bg-white/70' }}"
+                                aria-label="Tampilkan sorotan {{ $loop->iteration }}"
+                                aria-current="{{ $loop->first ? 'true' : 'false' }}"></button>
+                        @endforeach
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" data-slide-prev
+                            class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white backdrop-blur transition hover:bg-black/50">
+                            <x-ui.icon name="chevron-left" class="h-5 w-5" />
+                            <span class="sr-only">Sorotan sebelumnya</span>
+                        </button>
+                        <button type="button" data-slide-next
+                            class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white backdrop-blur transition hover:bg-black/50">
+                            <x-ui.icon name="chevron-right" class="h-5 w-5" />
+                            <span class="sr-only">Sorotan berikutnya</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const slider = document.getElementById('slider');
-            const slides = document.querySelectorAll('.slide');
-            const indicators = document.querySelectorAll('.indicator');
-            const btnPrev = document.getElementById('btn-prev');
-            const btnNext = document.getElementById('btn-next');
+    {{-- Nilai layanan --}}
+    <section class="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Kenapa belanja di sini">
+        <ul class="grid gap-3 sm:grid-cols-3">
+            <li class="rounded-card border border-line bg-surface p-5 shadow-sm">
+                <span
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-soft text-brand-text"
+                    aria-hidden="true">
+                    <x-ui.icon name="sparkles" class="h-5 w-5" />
+                </span>
+                <p class="mt-3 text-sm font-semibold text-fg">Produk UMKM pilihan</p>
+                <p class="mt-1 text-xs leading-relaxed text-fg-muted">Dikurasi dari pelaku usaha lokal di berbagai daerah.
+                </p>
+            </li>
+            <li class="rounded-card border border-line bg-surface p-5 shadow-sm">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-soft text-info"
+                    aria-hidden="true">
+                    <x-ui.icon name="shopping-bag" class="h-5 w-5" />
+                </span>
+                <p class="mt-3 text-sm font-semibold text-fg">Checkout mudah</p>
+                <p class="mt-1 text-xs leading-relaxed text-fg-muted">Masuk, isi alamat pengiriman, lalu konfirmasi
+                    pesanan.</p>
+            </li>
+            <li class="rounded-card border border-line bg-surface p-5 shadow-sm">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-soft text-success"
+                    aria-hidden="true">
+                    <x-ui.icon name="chat" class="h-5 w-5" />
+                </span>
+                <p class="mt-3 text-sm font-semibold text-fg">Tanya langsung</p>
+                <p class="mt-1 text-xs leading-relaxed text-fg-muted">
+                    @if ($whatsappNumber)
+                        <a href="https://wa.me/{{ $whatsappNumber }}" target="_blank" rel="noopener noreferrer"
+                            class="font-medium text-info underline underline-offset-2">Hubungi penjual via WhatsApp</a>
+                    @else
+                        <a href="{{ route('kontak') }}" class="font-medium text-info underline underline-offset-2">Lihat
+                            kanal kontak toko</a>
+                    @endif
+                    untuk pertanyaan sebelum membeli.
+                </p>
+            </li>
+        </ul>
+    </section>
 
-            if (!slider || slides.length === 0) {
+    {{-- Produk terbaru --}}
+    <section class="mx-auto mt-12 max-w-7xl px-4 sm:px-6 lg:px-8" aria-labelledby="produk-pilihan">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">Katalog</p>
+                <h2 id="produk-pilihan" class="mt-1 text-2xl font-bold tracking-tight text-fg sm:text-3xl">Produk Pilihan
+                    UMKM
+                </h2>
+                <p class="mt-1 text-sm text-fg-muted">Produk terbaru dari toko kami.</p>
+            </div>
+
+            <a href="{{ route('products') }}"
+                class="inline-flex min-h-11 items-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">
+                Lihat semua produk
+                <x-ui.icon name="arrow-right" class="h-4 w-4" />
+            </a>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+            @forelse ($products as $product)
+                <x-product-card :product="$product" />
+            @empty
+                <x-ui.empty-state class="col-span-full" title="Belum ada produk tersedia"
+                    description="Produk akan tampil di sini setelah penjual menambahkannya." icon="package" />
+            @endforelse
+        </div>
+    </section>
+
+    {{-- Blok toko --}}
+    @if ($store)
+        <section class="mx-auto mt-12 max-w-7xl px-4 sm:px-6 lg:px-8" aria-labelledby="tentang-toko">
+            <div class="grid gap-4 lg:grid-cols-3">
+                <div class="rounded-panel border border-line bg-surface p-6 shadow-sm lg:col-span-2 lg:p-8">
+                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">Tentang toko</p>
+                    <h2 id="tentang-toko" class="mt-1 text-2xl font-bold tracking-tight text-fg">
+                        {{ $store->store_name ?? 'Toko kami' }}
+                    </h2>
+                    <p class="mt-3 max-w-2xl text-sm leading-relaxed text-fg-secondary">
+                        {{ $store->description ?? 'Toko UMKM yang menjual produk pilihan dengan layanan langsung dari penjual.' }}
+                    </p>
+
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <x-ui.button :href="route('kontak')" variant="outline">
+                            <x-ui.icon name="chat" class="h-4 w-4" /> Hubungi Toko
+                        </x-ui.button>
+                        <x-ui.button :href="route('selamatdatang')" variant="ghost">
+                            Kenali instanweb
+                        </x-ui.button>
+                    </div>
+                </div>
+
+                <div class="rounded-panel border border-line bg-surface p-6 shadow-sm">
+                    <h3 class="text-sm font-semibold text-fg">Informasi</h3>
+                    <dl class="mt-4 space-y-4 text-sm">
+                        @if ($store->address)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Alamat</dt>
+                                <dd class="mt-1 text-fg-secondary">{{ $store->address }}</dd>
+                            </div>
+                        @endif
+                        @if ($whatsappNumber)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">WhatsApp</dt>
+                                <dd class="mt-1">
+                                    <a href="https://wa.me/{{ $whatsappNumber }}" target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="font-medium text-info underline underline-offset-2">{{ $store->whatsapp }}</a>
+                                </dd>
+                            </div>
+                        @endif
+                        @if ($store->instagram)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Instagram</dt>
+                                <dd class="mt-1">
+                                    <a href="https://instagram.com/{{ ltrim($store->instagram, '@') }}" target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="font-medium text-info underline underline-offset-2">{{ $store->instagram }}</a>
+                                </dd>
+                            </div>
+                        @endif
+                    </dl>
+                </div>
+            </div>
+        </section>
+    @endif
+    @guest
+        {{-- CTA penutup --}}
+        <section class="mx-auto mt-12 max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="overflow-hidden rounded-panel border border-line bg-inverse p-6 text-fg-inverse shadow-sm sm:p-10">
+                <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="max-w-xl">
+                        <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Siap mulai berbelanja?</h2>
+                        <p class="mt-2 text-sm leading-relaxed text-white/70">
+                            Masuk ke akun Anda untuk menyimpan riwayat pesanan dan melanjutkan checkout. Belum punya akun?
+                            Daftar terlebih dahulu.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <div class="flex flex-wrap gap-3">
+                            <x-ui.button :href="route('register.form')" size="lg">Daftar Akun</x-ui.button>
+                            <x-ui.button :href="route('login.form')" variant="outline" size="lg"
+                                class="border-white/30 bg-white/10 text-white hover:bg-white/20">Masuk</x-ui.button>
+                        </div>
+                    </div>
+                </div>
+        </section>
+    @endguest
+@endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const carousel = document.querySelector('[data-hero-carousel]');
+
+            if (!carousel) {
                 return;
             }
 
-            let currentSlide = 0;
-            let userInteracted = false;
-            let hideButtonsTimeout;
+            const slides = Array.from(carousel.querySelectorAll('[data-slide]'));
+            const dots = Array.from(carousel.querySelectorAll('[data-slide-dot]'));
+            const prev = carousel.querySelector('[data-slide-prev]');
+            const next = carousel.querySelector('[data-slide-next]');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            function showSlide(index) {
-                currentSlide = (index + slides.length) % slides.length;
-                slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-
-                indicators.forEach(function (indicator, i) {
-                    indicator.classList.toggle('bg-white', i === currentSlide);
-                    indicator.classList.toggle('bg-white/50', i !== currentSlide);
-                });
+            if (slides.length < 2) {
+                return;
             }
 
-            function showButtons() {
-                userInteracted = true;
+            let index = 0;
+            let timer = null;
+            let paused = false;
+            let touchStartX = null;
 
-                [btnPrev, btnNext].forEach(function (button) {
-                    if (button) {
-                        button.classList.remove('opacity-0', 'pointer-events-none');
+            function show(target) {
+                index = (target + slides.length) % slides.length;
+
+                slides.forEach(function(slide, i) {
+                    const active = i === index;
+
+                    slide.classList.toggle('opacity-100', active);
+                    slide.classList.toggle('opacity-0', !active);
+                    slide.classList.toggle('pointer-events-none', !active);
+                    slide.setAttribute('aria-hidden', active ? 'false' : 'true');
+
+                    if (active) {
+                        slide.removeAttribute('inert');
+                    } else {
+                        slide.setAttribute('inert', '');
                     }
                 });
 
-                clearTimeout(hideButtonsTimeout);
+                dots.forEach(function(dot, i) {
+                    const active = i === index;
 
-                hideButtonsTimeout = setTimeout(function () {
-                    userInteracted = false;
-
-                    [btnPrev, btnNext].forEach(function (button) {
-                        if (button) {
-                            button.classList.add('opacity-0', 'pointer-events-none');
-                        }
-                    });
-                }, 2500);
-            }
-
-            if (btnPrev) {
-                btnPrev.addEventListener('click', function () {
-                    showButtons();
-                    showSlide(currentSlide - 1);
+                    dot.classList.toggle('w-7', active);
+                    dot.classList.toggle('bg-white', active);
+                    dot.classList.toggle('w-2.5', !active);
+                    dot.classList.toggle('bg-white/40', !active);
+                    dot.setAttribute('aria-current', active ? 'true' : 'false');
                 });
             }
 
-            if (btnNext) {
-                btnNext.addEventListener('click', function () {
-                    showButtons();
-                    showSlide(currentSlide + 1);
-                });
+            function stop() {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
             }
 
-            indicators.forEach(function (indicator, index) {
-                indicator.addEventListener('click', function () {
-                    showButtons();
-                    showSlide(index);
+            function start() {
+                stop();
+
+                if (reduceMotion || paused) {
+                    return;
+                }
+
+                timer = setInterval(function() {
+                    show(index + 1);
+                }, 4500);
+            }
+
+            prev?.addEventListener('click', function() {
+                show(index - 1);
+                start();
+            });
+
+            next?.addEventListener('click', function() {
+                show(index + 1);
+                start();
+            });
+
+            dots.forEach(function(dot, i) {
+                dot.addEventListener('click', function() {
+                    show(i);
+                    start();
                 });
             });
 
-            slider.addEventListener('mouseenter', showButtons);
-            showSlide(0);
+            carousel.addEventListener('mouseenter', function() {
+                paused = true;
+                stop();
+            });
 
-            if (slides.length > 1) {
-                setInterval(function () {
-                    if (!userInteracted) {
-                        showSlide(currentSlide + 1);
-                    }
-                }, 4000);
-            }
+            carousel.addEventListener('mouseleave', function() {
+                paused = false;
+                start();
+            });
+
+            carousel.addEventListener('focusin', function() {
+                paused = true;
+                stop();
+            });
+
+            carousel.addEventListener('focusout', function(event) {
+                if (!carousel.contains(event.relatedTarget)) {
+                    paused = false;
+                    start();
+                }
+            });
+
+            carousel.addEventListener('touchstart', function(event) {
+                touchStartX = event.changedTouches[0].clientX;
+            }, {
+                passive: true
+            });
+
+            carousel.addEventListener('touchend', function(event) {
+                if (touchStartX === null) {
+                    return;
+                }
+
+                const distance = event.changedTouches[0].clientX - touchStartX;
+
+                if (Math.abs(distance) > 40) {
+                    show(distance > 0 ? index - 1 : index + 1);
+                    start();
+                }
+
+                touchStartX = null;
+            }, {
+                passive: true
+            });
+
+            show(0);
+            start();
         });
     </script>
-@endsection
+@endpush

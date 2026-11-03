@@ -42,12 +42,19 @@ class ImagesRelationManager extends RelationManager
             ->columns([
                 ImageColumn::make('image_file')
                     ->label('Gambar')
-                    ->square(),
+                    ->disk('public')
+                    ->square()
+                    ->imageSize(52),
 
                 TextColumn::make('created_at')
                     ->label('Diupload Pada')
-                    ->dateTime('d M Y - H:i'),
+                    ->dateTime('d M Y • H:i'),
             ])
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->emptyStateIcon('heroicon-o-photo')
+            ->emptyStateHeading('Belum ada gambar tambahan')
+            ->emptyStateDescription('Tambahkan foto lain agar pelanggan dapat melihat produk lebih detail.')
             ->headerActions([
                 CreateAction::make()
                     ->label('Tambah Gambar'),

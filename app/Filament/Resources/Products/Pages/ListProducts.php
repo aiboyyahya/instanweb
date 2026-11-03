@@ -10,6 +10,8 @@ class ListProducts extends ListRecords
 {
     protected static string $resource = ProductResource::class;
 
+    protected ?string $subheading = 'Kelola katalog produk yang tampil di storefront toko.';
+
     protected function getHeaderActions(): array
     {
         return [

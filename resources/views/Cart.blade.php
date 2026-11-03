@@ -1,170 +1,185 @@
 @extends('layouts.app')
 
-@section('title', 'Keranjang Belanja')
+@section('title', 'Keranjang Belanja | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-    <section class="py-16 bg-white min-h-screen">
-        <div class="max-w-6xl mx-auto px-6 lg:px-10">
+    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <x-ui.page-header eyebrow="Langkah 1 dari 3" title="Keranjang Belanja"
+            description="Tinjau produk pilihan Anda sebelum melanjutkan ke checkout.">
+            <x-ui.button :href="route('products')" variant="outline">
+                <x-ui.icon name="arrow-left" class="h-4 w-4" /> Lanjut Belanja
+            </x-ui.button>
+        </x-ui.page-header>
 
-            <h1 class="text-3xl font-bold text-gray-900 mb-10 text-center">Keranjang Belanja</h1>
-            @if (session('success'))
-                <div
-                    class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl mb-6 text-center shadow">
-                    {{ session('success') }}
-                </div>
-            @endif
+        @if (count($cart) > 0)
+            @php
+                $total = 0;
+                $totalQuantity = 0;
 
-            @if (count($cart) > 0)
+                foreach ($cart as $item) {
+                    $total += $item['price'] * $item['quantity'];
+                    $totalQuantity += $item['quantity'];
+                }
+            @endphp
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    <div class="lg:col-span-2 space-y-6">
+            <div class="mt-8 grid gap-6 lg:grid-cols-3 lg:items-start">
+                <div class="space-y-4 lg:col-span-2">
+                    @foreach ($cart as $id => $item)
+                        @php
+                            $subtotal = $item['price'] * $item['quantity'];
+                            $image = ! empty($item['image'])
+                                ? asset('storage/' . $item['image'])
+                                : asset('images/gambar3.jpeg');
+                        @endphp
 
-                        @php $total = 0; @endphp
-                        @foreach ($cart as $id => $item)
-                            @php
-                                $subtotal = $item['price'] * $item['quantity'];
-                                $total += $subtotal;
-                            @endphp
+                        <article class="rounded-panel border border-line bg-surface p-4 shadow-sm sm:p-5">
+                            <div class="flex gap-4">
+                                <a href="{{ route('product.show', $id) }}"
+                                    class="h-24 w-24 shrink-0 overflow-hidden rounded-card border border-line bg-surface-soft sm:h-28 sm:w-28">
+                                    <img src="{{ $image }}" alt="{{ $item['name'] }}"
+                                        class="h-full w-full object-cover">
+                                </a>
 
-                            <div
-                                class="bg-white rounded-2xl shadow-md p-6 hover:shadow-xl border border-gray-100 transition">
-
-                                <div class="flex items-center gap-5 w-full">
-
-                                    <img src="{{ $item['image'] ? asset('storage/' . $item['image']) : 'https://via.placeholder.com/150' }}"
-                                        alt="{{ $item['name'] }}" class="w-24 h-24 object-cover rounded-xl shadow-sm">
-
-                                    <div class="flex-1">
-
-                                        <h3 class="text-lg font-semibold text-gray-900 leading-tight">
-                                            {{ $item['name'] }}
-                                        </h3>
-
-                                        <p class="text-orange-600 font-bold mt-1">
-                                            Rp {{ number_format($item['price'], 0, ',', '.') }}
-                                        </p>
-
-                                        <div class="flex items-center gap-3 mt-4">
-                                            <form action="{{ route('updateCart', $id) }}" method="POST"
-                                                class="flex items-center gap-2" id="quantity-form-{{ $id }}">
-                                                @csrf
-                                                @method('PATCH')
-
-                                                <button type="button"
-                                                    onclick="updateQuantity({{ $id }}, {{ $item['quantity'] - 1 }})"
-                                                    class="w-7 h-7 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition text-sm"
-                                                    {{ $item['quantity'] <= 1 ? 'disabled' : '' }}>
-                                                    -
-                                                </button>
-
-                                                <input type="number" readonly name="quantity"
-                                                    id="quantity-{{ $id }}" value="{{ $item['quantity'] }}"
-                                                    min="1"
-                                                    class="w-12 text-center roundedpy-1 text-sm">
-
-                                                <button type="button"
-                                                    onclick="updateQuantity({{ $id }}, {{ $item['quantity'] + 1 }})"
-                                                    class="w-7 h-7 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition text-sm">
-                                                    +
-                                                </button>
-
-                                            </form>
-                                        </div>
-                                    </div>
-
-                                    <div class="text-right space-y-3">
-
-                                        <div>
-                                            <p class="text-sm text-gray-500">Subtotal</p>
-                                            <p class="text-lg font-bold text-gray-900">
-                                                Rp {{ number_format($subtotal, 0, ',', '.') }}
+                                <div class="flex min-w-0 flex-1 flex-col gap-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <h2 class="text-sm font-semibold leading-snug text-fg sm:text-base">
+                                                <a href="{{ route('product.show', $id) }}"
+                                                    class="transition hover:text-cta">{{ $item['name'] }}</a>
+                                            </h2>
+                                            <p class="mt-1 text-sm text-fg-muted">
+                                                Rp {{ number_format($item['price'], 0, ',', '.') }} / item
                                             </p>
                                         </div>
 
-                                        <form action="{{ route('removeCart', $id) }}" method="POST">
+                                        <form action="{{ route('removeCart', $id) }}" method="POST"
+                                            data-confirm="Hapus {{ $item['name'] }} dari keranjang?">
                                             @csrf
                                             @method('DELETE')
-
                                             <button type="submit"
-                                                class="p-2 rounded-full hover:bg-red-100 text-red-500 hover:text-red-700 transition">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
-                                                01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0
-                                                00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
+                                                class="inline-flex h-10 w-10 items-center justify-center rounded-full text-fg-muted transition hover:bg-danger-soft hover:text-danger"
+                                                aria-label="Hapus {{ $item['name'] }} dari keranjang">
+                                                <x-ui.icon name="trash" class="h-5 w-5" />
                                             </button>
                                         </form>
-
                                     </div>
 
+                                    <div class="mt-auto flex flex-wrap items-end justify-between gap-3">
+                                        {{-- Stepper jumlah --}}
+                                        <form action="{{ route('updateCart', $id) }}" method="POST"
+                                            id="quantity-form-{{ $id }}">
+                                            @csrf
+                                            @method('PATCH')
+
+                                            <div class="flex items-center gap-2">
+                                                <button type="button"
+                                                    onclick="updateQuantity({{ $id }}, {{ $item['quantity'] - 1 }})"
+                                                    @disabled($item['quantity'] <= 1)
+                                                    class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong bg-surface text-fg transition hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-40"
+                                                    aria-label="Kurangi jumlah {{ $item['name'] }}">
+                                                    <x-ui.icon name="minus" class="h-4 w-4" />
+                                                </button>
+
+                                                <label for="quantity-{{ $id }}" class="sr-only">Jumlah
+                                                    {{ $item['name'] }}</label>
+                                                <input type="number" readonly name="quantity" id="quantity-{{ $id }}"
+                                                    value="{{ $item['quantity'] }}" min="1"
+                                                    class="h-10 w-14 rounded-field border border-line-strong bg-surface text-center text-sm font-semibold text-fg">
+
+                                                <button type="button"
+                                                    onclick="updateQuantity({{ $id }}, {{ $item['quantity'] + 1 }})"
+                                                    class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong bg-surface text-fg transition hover:bg-surface-soft"
+                                                    aria-label="Tambah jumlah {{ $item['name'] }}">
+                                                    <x-ui.icon name="plus" class="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </form>
+
+                                        <div class="text-right">
+                                            <p class="text-xs text-fg-muted">Subtotal</p>
+                                            <p class="text-base font-bold text-fg sm:text-lg">
+                                                Rp {{ number_format($subtotal, 0, ',', '.') }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        @endforeach
+                        </article>
+                    @endforeach
 
+                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface p-4 text-sm">
+                        <p class="text-fg-muted">
+                            Keranjang disimpan selama sesi browser Anda. Total
+                            <span class="font-semibold text-fg">{{ $totalQuantity }}</span> item.
+                        </p>
+                        <a href="{{ route('products') }}"
+                            class="font-semibold text-info underline underline-offset-2">Tambah produk lain</a>
                     </div>
+                </div>
 
-                    <div class="bg-white rounded-2xl shadow-xl p-7 h-fit sticky top-24 border border-gray-100">
+                {{-- Ringkasan --}}
+                <aside class="lg:sticky lg:top-24" aria-labelledby="ringkasan-belanja">
+                    <div class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6">
+                        <h2 id="ringkasan-belanja" class="text-lg font-semibold text-fg">Ringkasan Belanja</h2>
 
-                        <h2 class="text-xl font-bold text-gray-900 mb-5">Ringkasan Belanja</h2>
+                        <dl class="mt-5 space-y-3 text-sm">
+                            <div class="flex items-center justify-between gap-3">
+                                <dt class="text-fg-muted">Jumlah produk</dt>
+                                <dd class="font-medium text-fg">{{ count($cart) }} jenis</dd>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <dt class="text-fg-muted">Total kuantitas</dt>
+                                <dd class="font-medium text-fg">{{ $totalQuantity }} item</dd>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 border-t border-line pt-3">
+                                <dt class="font-medium text-fg">Total pembayaran</dt>
+                                <dd class="text-xl font-bold text-fg">Rp {{ number_format($total, 0, ',', '.') }}</dd>
+                            </div>
+                        </dl>
 
-                        <div class="flex justify-between text-gray-700 mb-2">
-                            <span>Total Produk</span>
-                            <span>{{ count($cart) }}</span>
-                        </div>
+                        <p class="mt-3 text-xs leading-relaxed text-fg-muted">
+                            Ongkos kirim akan diinformasikan penjual saat konfirmasi pesanan.
+                        </p>
 
-                        <div class="flex justify-between text-gray-700 mb-5">
-                            <span>Total Pembayaran</span>
-                            <span class="text-xl font-bold text-orange-600">
-                                Rp {{ number_format($total, 0, ',', '.') }}
-                            </span>
-                        </div>
-
-                        <a href="{{ route('checkout.page') }}"
-                            class="block w-full bg-orange-600 text-white py-3 rounded-xl text-center font-medium hover:bg-orange-700 transition shadow-lg">
+                        <x-ui.button :href="route('checkout.page')" size="lg" block class="mt-5">
                             Checkout Sekarang
-                        </a>
+                            <x-ui.icon name="arrow-right" class="h-4 w-4" />
+                        </x-ui.button>
 
-                        <a href="{{ route('home') }}"
-                            class="block w-full mt-3 border border-gray-400 text-gray-700 py-3 rounded-xl text-center font-medium hover:bg-gray-100 transition">
+                        <x-ui.button :href="route('home')" variant="outline" block class="mt-3">
                             Lanjut Belanja
-                        </a>
+                        </x-ui.button>
                     </div>
+                </aside>
+            </div>
+        @else
+            <div class="mt-8">
+                <x-ui.empty-state title="Keranjang masih kosong"
+                    description="Belum ada produk di keranjang belanja Anda. Yuk pilih produk favoritmu." icon="shopping-bag">
+                    <x-ui.button :href="route('products')" size="lg">Mulai Belanja</x-ui.button>
+                    <x-ui.button :href="route('home')" variant="outline">Kembali ke Beranda</x-ui.button>
+                </x-ui.empty-state>
+            </div>
+        @endif
+    </div>
+@endsection
 
-                </div>
-            @else
-                <div class="bg-white rounded-2xl shadow-lg p-10 text-center border border-gray-100">
-                    <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13l-1.1 5M7 13h10m0 0v8a2
-                        2 0 01-2 2H9a2 2 0 01-2-2v-8z" />
-                    </svg>
-
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Keranjang Kosong</h3>
-                    <p class="text-gray-600 mb-6">Belum ada produk di keranjang belanja Anda.</p>
-
-                    <a href="{{ route('home') }}"
-                        class="inline-flex items-center bg-orange-600 text-white py-3 px-8 rounded-xl hover:bg-orange-700 transition font-medium shadow-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                        </svg>
-                        Mulai Belanja
-                    </a>
-                </div>
-
-            @endif
-        </div>
-    </section>
-
+@push('scripts')
     <script>
         function updateQuantity(productId, newQuantity) {
-            if (newQuantity < 1) return;
+            if (newQuantity < 1) {
+                return;
+            }
+
             const form = document.getElementById('quantity-form-' + productId);
             const quantityInput = document.getElementById('quantity-' + productId);
+
+            if (!form || !quantityInput) {
+                return;
+            }
+
             quantityInput.value = newQuantity;
             form.submit();
         }
     </script>
-
-@endsection
+@endpush

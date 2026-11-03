@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Store;
 
 class ProfilController extends Controller
 {
@@ -16,10 +17,17 @@ class ProfilController extends Controller
         $user = Auth::user();
 
         if (!$user) {
-            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+            return redirect()->route('login.form')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        return view('profil', compact('user'));
+        // Pemilik toko melihat toko miliknya. Admin lama yang belum memiliki
+        // relasi kepemilikan tetap dapat mengelola toko utama (single-store).
+        // Jika belum ada toko sama sekali, admin tetap melihat formulir
+        // pengaturan untuk membuat toko pertamanya.
+        $store = $user->store
+            ?: ($user->role === 'admin' ? (Store::first() ?? new Store()) : null);
+
+        return view('Profil', compact('user', 'store'));
     }
 
     public function update(Request $request)
@@ -63,5 +71,56 @@ class ProfilController extends Controller
         $user->save();
 
         return redirect()->route('profil')->with('success', 'Profil berhasil diperbarui!');
+    }
+
+    /**
+     * Perbarui pengaturan toko langsung dari halaman profil.
+     */
+    public function updateStore(Request $request)
+    {
+        $user = Auth::user();
+
+        if (! $user || $user->role !== 'admin') {
+            return redirect()
+                ->route('profil')
+                ->with('error', 'Pengaturan toko hanya dapat diubah oleh pemilik toko.');
+        }
+
+        $store = $user->store ?: Store::first() ?: new Store();
+
+        $validated = $request->validate([
+            'store_name' => ['required', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'whatsapp' => ['nullable', 'string', 'max:30'],
+            'instagram' => ['nullable', 'string', 'max:255'],
+            'tiktok' => ['nullable', 'string', 'max:255'],
+            'facebook' => ['nullable', 'string', 'max:255'],
+            'shopee' => ['nullable', 'string', 'max:255'],
+            'tokopedia' => ['nullable', 'string', 'max:255'],
+            'origin_city_id' => ['nullable', 'string', 'max:50'],
+            'origin_district_id' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $store->fill($validated);
+
+        if ($request->hasFile('logo')) {
+            if ($store->logo && Storage::disk('public')->exists($store->logo)) {
+                Storage::disk('public')->delete($store->logo);
+            }
+
+            $store->logo = $request->file('logo')->store('logos', 'public');
+        }
+
+        if (! $store->user_id) {
+            $store->user_id = $user->id;
+        }
+
+        $store->save();
+
+        cache()->forget('store_data');
+
+        return redirect()->route('profil')->with('success', 'Pengaturan toko berhasil diperbarui!');
     }
 }

@@ -1,138 +1,555 @@
 @extends('layouts.app')
 
-@section('title', 'Profil Saya')
+@section('title', 'Profil Saya | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-    <section class="min-h-screen bg-white py-16 px-6">
-        <div class="max-w-3xl mx-auto bg-white shadow-sm rounded-3xl p-10 border border-gray-100">
-            <div class="text-center mb-10">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Profil Saya</h1>
-                <p class="text-gray-500">Perbarui informasi akun dan foto profil Anda</p>
+    @php
+        $isOwner = $user->role === 'admin';
+        $hasStore = $store && $store->exists;
+        $roleLabel = $isOwner ? 'Pemilik Toko' : 'Pembeli';
+        $initial = strtoupper(substr($user->name, 0, 1));
+        $storeLogo = $store && $store->logo ? asset('storage/' . $store->logo) : null;
+    @endphp
+
+    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <x-ui.breadcrumb :items="[
+            ['label' => 'Beranda', 'url' => route('home')],
+            ['label' => 'Profil Saya'],
+        ]" />
+
+        {{-- Ringkasan akun --}}
+        <section class="iw-fade-in relative mt-4 overflow-hidden rounded-panel border border-line bg-inverse text-fg-inverse shadow-sm"
+            aria-labelledby="ringkasan-akun">
+            <div aria-hidden="true"
+                class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-brand-sky/20 blur-3xl">
+            </div>
+            <div aria-hidden="true"
+                class="pointer-events-none absolute -bottom-24 left-1/4 h-56 w-56 rounded-full bg-brand/20 blur-3xl">
             </div>
 
-            @if (session('success'))
-                <div class="bg-green-100 text-green-800 px-5 py-3 rounded-xl text-center mb-6">
-                    {{ session('success') }}
+            <div class="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+                <div class="flex items-center gap-4">
+                    <div class="relative shrink-0">
+                        @if ($user->profile_photo)
+                            <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="Foto profil {{ $user->name }}"
+                                class="h-20 w-20 rounded-2xl border-2 border-white/20 object-cover shadow-lg">
+                        @else
+                            <span
+                                class="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 text-2xl font-extrabold ring-1 ring-white/20">
+                                {{ $initial }}
+                            </span>
+                        @endif
+                        <span
+                            class="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-inverse {{ $isOwner ? 'bg-cta' : 'bg-brand-sky' }} text-white">
+                            <x-ui.icon :name="$isOwner ? 'shield' : 'shopping-bag'" class="h-3.5 w-3.5" />
+                        </span>
+                    </div>
+
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">Akun saya</p>
+                        <h1 id="ringkasan-akun" class="mt-1 truncate text-2xl font-bold tracking-tight sm:text-3xl">
+                            {{ $user->name }}
+                        </h1>
+                        <p class="mt-1 truncate text-sm text-white/60">{{ $user->email }}</p>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold">
+                                <span class="h-1.5 w-1.5 rounded-full bg-brand-sky" aria-hidden="true"></span>
+                                {{ $roleLabel }}
+                            </span>
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/70">
+                                Bergabung {{ $user->created_at?->translatedFormat('M Y') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 sm:justify-end">
+                    @if ($isOwner && $hasStore)
+                        <a href="{{ url('/admin') }}"
+                            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-field bg-white px-4 text-sm font-semibold text-inverse transition hover:bg-white/90">
+                            <x-ui.icon name="shield" class="h-4 w-4" /> Panel Toko
+                        </a>
+                    @endif
+                    <a href="{{ route('orders') }}"
+                        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-field border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/20">
+                        <x-ui.icon name="package" class="h-4 w-4" /> Pesanan Saya
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        {{-- Data pribadi --}}
+        <form action="{{ route('profil.update') }}" method="POST" enctype="multipart/form-data" class="mt-6"
+            data-profile-form>
+            @csrf
+            @method('PUT')
+
+            <div class="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
+                {{-- Foto profil --}}
+                <section class="rounded-panel border border-line bg-surface p-6 shadow-sm lg:sticky lg:top-24"
+                    aria-labelledby="foto-profil">
+                    <h2 id="foto-profil" class="text-xs font-semibold uppercase tracking-[0.14em] text-fg-muted">Foto Profil</h2>
+
+                    <div class="mt-5 flex flex-col items-center text-center">
+                        <div class="relative">
+                            @if ($user->profile_photo)
+                                <img id="profile-preview" src="{{ asset('storage/' . $user->profile_photo) }}"
+                                    alt="Foto profil {{ $user->name }}"
+                                    class="h-32 w-32 rounded-full border-4 border-surface object-cover shadow-md ring-1 ring-line">
+                            @else
+                                <span id="profile-initial"
+                                    class="flex h-32 w-32 items-center justify-center rounded-full bg-surface-soft text-4xl font-bold text-fg-secondary ring-1 ring-line">
+                                    {{ $initial }}
+                                </span>
+                                <img id="profile-preview" src="" alt="Pratinjau foto profil"
+                                    class="hidden h-32 w-32 rounded-full border-4 border-surface object-cover shadow-md ring-1 ring-line">
+                            @endif
+                        </div>
+
+                        <p class="mt-4 text-lg font-semibold text-fg">{{ $user->name }}</p>
+                        <p class="text-sm text-fg-muted">{{ $user->email }}</p>
+
+                        <div class="mt-3">
+                            <x-ui.badge :variant="$isOwner ? 'accent' : 'info'">
+                                <x-ui.icon :name="$isOwner ? 'shield' : 'shopping-bag'" class="h-3.5 w-3.5" />
+                                {{ $roleLabel }}
+                            </x-ui.badge>
+                        </div>
+
+                        <div class="mt-5 w-full">
+                            <label for="profile_photo"
+                                class="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">
+                                <x-ui.icon name="plus" class="h-4 w-4" />
+                                Pilih foto baru
+                            </label>
+                            <input type="file" name="profile_photo" id="profile_photo" accept="image/*"
+                                class="sr-only" data-profile-input>
+                            <p class="mt-2 text-xs leading-relaxed text-fg-muted">
+                                Format JPG, PNG, atau GIF. Maksimal 10 MB.
+                            </p>
+                            @error('profile_photo')
+                                <p class="mt-2 flex items-start gap-1.5 text-xs font-medium text-danger" role="alert">
+                                    <x-ui.icon name="alert-circle" class="mt-0.5 h-4 w-4" />
+                                    <span>{{ $message }}</span>
+                                </p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-2 border-t border-line pt-5">
+                        <a href="{{ route('orders') }}"
+                            class="flex items-center gap-2.5 rounded-field px-3 py-2.5 text-sm font-medium text-fg-secondary transition hover:bg-surface-soft hover:text-fg">
+                            <x-ui.icon name="package" class="h-4 w-4" /> Riwayat pesanan
+                        </a>
+                        <a href="{{ route('cart') }}"
+                            class="flex items-center gap-2.5 rounded-field px-3 py-2.5 text-sm font-medium text-fg-secondary transition hover:bg-surface-soft hover:text-fg">
+                            <x-ui.icon name="shopping-bag" class="h-4 w-4" /> Keranjang belanja
+                        </a>
+                    </div>
+                </section>
+
+                <div class="space-y-6">
+                    {{-- Informasi pribadi --}}
+                    <section class="rounded-panel border border-line bg-surface p-6 shadow-sm sm:p-8"
+                        aria-labelledby="informasi-pribadi">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 id="informasi-pribadi" class="text-lg font-bold text-fg">Informasi Pribadi</h2>
+                                <p class="mt-1 text-sm text-fg-muted">Data ini dipakai untuk kebutuhan akun dan pengiriman.</p>
+                            </div>
+                            <span
+                                class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-card bg-surface-soft text-brand-text sm:flex">
+                                <x-ui.icon name="user" class="h-5 w-5" />
+                            </span>
+                        </div>
+
+                        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+                            <x-ui.field label="Nama lengkap" name="name" required>
+                                <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}"
+                                    required autocomplete="name"
+                                    @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
+                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
+                            </x-ui.field>
+
+                            <x-ui.field label="Email" name="email" required>
+                                <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}"
+                                    required autocomplete="email"
+                                    @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
+                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
+                            </x-ui.field>
+
+                            <x-ui.field label="Nomor telepon" name="phone_number"
+                                hint="Hanya angka, contoh: 08123456789.">
+                                <input type="text" id="phone_number" name="phone_number"
+                                    value="{{ old('phone_number', $user->phone_number) }}" inputmode="numeric"
+                                    pattern="[0-9]*" autocomplete="tel" placeholder="08123456789"
+                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                            </x-ui.field>
+
+                            <x-ui.field label="Alamat" name="address">
+                                <input type="text" id="address" name="address"
+                                    value="{{ old('address', $user->address) }}" autocomplete="street-address"
+                                    placeholder="Jalan, nomor, kota"
+                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                            </x-ui.field>
+                        </div>
+                    </section>
+
+                    {{-- Password --}}
+                    <section class="rounded-panel border border-line bg-surface p-6 shadow-sm sm:p-8"
+                        aria-labelledby="ubah-password">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 id="ubah-password" class="text-lg font-bold text-fg">Ubah Password</h2>
+                                <p class="mt-1 text-sm text-fg-muted">Biarkan kosong jika tidak ingin mengganti password.</p>
+                            </div>
+                            <span
+                                class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-card bg-surface-soft text-info sm:flex">
+                                <x-ui.icon name="shield" class="h-5 w-5" />
+                            </span>
+                        </div>
+
+                        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+                            <x-ui.field label="Password baru" name="password" hint="Minimal 6 karakter.">
+                                <input type="password" id="password" name="password" autocomplete="new-password"
+                                    @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
+                            </x-ui.field>
+
+                            <x-ui.field label="Konfirmasi password" name="password_confirmation">
+                                <input type="password" id="password_confirmation" name="password_confirmation"
+                                    autocomplete="new-password"
+                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
+                            </x-ui.field>
+                        </div>
+                    </section>
+
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <x-ui.button :href="route('home')" variant="outline">Batal</x-ui.button>
+                        <x-ui.button type="submit">
+                            <x-ui.icon name="check" class="h-4 w-4" /> Simpan Perubahan
+                        </x-ui.button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {{-- Pengaturan toko / CTA buat toko --}}
+        <section class="mt-8" aria-labelledby="pengaturan-toko">
+            @if ($isOwner)
+                <form action="{{ route('profil.store.update') }}" method="POST" enctype="multipart/form-data"
+                    class="overflow-hidden rounded-panel border border-line bg-surface shadow-sm">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="flex flex-col gap-4 border-b border-line bg-surface-muted p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+                        <div class="flex items-start gap-4">
+                            <span
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-surface text-brand-text shadow-sm">
+                                <x-ui.icon name="shield" class="h-5 w-5" />
+                            </span>
+                            <div>
+                                <h2 id="pengaturan-toko" class="text-lg font-bold text-fg">Pengaturan Toko</h2>
+                                <p class="mt-1 max-w-xl text-sm leading-relaxed text-fg-muted">
+                                    Kelola identitas toko, kanal kontak, marketplace, dan asal pengiriman.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            @if ($hasStore)
+                                <x-ui.badge variant="success">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+                                    Toko aktif
+                                </x-ui.badge>
+                                <a href="{{ url('/admin/pengaturan') }}"
+                                    class="inline-flex min-h-11 items-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">
+                                    <x-ui.icon name="external" class="h-4 w-4" /> Buka di Panel
+                                </a>
+                            @else
+                                <x-ui.badge variant="warning">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+                                    Belum dibuat
+                                </x-ui.badge>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="space-y-6 p-6 sm:p-8">
+                        {{-- Identitas --}}
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Identitas Toko</h3>
+
+                            <div class="mt-4 grid gap-5 sm:grid-cols-2">
+                                <x-ui.field label="Nama toko" name="store_name" required class="sm:col-span-2">
+                                    <input type="text" id="store_name" name="store_name"
+                                        value="{{ old('store_name', $store->store_name) }}" required
+                                        placeholder="Contoh: Toko Kopi Nusantara"
+                                        @error('store_name') aria-invalid="true" aria-describedby="store_name-error" @enderror
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="Alamat toko" name="address" inputId="store_address" class="sm:col-span-2">
+                                    <input type="text" id="store_address" name="address"
+                                        value="{{ old('address', $store->address) }}" autocomplete="street-address"
+                                        placeholder="Alamat lengkap toko"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="Deskripsi toko" name="description" inputId="store_description" class="sm:col-span-2">
+                                    <textarea id="store_description" name="description" rows="3"
+                                        placeholder="Ceritakan singkat produk dan nilai toko Anda."
+                                        class="w-full rounded-field border border-line-strong bg-surface px-3.5 py-3 text-sm text-fg placeholder:text-fg-muted">{{ old('description', $store->description) }}</textarea>
+                                </x-ui.field>
+
+                                <div class="sm:col-span-2">
+                                    <p class="block text-sm font-medium text-fg-secondary">Logo toko</p>
+                                    <div class="mt-2 flex flex-col gap-4 rounded-card border border-line bg-surface-muted p-4 sm:flex-row sm:items-center">
+                                        <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-line bg-surface">
+                                            <img id="store-logo-preview" src="{{ $storeLogo ?? '' }}" alt="Logo toko"
+                                                class="{{ $storeLogo ? '' : 'hidden' }} h-full w-full object-cover">
+                                            <x-ui.icon name="sparkles" class="h-7 w-7 text-fg-muted {{ $storeLogo ? 'hidden' : '' }}"
+                                                data-store-logo-placeholder />
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <label for="store_logo"
+                                                class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">
+                                                <x-ui.icon name="plus" class="h-4 w-4" /> Ganti logo
+                                            </label>
+                                            <input type="file" name="logo" id="store_logo" accept="image/*" class="sr-only"
+                                                data-store-logo-input>
+                                            <p class="mt-2 text-xs leading-relaxed text-fg-muted">JPG, PNG, GIF, atau WEBP. Maksimal 10 MB.</p>
+                                            @error('logo')
+                                                <p class="mt-1 text-xs font-medium text-danger" role="alert">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Kontak --}}
+                        <div class="border-t border-line pt-6">
+                            <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Kontak & Sosial Media</h3>
+
+                            <div class="mt-4 grid gap-5 sm:grid-cols-2">
+                                <x-ui.field label="WhatsApp" name="whatsapp" inputId="store_whatsapp" hint="Contoh: 08123456789.">
+                                    <input type="tel" id="store_whatsapp" name="whatsapp"
+                                        value="{{ old('whatsapp', $store->whatsapp) }}" placeholder="08123456789"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="Instagram" name="instagram" inputId="store_instagram">
+                                    <input type="text" id="store_instagram" name="instagram"
+                                        value="{{ old('instagram', $store->instagram) }}" placeholder="@namatoko"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="TikTok" name="tiktok" inputId="store_tiktok">
+                                    <input type="text" id="store_tiktok" name="tiktok"
+                                        value="{{ old('tiktok', $store->tiktok) }}" placeholder="@namatoko"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="Facebook" name="facebook" inputId="store_facebook">
+                                    <input type="text" id="store_facebook" name="facebook"
+                                        value="{{ old('facebook', $store->facebook) }}" placeholder="Tautan halaman"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="Toko Shopee" name="shopee" inputId="store_shopee">
+                                    <input type="text" id="store_shopee" name="shopee"
+                                        value="{{ old('shopee', $store->shopee) }}" placeholder="Tautan toko Shopee"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="Toko Tokopedia" name="tokopedia" inputId="store_tokopedia">
+                                    <input type="text" id="store_tokopedia" name="tokopedia"
+                                        value="{{ old('tokopedia', $store->tokopedia) }}" placeholder="Tautan toko Tokopedia"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+                            </div>
+                        </div>
+
+                        {{-- Pengiriman --}}
+                        <div class="border-t border-line pt-6">
+                            <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Asal Pengiriman</h3>
+
+                            <div class="mt-4 grid gap-5 sm:grid-cols-2">
+                                <x-ui.field label="Origin City ID" name="origin_city_id" inputId="store_origin_city_id" hint="ID kota dari RajaOngkir.">
+                                    <input type="text" id="store_origin_city_id" name="origin_city_id"
+                                        value="{{ old('origin_city_id', $store->origin_city_id) }}" inputmode="numeric"
+                                        placeholder="Contoh: 469"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+
+                                <x-ui.field label="Origin District ID" name="origin_district_id" inputId="store_origin_district_id" hint="Opsional, lebih spesifik.">
+                                    <input type="text" id="store_origin_district_id" name="origin_district_id"
+                                        value="{{ old('origin_district_id', $store->origin_district_id) }}" inputmode="numeric"
+                                        placeholder="Contoh: 4691"
+                                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                </x-ui.field>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-end">
+                            <x-ui.button :href="route('home')" variant="outline">Batal</x-ui.button>
+                            <x-ui.button type="submit">
+                                <x-ui.icon name="check" class="h-4 w-4" /> Simpan Pengaturan Toko
+                            </x-ui.button>
+                        </div>
+                    </div>
+                </form>
+            @else
+                {{-- CTA pemilik toko baru --}}
+                <div class="overflow-hidden rounded-panel border border-line bg-surface shadow-sm">
+                    <div class="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+                        <div class="p-6 sm:p-8">
+                            <span
+                                class="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-surface-soft px-3 py-1 text-xs font-semibold text-brand-text">
+                                <x-ui.icon name="sparkles" class="h-3.5 w-3.5" /> Peluang UMKM
+                            </span>
+
+                            <h2 id="pengaturan-toko" class="mt-4 text-2xl font-bold tracking-tight text-fg">
+                                Punya usaha? Buat toko Anda sekarang.
+                            </h2>
+                            <p class="mt-2 max-w-xl text-sm leading-relaxed text-fg-secondary">
+                                Tingkatkan akun Anda menjadi pemilik toko untuk menampilkan profil usaha, mengelola
+                                produk, dan menerima pesanan langsung dari storefront.
+                            </p>
+
+                            <ul class="mt-5 grid gap-3 text-sm text-fg-secondary sm:grid-cols-2">
+                                <li class="flex items-start gap-2.5">
+                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                        <x-ui.icon name="check" class="h-3.5 w-3.5" />
+                                    </span>
+                                    Identitas toko & logo
+                                </li>
+                                <li class="flex items-start gap-2.5">
+                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                        <x-ui.icon name="check" class="h-3.5 w-3.5" />
+                                    </span>
+                                    Kontak & marketplace
+                                </li>
+                                <li class="flex items-start gap-2.5">
+                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                        <x-ui.icon name="check" class="h-3.5 w-3.5" />
+                                    </span>
+                                    Asal pengiriman
+                                </li>
+                                <li class="flex items-start gap-2.5">
+                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                        <x-ui.icon name="check" class="h-3.5 w-3.5" />
+                                    </span>
+                                    Panel pengelolaan toko
+                                </li>
+                            </ul>
+
+                            <div class="mt-6 flex flex-wrap gap-3">
+                                <x-ui.button :href="route('register.store.form')" size="lg">
+                                    <x-ui.icon name="shield" class="h-4 w-4" /> Buat Toko Sekarang
+                                </x-ui.button>
+                                <x-ui.button :href="route('kontak')" variant="outline">Tanya Pengelola</x-ui.button>
+                            </div>
+                        </div>
+
+                        <div class="relative flex items-center justify-center overflow-hidden bg-inverse p-8 text-fg-inverse">
+                            <div aria-hidden="true"
+                                class="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/25 blur-2xl">
+                            </div>
+                            <div aria-hidden="true"
+                                class="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-brand-sky/20 blur-2xl">
+                            </div>
+
+                            <div class="relative w-full max-w-xs space-y-3">
+                                <div class="rounded-card border border-white/15 bg-white/10 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-white/60">Langkah 1</p>
+                                    <p class="mt-1 text-sm font-semibold">Lengkapi data toko</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Nama, logo, deskripsi, dan alamat usaha.</p>
+                                </div>
+                                <div class="ml-6 rounded-card border border-white/15 bg-white/10 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-white/60">Langkah 2</p>
+                                    <p class="mt-1 text-sm font-semibold">Atur kontak & pengiriman</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Hubungkan WhatsApp, marketplace, dan origin kirim.</p>
+                                </div>
+                                <div class="ml-12 rounded-card border border-white/15 bg-white/10 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-white/60">Langkah 3</p>
+                                    <p class="mt-1 text-sm font-semibold">Mulai berjualan</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Kelola produk dan pesanan dari panel toko.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             @endif
+        </section>
+    </div>
+@endsection
 
-            <form action="{{ route('profil.update') }}" method="POST" enctype="multipart/form-data" class="space-y-10">
-                @csrf
-                @method('PUT')
-
-                <div class="flex flex-col items-center space-y-4">
-                    <div class="relative group">
-                        @if ($user->profile_photo)
-                            <img src="{{ asset('storage/' . $user->profile_photo) . '?v=' . time() }}"
-                                alt="{{ $user->name }}"
-                                class="w-32 h-32 rounded-full object-cover shadow-md border-4 border-white group-hover:opacity-75 transition">
-                        @else
-                            <div
-                                class="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 
-                                    flex items-center justify-center text-white text-4xl font-bold shadow-md">
-                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                            </div>
-                        @endif
-
-                        <label for="profile_photo"
-                            class="absolute bottom-0 right-0 bg-black bg-opacity-60 text-white p-2 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15.232 5.232l3.536 3.536M9 13l3-3L20.485 1.515a2.121 2.121 0 113 3L12 15l-3 3H6v-3l3-3z" />
-                            </svg>
-                        </label>
-                    </div>
-
-                    <input type="file" name="profile_photo" id="profile_photo" accept="image/*" class="hidden">
-                    @error('profile_photo')
-                        <p class="text-red-500 text-sm mt-2">{{ $message }}</p>
-                    @enderror
-                    <p class="text-sm text-gray-500">Klik foto untuk mengganti </p>
-                </div>
-
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Informasi Pribadi</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">Nama Lengkap</label>
-                            <input type="text" name="name" value="{{ old('name', $user->name) }}"
-                                class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">Email</label>
-                            <input type="email" name="email" value="{{ old('email', $user->email) }}"
-                                class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">Nomor Telepon</label>
-                            <!-- Tambahan inputmode="numeric" dan pattern untuk memicu keyboard angka di HP serta pembatasan via JS -->
-                            <input type="text" name="phone_number" id="phone_number" value="{{ old('phone_number', $user->phone_number) }}"
-                                inputmode="numeric" pattern="[0-9]*" placeholder="Contoh: 08123456789"
-                                class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">Alamat</label>
-                            <input type="text" name="address" value="{{ old('address', $user->address) }}"
-                                class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Ubah Password</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">Password Baru</label>
-                            <input type="password" name="password"
-                                class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">Konfirmasi Password</label>
-                            <input type="password" name="password_confirmation"
-                                class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center pt-4">
-                    <button type="submit"
-                        class="px-10 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-semibold shadow-md hover:shadow-lg hover:opacity-90 transition">
-                        Simpan Perubahan
-                    </button>
-                </div>
-            </form>
-        </div>
-    </section>
-
+@push('scripts')
     <script>
-        document.querySelectorAll('label[for="profile_photo"]').forEach(label => {
-            label.addEventListener('click', () => {
-                document.getElementById('profile_photo').click();
-            });
-        });
+        document.addEventListener('DOMContentLoaded', function () {
+            // Pratinjau foto profil
+            const input = document.querySelector('[data-profile-input]');
+            const preview = document.getElementById('profile-preview');
+            const initial = document.getElementById('profile-initial');
 
-        // Preview image immediately after selection
-        document.getElementById('profile_photo').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = document.querySelector('img[alt="{{ $user->name }}"]');
-                    if (img) {
-                        img.src = event.target.result;
+            if (input && preview) {
+                input.addEventListener('change', function (event) {
+                    const file = event.target.files && event.target.files[0];
+
+                    if (!file || !file.type.startsWith('image/')) {
+                        return;
                     }
-                };
-                reader.readAsDataURL(file);
+
+                    const reader = new FileReader();
+
+                    reader.onload = function (loadEvent) {
+                        preview.src = loadEvent.target.result;
+                        preview.classList.remove('hidden');
+                        initial?.classList.add('hidden');
+                    };
+
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // Pratinjau logo toko
+            const storeLogoInput = document.querySelector('[data-store-logo-input]');
+            const storeLogoPreview = document.getElementById('store-logo-preview');
+            const storeLogoPlaceholder = document.querySelector('[data-store-logo-placeholder]');
+
+            if (storeLogoInput && storeLogoPreview) {
+                storeLogoInput.addEventListener('change', function (event) {
+                    const file = event.target.files && event.target.files[0];
+
+                    if (!file || !file.type.startsWith('image/')) {
+                        return;
+                    }
+
+                    const reader = new FileReader();
+
+                    reader.onload = function (loadEvent) {
+                        storeLogoPreview.src = loadEvent.target.result;
+                        storeLogoPreview.classList.remove('hidden');
+                        storeLogoPlaceholder?.classList.add('hidden');
+                    };
+
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // Nomor telepon hanya angka
+            const phoneInput = document.getElementById('phone_number');
+
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function () {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
             }
         });
-
-        // Fungsi agar input Nomor Telepon hanya menerima angka secara real-time
-        const phoneInput = document.getElementById('phone_number');
-        if (phoneInput) {
-            phoneInput.addEventListener('input', function(e) {
-                this.value = this.value.replace(/[^0-9]/g, '');
-            });
-        }
     </script>
-@endsection
+@endpush

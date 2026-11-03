@@ -45,16 +45,21 @@ class ItemsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('product.product_name')
                     ->label('Nama Produk')
-                    ->searchable(),
+                    ->searchable()
+                    ->weight('semibold')
+                    ->placeholder('Produk tidak tersedia'),
                 TextColumn::make('price')
                     ->label('Harga')
                     ->money('IDR'),
                 TextColumn::make('quantity')
-                    ->label('Kuantitas'),
+                    ->label('Kuantitas')
+                    ->badge()
+                    ->color('info'),
                 TextColumn::make('subtotal')
                     ->label('Total')
                     ->state(fn($record) => $record->price * $record->quantity)
-                    ->money('IDR'),
+                    ->money('IDR')
+                    ->weight('semibold'),
             ])
             ->filters([
                 //
@@ -65,6 +70,9 @@ class ItemsRelationManager extends RelationManager
             ])
             ->bulkActions([
                 // Removed bulk actions to prevent deletion
-            ]);
+            ])
+            ->emptyStateIcon('heroicon-o-shopping-cart')
+            ->emptyStateHeading('Belum ada item pesanan')
+            ->emptyStateDescription('Rincian produk pada pesanan ini akan tampil di sini.');
     }
 }

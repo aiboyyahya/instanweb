@@ -1,310 +1,436 @@
+@php
+    $store = store();
+    $cartItems = session()->get('cart', []);
+    $cartCount = count($cartItems);
+    $storeName = $store->store_name ?? 'instanweb';
+    $whatsappNumber = $store && !empty($store->whatsapp) ? preg_replace('/[^0-9]/', '', $store->whatsapp) : null;
+@endphp
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'InstanWeb | Pasar Produk UMKM Indonesia')</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <meta name="theme-color" content="#1e56fc">
+    <link rel="icon" type="image/png" href="{{ asset('images/instanweb-logo.png') }}">
+    <title>@yield('title', $storeName . ' | Pasar Produk UMKM Indonesia')</title>
 
-    <style>
-        :root {
-            color-scheme: dark;
-            --iw-bg: #0b1120;
-            --iw-panel: #111c2f;
-            --iw-panel-soft: #16243a;
-            --iw-border: #26364d;
-            --iw-text: #e8eef7;
-            --iw-muted: #9aabc2;
-            --iw-blue: #38bdf8;
-            --iw-orange: #fb923c;
-        }
-        html { background: var(--iw-bg); scroll-behavior: smooth; }
-        body { background: var(--iw-bg) !important; color: var(--iw-text) !important; }
-        nav { background: rgba(11,17,32,.96) !important; color: var(--iw-text) !important; border-color: var(--iw-border) !important; backdrop-filter: blur(14px); }
-        nav a, footer a { transition: color .2s ease, background .2s ease, transform .2s ease; }
-        nav a:hover { color: var(--iw-blue) !important; }
-        footer { background: #070c16 !important; border-color: var(--iw-border) !important; }
-        section, main { background-color: var(--iw-bg) !important; color: var(--iw-text) !important; }
-        .bg-white, .bg-gray-50, .bg-gray-100, .bg-slate-50, .bg-slate-100 {
-            background-color: var(--iw-panel) !important;
-        }
-        .bg-gray-200, .bg-slate-200 { background-color: var(--iw-panel-soft) !important; }
-        .text-gray-900, .text-gray-800, .text-slate-900, .text-slate-800, .text-black {
-            color: var(--iw-text) !important;
-        }
-        .text-gray-700, .text-slate-700 { color: #cbd7e7 !important; }
-        .text-gray-600, .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-500 {
-            color: var(--iw-muted) !important;
-        }
-        .border-gray-100, .border-gray-200, .border-gray-300, .border-slate-100, .border-slate-200, .border-gray-600 {
-            border-color: var(--iw-border) !important;
-        }
-        .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
-        .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--iw-border) !important; }
-        input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
-        select, textarea {
-            background: #0b1424 !important;
-            color: var(--iw-text) !important;
-            border-color: #344761 !important;
-            border-radius: .8rem;
-        }
-        input::placeholder, textarea::placeholder { color: #8193ad !important; }
-        input:focus, select:focus, textarea:focus {
-            outline: none !important;
-            border-color: var(--iw-blue) !important;
-            box-shadow: 0 0 0 3px rgba(56,189,248,.14) !important;
-        }
-        .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
-            --tw-shadow: 0 12px 30px rgba(0,0,0,.18) !important;
-            box-shadow: 0 12px 30px rgba(0,0,0,.18) !important;
-        }
-        .rounded-xl, .rounded-2xl, .rounded-3xl { border-color: var(--iw-border); }
-        .bg-blue-600, .bg-blue-700, .bg-indigo-600 { background-color: #087eaa !important; }
-        .hover\:bg-blue-700:hover, .hover\:bg-indigo-700:hover { background-color: #0b9acb !important; }
-        .text-blue-600, .text-blue-700, .text-indigo-600, .text-indigo-700 { color: var(--iw-blue) !important; }
-        .bg-orange-500, .bg-orange-600 { background-color: #ea741c !important; }
-        .hover\:bg-orange-600:hover { background-color: #fb923c !important; }
-        .bg-green-50, .bg-green-100 { background-color: #102c2a !important; }
-        .text-green-700, .text-green-800 { color: #6ee7b7 !important; }
-        .border-green-200, .border-green-400 { border-color: #1e6254 !important; }
-        .bg-red-50, .bg-red-100 { background-color: #351b28 !important; }
-        .text-red-700, .text-red-800 { color: #fda4af !important; }
-        .border-red-200, .border-red-400 { border-color: #783447 !important; }
-        button, [type="submit"] { transition: transform .18s ease, filter .18s ease, box-shadow .18s ease; }
-        button:hover, [type="submit"]:hover { filter: brightness(1.12); }
-        button:active, [type="submit"]:active { transform: scale(.985); }
-        img { max-width: 100%; }
-        @media (max-width: 640px) {
-            nav { padding-top: .8rem !important; padding-bottom: .8rem !important; }
-            h1 { line-height: 1.15 !important; }
-        }
-    </style>
+    {{-- Terapkan tema sebelum paint agar tidak ada kilatan warna (brief §7.5). --}}
+    <script>
+        (function() {
+            try {
+                var saved = localStorage.getItem('iw-theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.style.colorScheme = theme;
+            } catch (error) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
 </head>
 
-<body class="bg-white text-gray-800">
+<body class="min-h-screen bg-surface-muted text-fg">
+    <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
 
-    <!-- Tambahkan z-[9999] agar navbar dan seluruh dropdown-nya berada di lapisan teratas -->
-    <nav class="px-4 py-3 shadow-sm border-b relative bg-white z-[9999]">
-        <input type="checkbox" id="menu-toggle" class="peer hidden">
-        <div class="flex items-center justify-between w-full">
-            <a href="{{ url('/') }}" class="flex items-center gap-3" aria-label="InstanWeb Beranda">
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 text-sm font-extrabold text-white shadow-sm">IW</span>
-                <span class="flex flex-col">
-                    <span class="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">InstanWeb</span>
-                    <span class="hidden text-xs text-slate-500 sm:block">Pasar Produk UMKM Indonesia</span>
+    <header
+        class="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+        <div class="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+            {{-- Brand --}}
+            <a href="{{ route('home') }}" class="iw-brand-link flex shrink-0 items-center gap-2.5 rounded-md"
+                aria-label="{{ $store ? $storeName . ' — Beranda' : 'instanweb — Beranda' }}">
+                <img src="{{ asset('images/instanweb-logo.png') }}" alt="" width="560" height="564"
+                    class="iw-brand-mark h-10 w-10" decoding="async">
+                <x-brand-wordmark size="xl" />
+                {{-- {{-- @if ($store)
+                    @if ($store->logo)
+                        <img src="{{ asset('storage/' . $store->logo) }}" alt=""
+                            class="iw-brand-mark h-10 w-10 rounded-xl border border-line object-cover">
+                            <img src="{{ asset('images/instanweb-logo.png') }}" alt="" width="560" height="564"
+                                class="iw-brand-mark h-10 w-10" decoding="async">
+                    @else
+                    @endif
+
+                <span class="flex min-w-0 flex-col leading-none">
+                    <span
+                        class="truncate text-base font-bold tracking-tight text-fg sm:text-lg">{{ $storeName }}</span>
+                    <span class="mt-1.5 hidden items-center gap-1 text-[11px] text-fg-muted sm:flex">
+                        <span>via</span>
+                        <x-brand-wordmark size="xs" />
+                    </span>
                 </span>
+            @else
+                <x-brand size="md" />
+                @endif --}}
             </a>
+            @if (!request()->routeIs('selamatdatang'))
 
-            <div class="hidden md:flex space-x-4 items-center font-medium text-sm">
-                <a href="{{ url('/') }}"
-                    class="pb-1 {{ request()->is('/') ? 'text-black font-semibold border-b-2 border-black' : 'hover:text-gray-900' }} transition">
-                    Beranda
-                </a>
-                <a href="{{ url('/produk') }}"
-                    class="pb-1 {{ request()->is('produk*') ? 'text-black font-semibold border-b-2 border-black' : 'hover:text-gray-900' }} transition">
-                    Produk
-                </a>
-                <a href="{{ route('articles.index') }}"
-                    class="pb-1 {{ request()->is('artikel*') ? 'text-black font-semibold border-b-2 border-black' : 'hover:text-gray-900' }} transition">
-                    Artikel
-                </a>
-                <a href="{{ route('kontak') }}"
-                    class="pb-1 {{ request()->is('kontak') ? 'text-black font-semibold border-b-2 border-black' : 'hover:text-gray-900' }} transition">
-                    Kontak
-                </a>
+                {{-- Navigasi desktop --}}
+                <nav class="ml-2 hidden items-center gap-1 lg:flex" aria-label="Navigasi utama">
+                    @php
+                        $navLinks = [
+                            ['label' => 'Beranda', 'url' => route('home'), 'active' => request()->is('home')],
+                            ['label' => 'Produk', 'url' => route('products'), 'active' => request()->is('produk*')],
+                            [
+                                'label' => 'Artikel',
+                                'url' => route('articles.index'),
+                                'active' => request()->is('artikel*'),
+                            ],
+                            ['label' => 'Kontak', 'url' => route('kontak'), 'active' => request()->is('kontak*')],
+                        ];
+                    @endphp
 
-                <form action="{{ url('/produk') }}" method="GET" class="relative" id="navbarSearchForm">
-                    <input type="text" name="q" id="navbarSearchInput" placeholder="Cari produk..."
-                        value="{{ request()->query('q') }}"
-                        class="border border-gray-300 rounded-full pl-3 pr-10 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                    <button type="submit"
-                        class="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1112 4.5a7.5 7.5 0 014.65 12.15z" />
-                        </svg>
-                    </button>
-                </form>
-
-                <script>
-                    document.getElementById('navbarSearchForm').addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        var query = document.getElementById('navbarSearchInput').value.trim();
-                        if (query.length === 0) {
-                            window.location.href = '{{ url('/') }}';
-                        } else {
-                            window.location.href = '{{ url('/produk') }}' + '?search=' + encodeURIComponent(query);
-                        }
-                    });
-                </script>
-            </div>
-
-            <div class="flex items-center space-x-4 text-sm">
-                @auth
-                    <div class="relative group hidden md:block">
-                        <button
-                            class="flex items-center space-x-2 px-2 py-1 rounded-full hover:bg-gray-100 transition font-medium">
-                            @if (Auth::user()->profile_photo)
-                                <img src="{{ asset('storage/' . Auth::user()->profile_photo) . '?v=' . time() }}"
-                                    alt="{{ Auth::user()->name }}"
-                                    class="w-8 h-8 rounded-full object-cover border border-gray-300">
-                            @else
-                                <div
-                                    class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold">
-                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                                </div>
+                    @foreach ($navLinks as $link)
+                        <a href="{{ $link['url'] }}" @if ($link['active']) aria-current="page" @endif
+                            class="relative rounded-md px-3 py-2 text-sm font-medium transition-colors {{ $link['active'] ? 'text-fg' : 'text-fg-secondary hover:bg-surface-soft hover:text-fg' }}">
+                            {{ $link['label'] }}
+                            @if ($link['active'])
+                                <span class="absolute inset-x-3 -bottom-[21px] h-0.5 rounded-full bg-cta"
+                                    aria-hidden="true"></span>
                             @endif
-                            <span>{{ Auth::user()->name }}</span>
-                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                        </a>
+                    @endforeach
+                </nav>
+            @endif
+
+            <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
+                @if (!request()->routeIs('selamatdatang'))
+                    {{-- Pencarian (tablet & desktop) --}}
+                    <form action="{{ route('products') }}" method="GET" role="search"
+                        class="hidden items-center md:flex">
+                        <label for="header-search" class="sr-only">Cari produk</label>
+                        <div class="relative">
+                            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-fg-muted">
+                                <x-ui.icon name="search" class="h-4 w-4" />
+                            </span>
+                            <input type="search" id="header-search" name="search" value="{{ request('search') }}"
+                                placeholder="Cari produk..."
+                                class="h-10 w-40 rounded-full border border-line-strong bg-surface pl-9 pr-3 text-sm text-fg placeholder:text-fg-muted lg:w-48 xl:w-56">
+                        </div>
+                    </form>
+                @endif
+
+                {{-- Toggle tema --}}
+                <button type="button" data-theme-toggle aria-pressed="false" title="Ganti mode tampilan"
+                    class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-fg-secondary transition hover:bg-surface-soft hover:text-fg">
+                    <x-ui.icon name="moon" data-theme-icon="moon" class="h-5 w-5 dark:hidden" />
+                    <x-ui.icon name="sun" data-theme-icon="sun" class="hidden h-5 w-5 dark:block" />
+                    <span class="sr-only" data-theme-label>Mode gelap</span>
+                </button>
+
+                {{-- Keranjang --}}
+                @if (!request()->routeIs('selamatdatang'))
+                    <a href="{{ route('cart') }}"
+                        class="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-fg-secondary transition hover:bg-surface-soft hover:text-fg"
+                        aria-label="Keranjang belanja, {{ $cartCount }} produk">
+                        <x-ui.icon name="shopping-bag" class="h-5 w-5" />
+                        @if ($cartCount > 0)
+                            <span
+                                class="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-cta px-1 text-[11px] font-bold text-on-cta">{{ $cartCount }}</span>
+                        @endif
+                    </a>
+                @endif
+
+                {{-- Akun --}}
+                @auth
+                    <div class="relative hidden lg:block">
+                        <button type="button" data-profile-menu-button aria-expanded="false" aria-controls="profile-menu"
+                            class="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-surface pl-1.5 pr-2.5 text-sm font-medium text-fg transition hover:bg-surface-soft">
+                            @if (Auth::user()->profile_photo)
+                                <img src="{{ asset('storage/' . Auth::user()->profile_photo) }}" alt=""
+                                    class="h-8 w-8 rounded-full object-cover">
+                            @else
+                                <span
+                                    class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-soft text-xs font-bold text-fg-secondary">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
+                            @endif
+                            <span class="hidden max-w-24 truncate xl:inline">{{ Auth::user()->name }}</span>
+                            <x-ui.icon name="chevron-down" class="h-4 w-4 text-fg-muted" />
                         </button>
 
-                        <!-- Gunakan z-[10000] agar menu profil benar-benar berada di atas slider banner home -->
-                        <div
-                            class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-[10000]">
-                            <a href="{{ route('profil') }}" class="block px-4 py-2 hover:bg-gray-100 transition">Profil</a>
-                            <a href="{{ url('/pesanan') }}"
-                                class="block px-4 py-2 hover:bg-gray-100 transition">Pesanan</a>
-                            <form method="POST" action="{{ route('logout') }}">
+                        <div id="profile-menu" data-profile-menu
+                            class="absolute right-0 top-full z-50 mt-2 hidden w-52 overflow-hidden rounded-card border border-line bg-surface p-1.5 shadow-lg">
+                            <div class="border-b border-line px-3 pb-2 pt-1.5">
+                                <p class="truncate text-sm font-semibold text-fg">{{ Auth::user()->name }}</p>
+                                <p class="truncate text-xs text-fg-muted">{{ Auth::user()->email }}</p>
+                            </div>
+                            <a href="{{ route('profil') }}"
+                                class="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-fg-secondary transition hover:bg-surface-soft hover:text-fg">
+                                <x-ui.icon name="user" class="h-4 w-4" /> Profil Saya
+                            </a>
+                            <a href="{{ route('orders') }}"
+                                class="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-fg-secondary transition hover:bg-surface-soft hover:text-fg">
+                                <x-ui.icon name="package" class="h-4 w-4" /> Pesanan Saya
+                            </a>
+                            @if (Auth::user()->role === 'admin')
+                                <a href="{{ url('/admin') }}"
+                                    class="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-fg-secondary transition hover:bg-surface-soft hover:text-fg">
+                                    <x-ui.icon name="shield" class="h-4 w-4" /> Panel Admin
+                                </a>
+                            @else
+                                <a href="{{ route('register.store.form') }}"
+                                    class="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-fg-secondary transition hover:bg-surface-soft hover:text-fg">
+                                    <x-ui.icon name="shield" class="h-4 w-4" /> Buat Toko
+                                </a>
+                            @endif
+                            <form method="POST" action="{{ route('logout') }}" class="border-t border-line pt-1">
                                 @csrf
                                 <button type="submit"
-                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">Logout</button>
+                                    class="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm text-danger transition hover:bg-danger-soft">
+                                    <x-ui.icon name="arrow-right" class="h-4 w-4" /> Keluar
+                                </button>
                             </form>
                         </div>
                     </div>
                 @else
                     <a href="{{ route('login.form') }}"
-                        class="px-4 py-2 bg-white border border-black rounded-full hover:bg-black hover:text-white transition font-medium">
-                        Login
+                        class="hidden h-11 items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft sm:inline-flex">
+                        Masuk
                     </a>
                 @endauth
 
-                <a href="{{ route('cart') }}" class="relative text-xl cursor-pointer hover:text-gray-700 transition">
-                    🛒
-                    @php
-                        $cart = session()->get('cart', []);
-                        $cartCount = count($cart);
-                    @endphp
-                    @if ($cartCount > 0)
-                        <span
-                            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                            {{ $cartCount }}
-                        </span>
-                    @endif
-                </a>
+                {{-- Menu mobile --}}
+                <button type="button" data-mobile-menu-button aria-expanded="false" aria-controls="mobile-nav"
+                    class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-fg transition hover:bg-surface-soft lg:hidden">
+                    <x-ui.icon name="menu" class="h-5 w-5" />
+                    <span class="sr-only">Buka menu navigasi</span>
+                </button>
 
-                <label for="menu-toggle" class="md:hidden cursor-pointer">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </label>
+                @auth
+                    <a href="{{ route('profil') }}"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-fg transition hover:bg-surface-soft lg:hidden"
+                        aria-label="Profil saya">
+                        <span
+                            class="flex h-7 w-7 items-center justify-center rounded-full bg-surface-soft text-xs font-bold text-fg-secondary">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
+                    </a>
+                @endauth
             </div>
         </div>
 
-        <div class="flex-col space-y-1 text-sm font-medium mt-4 hidden peer-checked:flex md:hidden border-t pt-3">
-            <a href="{{ url('/') }}" class="py-2 text-center hover:bg-gray-50 transition">Beranda</a>
-            <a href="{{ url('/produk') }}" class="py-2 text-center hover:bg-gray-50 transition">Produk</a>
-            <a href="{{ route('articles.index') }}" class="py-2 text-center hover:bg-gray-50 transition">Artikel</a>
-            <a href="{{ route('kontak') }}" class="py-2 text-center hover:bg-gray-50 transition">Kontak</a>
-
-            @auth
-                <a href="{{ route('profil') }}" class="py-2 text-center hover:bg-gray-50 transition">Profil</a>
-                <a href="{{ url('/pesanan') }}" class="py-2 text-center hover:bg-gray-50 transition">Pesanan</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="w-full py-2 text-center hover:bg-gray-50 transition">Logout</button>
+        {{-- Panel navigasi mobile --}}
+        <div id="mobile-nav" data-mobile-menu class="hidden border-t border-line bg-surface lg:hidden">
+            <div class="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6">
+                <form action="{{ route('products') }}" method="GET" role="search">
+                    <label for="mobile-search" class="sr-only">Cari produk</label>
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-fg-muted">
+                            <x-ui.icon name="search" class="h-4.5 w-4.5" />
+                        </span>
+                        <input type="search" id="mobile-search" name="search" value="{{ request('search') }}"
+                            placeholder="Cari produk..."
+                            class="h-11 w-full rounded-full border border-line-strong bg-surface-muted pl-10 pr-4 text-sm text-fg placeholder:text-fg-muted">
+                    </div>
                 </form>
-            @else
-                <a href="{{ route('login.form') }}"
-                    class="px-4 py-2 mt-1 bg-white border border-black rounded-full hover:bg-black hover:text-white transition font-medium text-center w-fit mx-auto">
-                    Login
-                </a>
-            @endauth
-        </div>
-    </nav>
 
-    <main class="min-h-screen">
+                <nav class="grid gap-1" aria-label="Navigasi mobile">
+                    <a href="{{ route('home') }}"
+                        class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium {{ request()->is('/') ? 'bg-surface-soft text-fg' : 'text-fg-secondary' }}">
+                        <x-ui.icon name="home" class="h-5 w-5" /> Beranda
+                    </a>
+                    <a href="{{ route('products') }}"
+                        class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium {{ request()->is('produk*') ? 'bg-surface-soft text-fg' : 'text-fg-secondary' }}">
+                        <x-ui.icon name="package" class="h-5 w-5" /> Produk
+                    </a>
+                    <a href="{{ route('articles.index') }}"
+                        class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium {{ request()->is('artikel*') ? 'bg-surface-soft text-fg' : 'text-fg-secondary' }}">
+                        <x-ui.icon name="sparkles" class="h-5 w-5" /> Artikel
+                    </a>
+                    <a href="{{ route('kontak') }}"
+                        class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium {{ request()->is('kontak*') ? 'bg-surface-soft text-fg' : 'text-fg-secondary' }}">
+                        <x-ui.icon name="chat" class="h-5 w-5" /> Kontak
+                    </a>
+                </nav>
+
+                <div class="border-t border-line pt-3">
+                    @auth
+                        <div class="grid gap-1">
+                            <a href="{{ route('profil') }}"
+                                class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-fg-secondary">
+                                <x-ui.icon name="user" class="h-5 w-5" /> Profil Saya
+                            </a>
+                            <a href="{{ route('orders') }}"
+                                class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-fg-secondary">
+                                <x-ui.icon name="package" class="h-5 w-5" /> Pesanan Saya
+                            </a>
+                            @if (Auth::user()->role === 'admin')
+                                <a href="{{ url('/admin') }}"
+                                    class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-fg-secondary">
+                                    <x-ui.icon name="shield" class="h-5 w-5" /> Panel Admin
+                                </a>
+                            @else
+                                <a href="{{ route('register.store.form') }}"
+                                    class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-fg-secondary">
+                                    <x-ui.icon name="shield" class="h-5 w-5" /> Buat Toko
+                                </a>
+                            @endif
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit"
+                                    class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium text-danger">
+                                    <x-ui.icon name="arrow-right" class="h-5 w-5" /> Keluar
+                                </button>
+                            </form>
+                        </div>
+                    @else
+                        <div class="grid gap-2">
+                            <a href="{{ route('login.form') }}"
+                                class="inline-flex min-h-11 w-full items-center justify-center rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg">Masuk</a>
+                            <a href="{{ route('register.form') }}"
+                                class="inline-flex min-h-11 w-full items-center justify-center rounded-field bg-cta px-4 text-sm font-semibold text-on-cta">Daftar
+                                Akun</a>
+                        </div>
+                    @endauth
+                </div>
+            </div>
+        </div>
+    </header>
+
+    @if (session('success') || session('error') || session('warning'))
+        <div class="mx-auto mt-4 max-w-7xl px-4 sm:px-6 lg:px-8">
+            @if (session('success'))
+                <x-ui.alert variant="success" dismissible>{{ session('success') }}</x-ui.alert>
+            @endif
+            @if (session('error'))
+                <x-ui.alert variant="danger" dismissible class="mt-2">{{ session('error') }}</x-ui.alert>
+            @endif
+            @if (session('warning'))
+                <x-ui.alert variant="warning" dismissible class="mt-2">{{ session('warning') }}</x-ui.alert>
+            @endif
+        </div>
+    @endif
+
+    <main id="main-content" tabindex="-1" class="iw-fade-in min-h-[60vh] scroll-mt-20">
         @yield('content')
     </main>
 
-    <footer class="bg-black text-white py-8 border-t border-gray-800 text-sm">
-        @if (store())
-            <div class="max-w-6xl mx-auto text-center">
+    <footer class="mt-16 border-t border-line bg-inverse text-fg-inverse">
+        <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+                <div class="lg:col-span-2">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ asset('images/instanweb-logo.png') }}" alt="" width="360"
+                            height="364" class="iw-brand-mark h-11 w-11" decoding="async">
+                        <x-brand-wordmark variant="inverse" size="lg" />
+                        {{-- @if ($store)
+                            @if ($store->logo)
+                                <img src="{{ asset('storage/' . $store->logo) }}" alt=""
+                                    class="iw-brand-mark h-11 w-11 rounded-xl border border-white/15 object-cover">
+                            @else
+                                <img src="{{ asset('images/instanweb-logo.png') }}" alt="" width="560"
+                                    height="564" class="iw-brand-mark h-11 w-11" decoding="async">
+                            @endif
+                            <div>
+                                <p class="text-lg font-bold">{{ $storeName }}</p>
+                                <p class="mt-1 flex items-center gap-1.5 text-xs text-white/60">
+                                    <span>Ditenagai</span>
+                                    <x-brand-wordmark variant="inverse" size="xs" />
+                                </p>
+                            </div>
+                        @else
+                            <x-brand variant="inverse" size="lg" />
+                        @endif --}}
+                    </div>
 
-                <div class="flex flex-wrap justify-center items-center space-x-6 mb-4">
+                    <p class="mt-4 max-w-md text-sm leading-relaxed text-white/70">
+                        {{ $store->description ?? 'Temukan produk pilihan dari usaha kecil di berbagai daerah Indonesia.' }}
+                    </p>
 
-                    @if (!empty(store()->instagram))
-                        <a href="https://instagram.com/{{ ltrim(store()->instagram, '@') }}" target="_blank"
-                            class="flex items-center space-x-2 hover:text-gray-300 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor"
-                                viewBox="0 0 24 24">
-                                <path
-                                    d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3h10zM12 7a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm4.5-3a1.5 1.5 0 11-3-.001 1.5 1.5 0 013 .001z" />
-                            </svg>
-                            <span>{{ store()->instagram }}</span>
-                        </a>
+                    @if ($store && $store->address)
+                        <p class="mt-3 flex items-start gap-2 text-sm text-white/60">
+                            <x-ui.icon name="home" class="mt-0.5 h-4 w-4" />
+                            <span>{{ $store->address }}</span>
+                        </p>
                     @endif
 
-                    @if (!empty(store()->tiktok))
-                        <a href="https://www.tiktok.com/@{{ ltrim(store()->tiktok, '@') }}" target="_blank"
-                            class="flex items-center space-x-2 hover:text-gray-300 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5"
-                                fill="currentColor">
-                                <path
-                                    d="M16.5 3c.2 1.3 1.1 2.3 2.3 2.6.3.1.6.1.9.2v2.3c-.4 0-.8-.1-1.2-.2-.5-.1-1-.3-1.5-.6v6.6c0 3-2.2 5.7-5.3 6-3.3.4-6.2-2-6.6-5.2-.4-3.3 2-6.2 5.2-6.6.4-.1.9-.1 1.3 0v2.4c-.3-.1-.6-.1-.9 0-1.6.2-2.8 1.7-2.6 3.4.2 1.6 1.7 2.8 3.4 2.6 1.5-.2 2.6-1.5 2.6-3V3h3.4z" />
-                            </svg>
-                            <span>{{ store()->tiktok }}</span>
-                        </a>
-                    @endif
-
-                    @if (!empty(store()->facebook))
-                        <a href="{{ store()->facebook }}" target="_blank"
-                            class="flex items-center space-x-2 hover:text-gray-300 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor"
-                                viewBox="0 0 24 24">
-                                <path
-                                    d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.988H8.078V12h2.36V9.797c0-2.332 1.393-3.622 3.522-3.622.999 0 2.043.177 2.043.177v2.248h-1.151c-1.136 0-1.493.704-1.493 1.425V12h2.543l-.406 2.89h-2.137v6.988C18.343 21.128 22 16.991 22 12z" />
-                            </svg>
-                            <span>{{ store()->facebook }}</span>
-                        </a>
-                    @endif
-
-                    @if (!empty(store()->whatsapp))
-                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', store()->whatsapp) }}" target="_blank"
-                            class="flex items-center space-x-2 hover:text-gray-300 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor"
-                                viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2a10 10 0 00-8.94 14.36L2 22l5.78-1.9A10 10 0 1012 2zm0 18a8 8 0 01-4.28-1.22l-.31-.2-3.43 1.13 1.14-3.27-.21-.32A8 8 0 1112 20zm4.26-5.47c-.23-.12-1.37-.68-1.58-.76s-.37-.12-.53.12-.62.76-.76.92-.28.17-.51.05a6.54 6.54 0 01-1.92-1.19 7.12 7.12 0 01-1.31-1.62c-.14-.23 0-.35.1-.47s.23-.28.35-.42a1.56 1.56 0 00.23-.39.43.43 0 00-.02-.41c-.06-.12-.53-1.27-.73-1.74s-.39-.4-.53-.41h-.45a.86.86 0 00-.62.29A2.62 2.62 0 007 9.83 4.57 4.57 0 007.92 12a10.62 10.62 0 003.61 3.61 7.87 7.87 0 002.47 1c.26.04.5.03.68-.02a2.1 2.1 0 001.37-1.1 1.72 1.72 0 00.12-1c-.05-.09-.21-.15-.41-.25z" />
-                            </svg>
-                            <span>{{ store()->whatsapp }}</span>
+                    @if ($whatsappNumber)
+                        <a href="https://wa.me/{{ $whatsappNumber }}" target="_blank" rel="noopener noreferrer"
+                            class="mt-4 inline-flex min-h-11 items-center gap-2 rounded-field bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/20">
+                            <x-ui.icon name="chat" class="h-4 w-4" /> Chat via WhatsApp
                         </a>
                     @endif
                 </div>
 
-                <div class="flex justify-center space-x-6 mb-2">
-                    @if (!empty(store()->shopee))
-                        <a href="{{ store()->shopee }}" target="_blank"
-                            class="hover:text-gray-300 transition">Shopee</a>
-                    @endif
-                    @if (!empty(store()->tokopedia))
-                        <a href="{{ store()->tokopedia }}" target="_blank"
-                            class="hover:text-gray-300 transition">Tokopedia</a>
-                    @endif
+                <nav aria-label="Navigasi footer">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-white/80">Jelajahi</h2>
+                    <ul class="mt-4 space-y-2 text-sm text-white/70">
+                        <li><a href="{{ route('home') }}" class="transition hover:text-white">Beranda</a></li>
+                        <li><a href="{{ route('products') }}" class="transition hover:text-white">Semua Produk</a>
+                        </li>
+                        <li><a href="{{ route('articles.index') }}" class="transition hover:text-white">Artikel</a>
+                        </li>
+                        <li><a href="{{ route('kontak') }}" class="transition hover:text-white">Kontak</a></li>
+                        <li><a href="{{ route('home') }}" class="transition hover:text-white">Mulai di instanweb</a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div>
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-white/80">Akun</h2>
+                    <ul class="mt-4 space-y-2 text-sm text-white/70">
+                        @auth
+                            <li><a href="{{ route('profil') }}" class="transition hover:text-white">Profil</a></li>
+                            <li><a href="{{ route('orders') }}" class="transition hover:text-white">Pesanan</a></li>
+                        @else
+                            <li><a href="{{ route('login.form') }}" class="transition hover:text-white">Masuk</a></li>
+                            <li><a href="{{ route('register.form') }}" class="transition hover:text-white">Daftar</a>
+                            </li>
+                        @endauth
+                        <li><a href="{{ route('cart') }}" class="transition hover:text-white">Keranjang</a></li>
+                        @if ($store && $store->shopee)
+                            <li><a href="{{ $store->shopee }}" target="_blank" rel="noopener noreferrer"
+                                    class="transition hover:text-white">Toko Shopee</a></li>
+                        @endif
+                        @if ($store && $store->tokopedia)
+                            <li><a href="{{ $store->tokopedia }}" target="_blank" rel="noopener noreferrer"
+                                    class="transition hover:text-white">Toko Tokopedia</a></li>
+                        @endif
+                    </ul>
                 </div>
             </div>
-        @endif
 
-        <div class="text-center mt-4 text-gray-400">
-            &copy; {{ date('Y') }} InstanWeb — Pasar Produk UMKM Indonesia. All rights reserved.
+            <div
+                class="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
+                <p>&copy; {{ date('Y') }}. Seluruh hak cipta dilindungi.</p>
+                <div class="flex flex-wrap items-center gap-4">
+                    @if ($store && $store->instagram)
+                        <a href="https://instagram.com/{{ ltrim($store->instagram, '@') }}" target="_blank"
+                            rel="noopener noreferrer" class="transition hover:text-white">Instagram</a>
+                    @endif
+                    @if ($store && $store->tiktok)
+                        <a href="https://www.tiktok.com/@{{ ltrim($store - > tiktok, '@') }}" target="_blank"
+                            rel="noopener noreferrer" class="transition hover:text-white">TikTok</a>
+                    @endif
+                    @if ($store && $store->facebook)
+                        <a href="{{ $store->facebook }}" target="_blank" rel="noopener noreferrer"
+                            class="transition hover:text-white">Facebook</a>
+                    @endif
+                    <a href="{{ url('/admin') }}" class="transition hover:text-white">Panel Admin</a>
+                </div>
+            </div>
         </div>
     </footer>
 
+    {{-- Dialog konfirmasi global (pengganti confirm() bawaan browser). --}}
+    <dialog data-confirm-dialog aria-labelledby="confirm-title"
+        class="m-auto w-[min(92vw,26rem)] rounded-panel border border-line bg-surface p-6 text-fg shadow-lg backdrop:bg-black/50 backdrop:backdrop-blur-sm">
+        <h2 id="confirm-title" class="text-lg font-semibold text-fg">Konfirmasi</h2>
+        <p data-confirm-message class="mt-2 text-sm leading-relaxed text-fg-secondary">Apakah Anda yakin?</p>
+        <div class="mt-6 flex justify-end gap-3">
+            <button type="button" data-confirm-cancel
+                class="inline-flex min-h-11 items-center justify-center rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">Batal</button>
+            <button type="button" data-confirm-accept
+                class="inline-flex min-h-11 items-center justify-center rounded-field bg-danger-strong px-4 text-sm font-semibold text-white transition hover:opacity-90">Ya,
+                lanjutkan</button>
+        </div>
+    </dialog>
+
+    <p class="sr-only" role="status" aria-live="polite" data-copy-feedback></p>
+
+    @stack('scripts')
 </body>
 
 </html>

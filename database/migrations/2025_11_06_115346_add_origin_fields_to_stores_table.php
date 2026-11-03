@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('stores', function (Blueprint $table) {
-            $table->string('origin_city_id')->nullable()->after('is_production');
-            $table->string('origin_district_id')->nullable()->after('origin_city_id');
+            $table->string('origin_city_id')->nullable();
+            $table->string('origin_district_id')->nullable();
         });
     }
 

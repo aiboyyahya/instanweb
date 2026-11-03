@@ -18,12 +18,11 @@ class IsAdmin
     {
 
         if (!Auth::check()) {
-            return redirect()->route('google.redirect'); 
+            return redirect()->route('login.form');
         }
 
-      
         if (Auth::user()->role !== 'admin') {
-            return redirect()->route('user.homepage');
+            return redirect()->route('home')->with('error', 'Halaman tersebut hanya dapat diakses admin.');
         }
 
    

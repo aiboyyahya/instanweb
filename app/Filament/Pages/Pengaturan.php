@@ -16,11 +16,13 @@ use UnitEnum;
 
 class Pengaturan extends Page
 {
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cog';
-    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
-    protected static ?int $navigationSort = 100;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+    protected static ?int $navigationSort = 10;
     protected static ?string $navigationLabel = 'Pengaturan';
-    protected static ?string $title = 'Pengaturan';
+    protected static ?string $title = 'Pengaturan Toko';
+
+    protected ?string $subheading = 'Kelola identitas toko, kanal kontak, pembayaran, dan asal pengiriman.';
 
     protected string $view = 'filament.pages.pengaturan';
 
@@ -28,7 +30,9 @@ class Pengaturan extends Page
 
     public function mount(): void
     {
-        $store = Store::first();
+        $user = auth()->user();
+        $store = $user?->store ?: Store::first();
+
         if ($store) {
             $this->form->fill($store->toArray());
         }
@@ -38,99 +42,109 @@ class Pengaturan extends Page
     {
         return $schema
             ->schema([
-          
-                Section::make('Informasi Toko')
+                Section::make('Identitas Toko')
+                    ->description('Informasi ini tampil pada storefront, header, dan footer toko.')
+                    ->icon('heroicon-o-building-storefront')
+                    ->columns(2)
                     ->schema([
                         TextInput::make('store_name')
                             ->label('Nama Toko')
+                            ->placeholder('Contoh: Toko Kopi Nusantara')
                             ->required()
                             ->maxLength(255)
-                            ->columnSpan('full'),
+                            ->columnSpanFull(),
 
                         TextInput::make('address')
                             ->label('Alamat')
+                            ->placeholder('Alamat lengkap toko')
                             ->maxLength(255)
-                            ->columnSpan('full'),
+                            ->columnSpanFull(),
 
                         FileUpload::make('logo')
-                            ->label('Logo')
+                            ->label('Logo Toko')
+                            ->helperText('Gunakan logo persegi atau bulat dengan latar transparan bila tersedia.')
                             ->disk('public')
                             ->image()
-                            ->directory('logos')
                             ->imageEditor()
-                            ->columnSpan('full'),
+                            ->directory('logos')
+                            ->columnSpanFull(),
 
                         Textarea::make('description')
-                            ->label('Deskripsi')
+                            ->label('Deskripsi Toko')
+                            ->placeholder('Ceritakan singkat produk dan nilai toko Anda.')
                             ->rows(4)
-                            ->columnSpan('full'),
-                    ])
-                    ->columns(2),
+                            ->columnSpanFull(),
+                    ]),
 
-              
-                Section::make()
+                Section::make('Kontak & Sosial Media')
+                    ->description('Hubungkan pelanggan dengan kanal komunikasi dan marketplace toko.')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->columns(2)
                     ->schema([
-                        
-                        Section::make('Sosial Media')
-                            ->schema([
-                                TextInput::make('instagram')
-                                    ->label('Instagram')
-                                    ->prefixIcon('heroicon-o-link'),
-                                TextInput::make('tiktok')
-                                    ->label('Tiktok')
-                                    ->prefixIcon('heroicon-o-link'),
-                                TextInput::make('whatsapp')
-                                    ->label('WhatsApp')
-                                    ->prefixIcon('heroicon-o-phone'),
-                                TextInput::make('facebook')
-                                    ->label('Facebook')
-                                    ->prefixIcon('heroicon-o-link'),
-                            ])
-                            ->columns(1),
+                        TextInput::make('whatsapp')
+                            ->label('WhatsApp')
+                            ->placeholder('08xxxxxxxxxx')
+                            ->prefixIcon('heroicon-o-phone'),
 
-                       
-                        Section::make('Marketplace')
-                            ->schema([
-                                TextInput::make('shopee')->label('Shopee'),
-                                TextInput::make('tokopedia')->label('Tokopedia'),
-                            ])
-                            ->columns(1),
-                    ])
-                    ->columns(2), 
+                        TextInput::make('instagram')
+                            ->label('Instagram')
+                            ->placeholder('@namatoko')
+                            ->prefixIcon('heroicon-o-link'),
 
-              
-                Section::make('Midtrans Payment Gateway')
-                    ->schema([
-                        TextInput::make('midtrans_client_key')
-                            ->label('Midtrans Client Key')
-                            ->required()
-                            ->columnSpan('full'),
+                        TextInput::make('tiktok')
+                            ->label('TikTok')
+                            ->placeholder('@namatoko')
+                            ->prefixIcon('heroicon-o-link'),
 
-                        TextInput::make('midtrans_server_key')
-                            ->label('Midtrans Server Key')
-                            ->required()
-                            ->columnSpan('full'),
+                        TextInput::make('facebook')
+                            ->label('Facebook')
+                            ->prefixIcon('heroicon-o-link'),
 
-                        Toggle::make('is_production')
-                            ->label('Production Mode')
-                            ->helperText('Aktifkan untuk mode produksi, nonaktifkan untuk sandbox.')
-                            ->columnSpan('full'),
-                    ])
-                    ->columns(1),
+                        TextInput::make('shopee')
+                            ->label('Toko Shopee')
+                            ->prefixIcon('heroicon-o-shopping-bag'),
 
-                Section::make('Lokasi Asal Pengiriman')
+                        TextInput::make('tokopedia')
+                            ->label('Toko Tokopedia')
+                            ->prefixIcon('heroicon-o-shopping-bag'),
+                    ]),
+
+                // Section::make('Pembayaran Online')
+                //     ->description('Kredensial Midtrans digunakan untuk memproses pembayaran pelanggan.')
+                //     ->icon('heroicon-o-credit-card')
+                //     ->columns(1)
+                //     ->schema([
+                //         TextInput::make('midtrans_client_key')
+                //             ->label('Midtrans Client Key')
+                //             ->required()
+                //             ->columnSpanFull(),
+
+                //         TextInput::make('midtrans_server_key')
+                //             ->label('Midtrans Server Key')
+                //             ->required()
+                //             ->columnSpanFull(),
+
+                //         Toggle::make('is_production')
+                //             ->label('Mode Produksi')
+                //             ->helperText('Aktifkan untuk transaksi nyata. Nonaktifkan untuk mode sandbox.')
+                //             ->columnSpanFull(),
+                //     ]),
+
+                Section::make('Asal Pengiriman')
+                    ->description('Tentukan lokasi asal agar perhitungan ongkir sesuai.')
+                    ->icon('heroicon-o-map-pin')
+                    ->columns(2)
                     ->schema([
                         TextInput::make('origin_city_id')
                             ->label('Origin City ID')
-                            ->helperText('ID kota asal pengiriman dari RajaOngkir')
-                            ->columnSpan('full'),
+                            ->helperText('ID kota asal pengiriman dari RajaOngkir.')
+                            ->columnSpanFull(),
 
                         TextInput::make('origin_district_id')
                             ->label('Origin District ID')
-                            ->helperText('ID kecamatan asal pengiriman dari RajaOngkir (opsional, lebih spesifik)')
-                            ->columnSpan('full'),
-                    ])
-                    ->columns(1),
+                            ->helperText('ID kecamatan asal pengiriman dari RajaOngkir (opsional, lebih spesifik).')
+                            ->columnSpanFull(),
+                    ]),
             ])
             ->columns(1)
             ->statePath('data');
@@ -139,8 +153,14 @@ class Pengaturan extends Page
     public function save()
     {
         $data = $this->form->getState();
+        $user = auth()->user();
 
-        $store = Store::first() ?? new Store();
+        $store = $user?->store ?: Store::first() ?: new Store();
+
+        if (! $store->user_id && $user) {
+            $store->user_id = $user->id;
+        }
+
         $store->fill($data);
         $store->save();
 

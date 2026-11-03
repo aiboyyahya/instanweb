@@ -6,6 +6,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ArticleForm
@@ -14,34 +15,53 @@ class ArticleForm
     {
         return $schema
             ->components([
-                TextInput::make('title')
-                    ->label('Judul')
-                    ->required(),
+                Section::make('Konten Artikel')
+                    ->description('Tulis informasi, tips, atau cerita yang relevan untuk pelanggan.')
+                    ->icon('heroicon-o-document-text')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('title')
+                            ->label('Judul')
+                            ->placeholder('Contoh: Tips Merawat Produk Kulit')
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
 
-                TextInput::make('slug')
-                    ->unique(ignoreRecord: true)
-                    ->label('Slug'),
+                        TextInput::make('slug')
+                            ->label('Slug')
+                            ->placeholder('tips-merawat-produk-kulit')
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->helperText('Dibuat otomatis dari judul jika dikosongkan.'),
 
-                RichEditor::make('description')
-                    ->label('Deskripsi')
-                    ->required()
-                    ->columnSpanFull(),
+                        RichEditor::make('description')
+                            ->label('Isi Artikel')
+                            ->required()
+                            ->columnSpanFull(),
+                    ]),
 
-                FileUpload::make('image')
-                    ->label('Gambar Utama')
-                    ->disk('public')
-                    ->columnSpanFull()
-                    ->required(),
+                Section::make('Media Artikel')
+                    ->description('Gunakan gambar landscape berkualitas baik untuk tampilan artikel dan daftar artikel.')
+                    ->icon('heroicon-o-photo')
+                    ->columns(2)
+                    ->schema([
+                        FileUpload::make('image')
+                            ->label('Gambar Utama')
+                            ->image()
+                            ->imageEditor()
+                            ->disk('public')
+                            ->required(),
 
-                FileUpload::make('thumbnail')
-                    ->label('Thumbnail')
-                    ->disk('public')
-                    ->columnSpanFull()
-                    ->required(),
-                    
+                        FileUpload::make('thumbnail')
+                            ->label('Thumbnail')
+                            ->image()
+                            ->imageEditor()
+                            ->disk('public')
+                            ->required(),
+                    ]),
+
                 Hidden::make('user_id')
-                    ->label('Penulis')
-                    ->default(fn() => auth()->id()),
+                    ->default(fn () => auth()->id()),
             ]);
     }
 }

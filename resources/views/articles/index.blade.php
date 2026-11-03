@@ -1,49 +1,72 @@
 @extends('layouts.app')
 
+@section('title', 'Artikel | ' . (store()->store_name ?? 'instanweb'))
+
 @section('content')
-    <div class="container mx-auto px-4 py-10 text-center">
-        <h1 class="text-4xl font-extrabold mb-4 text-gray-800 tracking-wide">Artikel</h1>
-        <p class="text-gray-600 text-base mb-4">
-            Temukan artikel informatif dan terbaru yang telah kami sajikan untuk menambah wawasan Anda.
-        </p>
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <x-ui.page-header eyebrow="Wawasan" title="Artikel"
+            description="Temukan artikel informatif dan terbaru yang telah kami sajikan untuk menambah wawasan Anda.">
+            <x-ui.button :href="route('products')" variant="outline">
+                <x-ui.icon name="shopping-bag" class="h-4 w-4" /> Lihat Produk
+            </x-ui.button>
+        </x-ui.page-header>
 
         @if ($articles->isEmpty())
-            <p class="text-gray-500 italic">No articles available.</p>
+            <x-ui.empty-state class="mt-8" title="Belum ada artikel" icon="sparkles"
+                description="Artikel akan tampil di sini setelah redaksi menambahkannya.">
+                <x-ui.button :href="route('home')" variant="outline">Kembali ke Beranda</x-ui.button>
+            </x-ui.empty-state>
         @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 border-t border-gray-400 pt-8">
+            <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($articles as $article)
-                    <div
-                        class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all border border-gray-100 overflow-hidden">
+                    <article
+                        class="group flex flex-col overflow-hidden rounded-panel border border-line bg-surface shadow-sm transition hover:shadow-md">
+                        <a href="{{ route('articles.show', $article->slug) }}" class="block overflow-hidden bg-surface-soft"
+                            tabindex="-1" aria-hidden="true">
+                            @if ($article->image)
+                                <img src="{{ asset('storage/' . $article->image) }}" alt=""
+                                    class="h-48 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                                    loading="lazy">
+                            @else
+                                <span class="flex h-48 w-full items-center justify-center text-fg-muted">
+                                    <x-ui.icon name="sparkles" class="h-10 w-10" />
+                                </span>
+                            @endif
+                        </a>
 
-                        @if ($article->image)
-                            <img src="{{ asset('storage/' . $article->image) }}" alt="{{ $article->title }}"
-                                class="w-full h-52 object-cover">
-                        @endif
+                        <div class="flex flex-1 flex-col p-5 sm:p-6">
+                            <p class="text-xs font-medium text-fg-muted">
+                                <time datetime="{{ $article->created_at->toIso8601String() }}">
+                                    {{ $article->created_at->translatedFormat('d M Y') }}
+                                </time>
+                                <span aria-hidden="true">·</span>
+                                {{ $article->user?->name ?? 'Redaksi' }}
+                            </p>
 
-                        <div class="p-8">
-                            <div class="mb-3">
-                                <p class="text-2xl font-extrabold text-gray-700 text-left mb-2">
-                                    {{ $article->user->name }}
-                                </p>
-                                <p class="text-xs text-gray-500 text-left">
-                                    {{ $article->created_at->format('d M Y') }}
-                                </p>
-                            </div>
-
-                            <h2 class="text-xl font-semibold text-gray-900 leading-tight mb-3 text-right">
-
+                            <h2 class="mt-2 text-lg font-bold leading-snug text-fg">
                                 <a href="{{ route('articles.show', $article->slug) }}"
-                                    class="inline-block px-4 py-2 text-sm border border-black text-gray-700 rounded-lg font-semibold hover:bg-green-50 transition">
-                                    Baca Selengkapnya
+                                    class="rounded transition hover:text-info">
+                                    {{ $article->title }}
                                 </a>
+                            </h2>
+
+                            @if ($article->description)
+                                <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-fg-secondary">
+                                    {{ \Illuminate\Support\Str::limit(strip_tags($article->description), 140) }}
+                                </p>
+                            @endif
+
+                            <a href="{{ route('articles.show', $article->slug) }}"
+                                class="mt-4 inline-flex min-h-11 items-center gap-1.5 self-start text-sm font-semibold text-info">
+                                Baca selengkapnya
+                                <x-ui.icon name="arrow-right" class="h-4 w-4" />
+                            </a>
                         </div>
-                    </div>
+                    </article>
                 @endforeach
             </div>
 
-            <div class="mt-10">
-                {{ $articles->links() }}
-            </div>
+            <x-ui.pagination :paginator="$articles" class="mt-8" />
         @endif
     </div>
 @endsection

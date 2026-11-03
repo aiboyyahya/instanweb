@@ -1,0 +1,608 @@
+# UI/UX DESIGN BRIEF
+## InstanWeb — Marketplace Produk UMKM
+
+> **Dokumen ini adalah prompt & spesifikasi untuk merancang UI/UX InstanWeb.**
+> Sumber kebenaran teknis: `analisisweb.md` (di repositori yang sama). Jika ada konflik, dokumen ini menang untuk keputusan desain.
+> **Versi:** 1.0 · **Tanggal:** 1 November 2026 · **Status:** siap dipakai untuk AI desain / desainer manusia
+
+---
+
+## 0. PROMPT SIAP PAKAI (copy mulai dari sini)
+
+```text
+Kamu adalah Senior Product Designer yang merancang UI/UX untuk "InstanWeb",
+marketplace produk UMKM Indonesia yang saat ini beroperasi sebagai SATU TOKO
+(bukan multi-penjual). Pengguna: pengunjung, customer terdaftar, dan admin toko.
+
+TUGAS
+Susun rencana UI/UX lengkap untuk 27 layar (16 customer + 11 admin) yang
+terdaftar di dokumen ini, mengikuti inventaris layar, komponen, dan design
+token yang sudah ditetapkan.
+
+ATURAN WAJIB
+1. Jangan merancang fitur yang tidak ada di daftar (lihat §9). Dilarang
+   menambahkan wishlist, kupon, varian produk, multi-penjual, chat, COD, dsb.
+2. Harga yang ditampilkan adalah HARGA JUAL. Jangan menampilkan harga beli.
+3. Checkout hanya untuk pengguna login. Tidak ada guest checkout.
+4. Gunakan Bahasa Indonesia untuk seluruh copy, format Rupiah "Rp 1.234.000".
+5. Setiap layar wajib mendefinisikan 4 state: default, loading, kosong, error.
+6. Rancang mobile-first (360px) lalu perluas ke 768px dan 1280px.
+
+FORMAT OUTPUT (berurutan)
+1) 3-5 design principle  2) sitemap + model navigasi  3) 3 user flow
+4) wireframe deskriptif per layar (per ID, bukan gambar)  5) spesifikasi
+komponen  6) design token (JSON)  7) copy deck  8) checklist aksesibilitas
+& responsif  9) handoff mapping ke file implementasi  10) open questions
+```
+
+---
+
+## 1. KONTEKS PRODUK
+
+| Aspek              | Fakta                                                                                                                                                                                                                                                |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nama produk        | InstanWeb — "Pasar Produk UMKM Indonesia"                                                                                                                                                                                                            |
+| Model bisnis       | **Single-store** (satu toko, satu admin). satu toko utnuk dikunjungi banyak calon customer. setiap link meruju ke satu penjual saja untuk mengurangi daya saing dan mendorong umkm untuk memiliki web sendiri tanpa harus membuat web secara mandiri |
+| Kategori transaksi | Produk fisik (dikirim via kurir)                                                                                                                                                                                                                     |
+| Pembayaran         | Midtrans Snap: QRIS, Virtual Account, E-Wallet                                                                                                                                                                                                       |
+| Pengiriman         | RajaOngkir (Komerce): provinsi → kota → kecamatan, 17 kurir (JNE, J&T, SiCepat, POS, TIKI, dst.)                                                                                                                                                     |
+| Notifikasi         | WhatsApp otomatis (Fonnte) setelah pesanan dibuat & setelah pembayaran sukses                                                                                                                                                                        |
+| Login              | Email + password, atau Google OAuth                                                                                                                                                                                                                  |
+| Keranjang          | Berbasis **session** (tidak tersimpan permanen, tidak lintas perangkat)                                                                                                                                                                              |
+| Konten             | Katalog produk, artikel/blog, halaman kontak, profil toko                                                                                                                                                                                            |
+| Bahasa             | Indonesia                                                                                                                                                                                                                                            |
+| Platform           | Web responsif (desktop + mobile). Tidak ada aplikasi native                                                                                                                                                                                          |
+
+**Tujuan bisnis yang harus didukung desain:** mempercepat pengunjung menemukan produk, menaikkan konversi checkout, dan memberi admin alur kerja pesanan yang cepat (ubah status, kirim), emengurangi daya saing antar penjual, mendorong penjual umkm skala menengah kecil untuk mempunyai website mandiri tanpa develop web secara mandiri.
+
+---
+
+## 2. PENGGUNA & JOBS-TO-BE-DONE
+
+| Persona        | Karakteristik                             | JTBD utama                                                   | Hambatan yang harus diatasi desain                                                                               |
+| -------------- | ----------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **Guest**      | Belum login, datang dari pencarian/sosmed | "Saya ingin melihat produk & harganya"                       | Harus bisa menjelajah tanpa dipaksa login; login baru diminta saat menambah ke keranjang atau melakukan checkout |
+| **Customer**   | Punya akun, pernah/akan membeli           | "Saya ingin membeli, membayar, dan tahu pesanan saya sampai" | Status pesanan harus jelas, nomor resi mudah ditemukan, pembayaran tidak membingungkan                           |
+| **Admin toko** | Pemilik/operator, mengakses `/admin`      | "Saya ingin mengelola produk & memproses pesanan"            | Tabel padat tapi terbaca; perubahan status pesanan harus ≤ 2 klik                                                |
+
+---
+
+## 3. RUANG LINGKUP & PRIORITAS
+
+**27 layar**: 16 customer (C-01…C-16) + 11 admin (A-01…A-11).
+
+| Prioritas | Arti | Layar |
+|---|---|---|
+| **P0** | Alur transaksi inti — wajib ada | C-01, C-02, C-03, C-04, C-05, C-06, C-07, C-11, C-12, A-01, A-07, A-08 |
+| **P1** | Penting untuk retensi & operasional | C-08, C-09, C-10, C-16, A-02, A-03, A-04, A-05, A-06, A-11 |
+| **P2** | Pendukung & konten | C-13, C-14, C-15, A-09, A-10 |
+
+> Catatan: Login (C-11) dan Registrasi (C-12) dihitung terpisah, dan layar Kirim Ulasan (C-16) dihitung tersendiri — sehingga total menjadi 27 layar.
+
+---
+
+## 4. ALUR & NAVIGASI
+
+### 4.1 Alur A — Belanja & Bayar (happy path)
+
+1. C-01 Beranda → pilih produk (atau C-02 lewat pencarian/filter)
+2. C-03 Detail Produk → atur jumlah → "Tambah ke Keranjang" atau "Beli Sekarang"
+3. Jika belum login → C-11 Login / C-12 Registrasi → kembali ke tujuan semula
+4. C-04 Keranjang → cek item, ubah jumlah, hapus
+5. C-05 Checkout → isi penerima, telepon, alamat; pilih provinsi → kota → kecamatan; pilih kurir → layanan; ongkir & total terhitung otomatis → "Konfirmasi Pesanan"
+6. C-06 Pembayaran → modal Midtrans Snap muncul otomatis; fallback tombol "Buka Pembayaran Manual"
+7. C-07 Pesanan Berhasil → ringkasan + form ulasan (muncul aktif setelah status selesai)
+
+### 4.2 Alur B — Pantau & Selesaikan Pesanan
+
+1. C-08 Riwayat Pesanan → tab status (Semua, Belum Bayar, Dikemas, Dikirim, Selesai)
+2. C-09 Detail Pesanan → timeline 4 langkah, info kirim, nomor resi, tombol "Bayar Sekarang" bila belum dibayar
+3. Jika status masih "Belum Bayar" → C-09 tombol "Batal" (konfirmasi modal) → stok dikembalikan
+4. Jika status "Selesai" → C-16 Kirim Ulasan (rating, komentar, foto opsional)
+
+### 4.3 Alur C — Operasional Admin
+
+1. A-00 Login Admin (redirect ke Google) → A-01 Dashboard
+2. A-02 Daftar Produk → A-03 Form Produk / A-04 Detail + Galeri
+3. A-05/A-06 Kategori
+4. A-07 Daftar Transaksi → A-08 Form Transaksi (ubah status; resi terisi otomatis saat status "Dikirim")
+5. A-09/A-10 Artikel, A-11 Pengaturan Toko (termasuk kredensial Midtrans & lokasi asal kirim)
+
+### 4.4 Model Navigasi
+
+**Customer — desktop:** Logo · Beranda · Produk · Artikel · Kontak · [Pencarian] · Profil▾ / Login · Keranjang (badge jumlah produk).
+**Customer — mobile:** Logo · Keranjang · Hamburger → daftar vertikal + pencarian.
+**Dropdown profil:** Profil · Pesanan · Keluar.
+**Admin:** sidebar Filament dengan grup: **Produk** (Kategori, Produk) · **Manajemen Order** (Transaksi) · **Manajemen Konten** (Artikel) · **Pengaturan**.
+
+**Aturan navigasi kritis:**
+- Pencarian harus tersedia di mobile (saat ini hanya desktop) — wajib dirancang.
+- Item menu aktif harus punya indikator jelas (bukan hanya warna).
+- Keranjang menampilkan badge jumlah **baris produk** (bukan total kuantitas).
+
+---
+
+## 5. INVENTARIS LAYAR
+
+### 5.1 Ringkasan
+
+| ID | Layar | Rute | Sumber data | Prioritas |
+|---|---|---|---|---|
+| C-01 | Beranda | `/` | 8 produk terbaru + rating agregat + info toko | P0 |
+| C-02 | Katalog Produk | `/produk` | Produk terpaginasikan (12/hal), kategori, rating | P0 |
+| C-03 | Detail Produk | `/product/{id}` | Produk, galeri, stok, rating, daftar ulasan | P0 |
+| C-04 | Keranjang | `/cart` | Session cart (nama, harga, qty, gambar) | P0 |
+| C-05 | Checkout | `/checkout` | Cart/direct item, berat total, ongkir | P0 |
+| C-06 | Pembayaran | `/checkout/payment/{id}` | Transaksi, item, alamat, ongkir, status bayar | P0 |
+| C-07 | Pesanan Berhasil | `/checkout/success/{id}` | Transaksi + item + rating user | P0 |
+| C-08 | Riwayat Pesanan | `/pesanan` | Semua transaksi milik user | P1 |
+| C-09 | Detail Pesanan | `/pesanan/{id}` | Transaksi + item + status + resi | P1 |
+| C-10 | Profil | `/profile` | User (nama, email, telepon, alamat, foto) | P1 |
+| C-11 | Login | `/login` | — | P0 |
+| C-12 | Registrasi | `/register` | — | P0 |
+| C-13 | Artikel | `/artikel` | Artikel terpaginasikan + penulis | P2 |
+| C-14 | Detail Artikel | `/artikel/{slug}` | Artikel + penulis + konten + share | P2 |
+| C-15 | Kontak | `/kontak` | Data toko (nama, alamat, deskripsi, sosmed, marketplace) | P2 |
+| C-16 | Kirim Ulasan | `/ratings/create` | Produk + transaksi terkait | P1 |
+| A-00 | Login Admin | `/admin` | Redirect ke Google OAuth | P1 |
+| A-01 | Dashboard | `/admin` | Statistik produk/kategori/pesanan, grafik 7 hari, 10 pesanan terbaru | P0 |
+| A-02 | Daftar Produk | `/admin/products` | Produk: nama, kategori, harga beli, harga jual, stok, status, gambar | P1 |
+| A-03 | Form Produk | `/admin/products/create`, `/{id}/edit` | Field produk + upload gambar | P1 |
+| A-04 | Detail Produk + Galeri | `/admin/products/{id}` | Field produk + relation manager gambar | P1 |
+| A-05 | Daftar Kategori | `/admin/categories` | id, nama, slug, ikon, tanggal | P1 |
+| A-06 | Form Kategori | `/admin/categories/create`, `/{id}/edit` | nama, slug, ikon | P1 |
+| A-07 | Daftar Transaksi | `/admin/transactions` | Order, customer, wilayah, status, pembayaran, kurir, ongkir, total, resi | P0 |
+| A-08 | Form Transaksi | `/admin/transactions/{id}/edit` | Detail transaksi + ubah status + kurir + resi | P0 |
+| A-09 | Daftar Artikel | `/admin/articles` | Judul, penulis, gambar, thumbnail, kategori, tanggal | P2 |
+| A-10 | Form Artikel | `/admin/articles/create`, `/{id}/edit` | Judul, slug, rich text, gambar, thumbnail | P2 |
+| A-11 | Pengaturan Toko | `/admin/pengaturan` | Info toko, sosmed, marketplace, Midtrans, origin kirim | P1 |
+
+### 5.2 Detail per Layar
+
+> Format tiap blok: **Tujuan · Data · Komponen · Aksi · State · Responsif**.
+
+---
+
+#### C-01 Beranda — P0
+
+- **Tujuan:** memperkenalkan brand dan mengarahkan ke produk.
+- **Data:** hero 3 slide (gambar + headline + subteks), 8 produk terbaru (gambar, nama, rating bintang + jumlah ulasan, deskripsi 2 baris, **harga jual**, tombol tambah ke keranjang).
+- **Komponen:** `hero-carousel`, `product-card`, `rating-stars`, `section-heading`, `empty-state`.
+- **Aksi:** geser slide (auto 4 detik, panah, indikator), buka detail produk, tambah ke keranjang.
+- **State:** *default* (grid 8 produk) · *loading* (skeleton 8 kartu) · *kosong* ("Belum ada produk tersedia" + CTA ke admin? tidak — cukup teks + ilustrasi) · *error* (pesan retry).
+- **Responsif:** grid 2 → 3 (768) → 4 (1280); hero tinggi 256 → 320 → 384 px; carousel harus bisa di-swipe di mobile.
+
+#### C-02 Katalog Produk — P0
+
+- **Tujuan:** menemukan produk lewat pencarian & filter kategori.
+- **Data:** total hasil, produk per halaman (12), kategori (satu level), rating.
+- **Komponen:** `search-input` (ikon + tombol hapus), `category-select`, `product-grid`, `pagination`, `sort-control` (disarankan: terbaru/harga).
+- **Aksi:** ketik untuk mencari (debounce 300 ms), pilih kategori, ganti halaman, tambah ke keranjang, buka detail.
+- **State:** *default* · *loading* (skeleton grid, bukan layar kosong) · *kosong* ("Tidak ada produk yang cocok" + tombol reset filter) · *error* (retry).
+- **Responsif:** filter menjadi 1 kolom / bottom-sheet di mobile; grid 2 → 3 → 4.
+
+#### C-03 Detail Produk — P0
+
+- **Tujuan:** meyakinkan pembeli dan memulai transaksi.
+- **Data:** gambar utama + galeri thumbnail, nama, deskripsi, rating rata-rata + jumlah ulasan, stok tersisa, **harga jual**, info pengembalian, daftar ulasan (avatar, nama, bintang, komentar, foto).
+- **Komponen:** `product-gallery`, `qty-stepper`, `rating-stars`, `review-list`, `sticky-buy-panel`, `breadcrumb`.
+- **Aksi:** ganti gambar utama, +/- jumlah (maks = stok), "Beli Sekarang", "Tambah ke Keranjang".
+- **State:** *default* · *loading* · *stok habis* (tombol nonaktif + label "Stok habis") · *tanpa ulasan* ("Belum ada ulasan") · *error*.
+- **Responsif:** 1 kolom (mobile, panel beli menjadi sticky bottom bar) → 2 kolom (desktop, panel kanan sticky).
+
+#### C-04 Keranjang — P0
+
+- **Tujuan:** meninjau item sebelum checkout.
+- **Data:** per item (gambar, nama, harga jual, qty, subtotal), ringkasan (jumlah produk, total).
+- **Komponen:** `cart-item`, `qty-stepper`, `summary-card`, `empty-state`, `alert`.
+- **Aksi:** ubah qty (langsung tersimpan), hapus item (dengan undo/konfirmasi), lanjut belanja, checkout.
+- **State:** *default* · *kosong* (ilustrasi + "Keranjang Kosong" + CTA belanja) · *error* (item tidak tersedia karena stok habis).
+- **Responsif:** 1 kolom + ringkasan di bawah (mobile) → 2 kolom dengan sidebar sticky (desktop).
+
+#### C-05 Checkout — P0
+
+- **Tujuan:** melengkapi data pengiriman dan mengonfirmasi pesanan.
+- **Data:** penerima, telepon, alamat lengkap, provinsi/kota/kecamatan (cascading), kode pos, kurir + layanan, ongkir, catatan, metode pembayaran (Midtrans), ringkasan item + subtotal + ongkir + total.
+- **Komponen:** `form-field`, `cascading-region-select`, `courier-select`, `service-select`, `order-summary`, `sticky-footer-cta`, `inline-error`.
+- **Aksi:** pilih wilayah bertingkat, hitung ongkir, ubah total otomatis, konfirmasi pesanan.
+- **State:** *loading provinsi* · *gagal memuat wilayah* (pesan + tombol coba lagi per field) · *layanan tidak tersedia* · *validasi gagal* (error di field terkait) · *submitting* (tombol disabled + spinner).
+- **Responsif:** 1 kolom dengan ringkasan collapsible di mobile; 2 kolom di desktop.
+
+#### C-06 Pembayaran — P0
+
+- **Tujuan:** menyelesaikan pembayaran tanpa kebingungan.
+- **Data:** kode pesanan, item, alamat, kurir & layanan, ongkir, total, status pembayaran.
+- **Komponen:** `order-summary`, `status-badge`, `payment-state-panel` (spinner → siap), `button` (buka pembayaran manual).
+- **Aksi:** modal pembayaran muncul otomatis; buka manual; kembali ke pesanan.
+- **State:** *memproses* (spinner + "Menyiapkan pembayaran Midtrans") · *siap* (tombol bayar) · *gagal membuat token* (pesan + retry) · *kadaluwarsa*.
+- **Responsif:** 1 kolom; modal Snap mengikuti layar penuh di mobile.
+
+#### C-07 Pesanan Berhasil — P0
+
+- **Tujuan:** mengonfirmasi pesanan diterima dan memicu ulasan.
+- **Data:** kode pesanan, status pesanan, status pembayaran, total, tanggal, alamat, catatan, daftar item.
+- **Komponen:** `success-header`, `summary-card`, `item-row`, `inline-review-form` (bintang + komentar + foto), `button`.
+- **Aksi:** kirim ulasan per item; ke beranda; ke daftar pesanan.
+- **State:** *default* · *sudah diulas* (tampilkan rating tersimpan, form disembunyikan) · *belum bisa diulas* (status belum selesai → tampilkan penjelasan).
+- **Responsif:** 1 kolom.
+
+#### C-08 Riwayat Pesanan — P1
+
+- **Tujuan:** memantau semua pesanan.
+- **Data:** per pesanan — tanggal, badge status, resi (jika dikirim), item, total.
+- **Komponen:** `tabs-status`, `order-card`, `status-badge`, `empty-state`.
+- **Aksi:** filter tab, buka detail, batalkan (khusus "Belum Bayar", dengan modal konfirmasi), kirim ulasan (jika selesai).
+- **State:** *default* · *kosong per tab* (pesan berbeda tiap tab) · *loading skeleton* · *error*.
+- **Responsif:** kartu bertumpuk; tab dapat di-scroll horizontal.
+
+#### C-09 Detail Pesanan — P1
+
+- **Tujuan:** memberi kepastian status dan informasi pengiriman.
+- **Data:** item, kode pesanan, tanggal pesan, tanggal kirim, jumlah barang, status, resi, alamat, provinsi/kota/kecamatan, kurir, layanan, ongkir, timeline 4 langkah (Dibuat → Dikemas → Dikirim → Selesai), ringkasan biaya.
+- **Komponen:** `timeline`, `info-grid`, `summary-card`, `status-badge`.
+- **Aksi:** bayar sekarang (jika belum dibayar), kembali ke daftar.
+- **State:** *pending* (timeline di langkah 1, tombol bayar aktif) · *dikirim* (resi tampil) · *dibatalkan* (timeline diganti banner pembatalan) · *error*.
+- **Responsif:** 2 kolom → 1 kolom; timeline horizontal di desktop, vertikal di mobile.
+
+#### C-10 Profil — P1
+
+- **Tujuan:** memperbarui data akun.
+- **Data:** foto profil, nama, email, nomor telepon, alamat, ubah password.
+- **Komponen:** `avatar-uploader` (preview langsung), `form-field`, `password-field` + kekuatan password, `button`.
+- **Aksi:** unggah foto (maks 10 MB, jpg/png/jpeg), simpan perubahan.
+- **State:** *default* · *uploading* · *sukses* (toast) · *error per field*.
+- **Responsif:** 1 kolom; form 2 kolom di desktop.
+
+#### C-11 Login — P0
+
+- **Tujuan:** masuk cepat.
+- **Data:** email, password, "Ingat saya", tombol "Masuk dengan Google".
+- **Komponen:** `auth-card`, `form-field`, `button-primary`, `button-oauth`, `divider`.
+- **Aksi:** submit, login Google.
+- **State:** *default* · *error kredensial* ("Email atau password salah") · *submitting*.
+- **Responsif:** kartu max-width 448 px, terpusat.
+
+#### C-12 Registrasi — P0
+
+- **Tujuan:** membuat akun.
+- **Data:** nama, email, password, konfirmasi password.
+- **Komponen:** sama dengan C-11 + indikator kekuatan password.
+- **State:** *default* · *error validasi per field* (email sudah dipakai, password < 8 karakter, konfirmasi tidak sama) · *submitting*.
+- **Responsif:** kartu max-width 448 px.
+
+#### C-13 Artikel — P2
+
+- **Tujuan:** membaca konten edukatif.
+- **Data:** kartu artikel (gambar, penulis, tanggal, judul), pagination.
+- **Komponen:** `article-card`, `pagination`, `empty-state`.
+- **State:** *default* · *kosong* (copy Indonesia) · *loading* · *error*.
+- **Responsif:** 1 → 2 → 3 kolom.
+
+#### C-14 Detail Artikel — P2
+
+- **Tujuan:** membaca artikel dan membagikannya.
+- **Data:** judul, penulis + avatar, tanggal, gambar utama, thumbnail, konten rich text, panel bagikan (WhatsApp, Facebook, X, salin tautan).
+- **Komponen:** `article-hero`, `prose`, `share-panel`, `breadcrumb`.
+- **Aksi:** bagikan, salin tautan (dengan feedback "Tautan disalin").
+- **State:** *default* · *artikel tidak ditemukan* (404 kustom).
+- **Responsif:** 1 kolom; share panel menjadi bar bawah di mobile.
+
+#### C-15 Kontak — P2
+
+- **Tujuan:** menghubungi toko.
+- **Data:** logo, nama toko, alamat, deskripsi, WhatsApp, Instagram, TikTok, Facebook, Shopee, Tokopedia.
+- **Komponen:** `info-card`, `social-link`, `marketplace-link`.
+- **State:** *default* · *data toko kosong* ("Informasi toko belum tersedia").
+- **Responsif:** grid 1 → 2 kolom; ikon tetap mudah ditekan (min 44×44 px).
+
+#### C-16 Kirim Ulasan — P1
+
+- **Tujuan:** mengumpulkan ulasan produk.
+- **Data:** ringkasan produk (gambar, nama, harga jual), rating 1–5 bintang, komentar (opsional, maks 1.000 karakter), foto (opsional, maks 2 MB).
+- **Komponen:** `star-rating-input`, `textarea`, `image-uploader` + preview, `button`.
+- **Aksi:** pilih bintang (hover & tap), unggah foto, kirim.
+- **State:** *default* · *belum memilih bintang* (tombol disabled + hint) · *uploading* · *sukses* (toast, lalu redirect) · *error* ("Anda sudah memberi ulasan untuk produk ini").
+- **Responsif:** 1 kolom, max-width 768 px.
+
+---
+
+#### A-00 Login Admin — P1
+
+- **Tujuan:** masuk ke panel admin.
+- **Catatan:** tidak ada form login Filament; tombol login langsung mengarah ke OAuth Google.
+- **State:** *redirect* (tampilkan layar transisi singkat) · *ditolak* (bukan admin → pesan "Akun ini tidak memiliki akses admin" + tautan ke toko).
+
+#### A-01 Dashboard — P0
+
+- **Tujuan:** memberi gambaran cepat kondisi toko.
+- **Data:** 3 kartu statistik (total produk, kategori, pesanan), grafik batang pesanan 7 hari, grafik garis tren 7 hari, tabel 10 pesanan terbaru.
+- **Komponen:** `stat-card`, `chart-card`, `data-table`, `filter-periode`.
+- **Aksi:** buka pesanan dari tabel, ganti periode grafik.
+- **State:** *default* · *kosong* (belum ada data → ilustrasi + CTA tambah produk) · *loading* (skeleton) · *error*.
+- **Responsif:** kartu 1 → 3 kolom; grafik menumpuk vertikal.
+
+#### A-02 Daftar Produk — P1
+
+- **Data:** nama, kategori, harga beli, harga jual, stok, status, gambar, tanggal dibuat/diubah.
+- **Komponen:** `data-table` (sortable, searchable), `bulk-action-bar`, `filter-chips` (status, kategori, stok menipis), `pagination`.
+- **Aksi:** lihat, edit, hapus massal, tambah produk.
+- **State:** *default* · *kosong* · *loading* · *error* · *konfirmasi hapus*.
+- **Catatan desain:** tampilkan **harga jual** sebagai kolom utama; harga beli boleh ada tapi visual lebih redup (data internal).
+
+#### A-03 Form Produk — P1
+
+- **Data:** nama, slug (auto-generate dari nama, bisa diedit), kategori, deskripsi, harga beli, harga jual, stok, status (aktif/nonaktif), gambar utama.
+- **Komponen:** `form-section`, `text-input`, `select-kategori`, `textarea`, `currency-input` (mask Rp), `number-input`, `toggle-status`, `image-uploader` + preview.
+- **Aksi:** simpan, batal, kembali.
+- **State:** *create* · *edit* (prefilled) · *validasi gagal* · *uploading* · *sukses* (toast).
+- **Catatan:** margin (harga jual − harga beli) ditampilkan sebagai bantuan, bukan field.
+
+#### A-04 Detail Produk + Galeri — P1
+
+- **Data:** semua field produk (read-only) + daftar gambar galeri.
+- **Komponen:** `detail-grid`, `image-gallery-manager` (tambah/edit/hapus).
+- **Aksi:** edit produk, kelola galeri.
+- **State:** *default* · *galeri kosong* · *konfirmasi hapus gambar*.
+
+#### A-05 Daftar Kategori — P1
+
+- **Data:** id, nama, slug, ikon, tanggal dibuat.
+- **Komponen:** `data-table`, `bulk-action-bar`, `image-thumb`.
+- **Aksi:** edit, hapus massal, tambah kategori.
+- **State:** *default* · *kosong* · *konfirmasi hapus*.
+
+#### A-06 Form Kategori — P1
+
+- **Data:** nama (wajib, unik), slug (otomatis, read-only), ikon (opsional).
+- **Komponen:** `text-input`, `readonly-field` + hint, `image-uploader`.
+- **State:** *create* · *edit* · *validasi gagal*.
+
+#### A-07 Daftar Transaksi — P0
+
+- **Data:** kode pesanan, customer, provinsi/kota/kecamatan/kode pos, status pesanan, metode pembayaran, status pembayaran, kurir, layanan, ongkir, total, nomor resi, tanggal.
+- **Komponen:** `data-table` (padat, sticky header), `status-badge` (warna berbeda per status), `filter-chips` (status pesanan, status bayar, tanggal), `search`, `bulk-action-bar`.
+- **Aksi:** buka & ubah pesanan, hapus massal, ekspor (opsional).
+- **State:** *default* · *kosong* · *loading* · *error*.
+- **Catatan desain:** baris harus menampilkan **dua status berbeda** (pesanan vs pembayaran) dengan visual yang tidak tertukar.
+
+#### A-08 Form Transaksi — P0
+
+- **Data:** kode pesanan (read-only), customer (read-only), alamat (read-only), total (read-only), catatan (read-only), metode pembayaran (read-only), **status pesanan (editable)**: Menunggu / Dikemas / Dikirim / Selesai / Dibatalkan; provinsi/kota/kecamatan (read-only), kode pos, kurir, layanan kurir, nomor resi (otomatis saat status "Dikirim").
+- **Komponen:** `status-toggle-group` (dengan ikon), `readonly-field`, `select`, `text-input`, `sticky-save-bar`.
+- **Aksi:** ubah status, ubah kurir/layanan/kode pos, simpan, hapus pesanan.
+- **State:** *default* · *menyimpan* · *sukses* (toast + resi muncul) · *validasi gagal* · *konfirmasi hapus*.
+- **Catatan:** beri peringatan bahwa mengubah status ke "Dikirim" akan membuat nomor resi otomatis.
+
+#### A-09 Daftar Artikel — P2
+
+- **Data:** judul, penulis, gambar, thumbnail, kategori, tanggal.
+- **Komponen:** `data-table`, `image-thumb`, `bulk-action-bar`.
+- **Aksi:** edit, hapus massal, tulis artikel.
+- **State:** *default* · *kosong* · *konfirmasi hapus*.
+
+#### A-10 Form Artikel — P2
+
+- **Data:** judul, slug (auto), kategori, konten (rich text), gambar utama, thumbnail.
+- **Komponen:** `text-input`, `select-kategori`, `rich-text-editor`, `image-uploader`, `preview`.
+- **Aksi:** simpan, pratinjau, batal.
+- **State:** *create* · *edit* · *validasi gagal* · *uploading*.
+
+#### A-11 Pengaturan Toko — P1
+
+- **Data:** nama toko, alamat, logo, deskripsi, Instagram, TikTok, WhatsApp, Facebook, Shopee, Tokopedia, Midtrans Client Key, Midtrans Server Key, mode produksi (toggle), Origin City ID, Origin District ID.
+- **Komponen:** `form-section` (Info Toko, Sosial Media, Marketplace, Payment Gateway, Lokasi Asal), `text-input`, `masked-secret-input` (dengan tombol tampilkan), `toggle`, `image-uploader`.
+- **Aksi:** simpan pengaturan.
+- **State:** *default* · *menyimpan* · *sukses* (toast) · *validasi gagal* · *belum dikonfigurasi* (banner peringatan "Midtrans belum dikonfigurasi").
+- **Catatan desain:** **server key wajib masked** di tampilan.
+
+---
+
+## 6. INVENTARIS KOMPONEN
+
+| Komponen | Anatomi | Varian | State |
+|---|---|---|---|
+| `product-card` | gambar, nama (maks 2 baris), rating, deskripsi (2 baris), harga, CTA | grid, list, compact | default, hover, stok habis, loading (skeleton) |
+| `rating-stars` | 5 bintang + jumlah ulasan | display, input (interaktif) | 0–5, hover, disabled |
+| `status-badge` | titik/warna + label | pesanan (5), pembayaran (5), stok | default |
+| `qty-stepper` | tombol − input + tombol + | inline, block | min, max (stok), disabled |
+| `summary-card` | baris label–nilai, total, CTA | cart, checkout, pesanan | default, sticky |
+| `empty-state` | ilustrasi, judul, deskripsi, CTA | halaman, inline, tabel | default |
+| `alert` / `toast` | ikon, pesan, aksi | sukses, error, peringatan, info | muncul, auto-dismiss, dismiss manual |
+| `inline-error` | ikon + teks | field, blok | default |
+| `modal-confirm` | judul, deskripsi, 2 tombol | destruktif, netral | default, submitting |
+| `tab-status` | label + indikator aktif | pill, underline, scrollable | aktif, nonaktif, badge jumlah |
+| `timeline` | 4 langkah, tanggal, konektor | horizontal, vertikal | selesai, aktif, menunggu, dibatalkan |
+| `data-table` | header sticky, baris, aksi baris, bulk bar, pagination | padat, nyaman | default, kosong, loading, terpilih, error |
+| `form-field` | label, input, hint, error | text, number, currency, textarea, select | default, focus, filled, error, disabled |
+| `cascading-select` | 3 select bertingkat | wilayah | loading, terisi, error, disabled |
+| `image-uploader` | dropzone, preview, hapus | single, multiple (galeri) | kosong, uploading, terisi, error |
+| `star-rating-input` | 5 bintang + teks bantuan | — | kosong, hover, terpilih |
+| `share-panel` | 4 tombol (WA, FB, X, salin) | sidebar, bar bawah | default, tersalin |
+| `breadcrumb` | tautan bertingkat | — | default |
+
+**Aturan komponen:** satu komponen = satu nama = satu gaya; tidak boleh ada dua gaya tombol primer dalam satu layar.
+
+---
+
+## 7. ARAH VISUAL & DESIGN TOKEN
+
+### 7.1 Arah yang direkomendasikan: *Light-first, brand navy–sky–orange*
+
+Alasan: mayoritas layar saat ini bertema terang dan alur e-commerce lebih terbaca di latar terang; identitas navy/sky/orange sudah ada di kode (`#0B1120`, `#38BDF8`, `#EA741C`) sehingga bisa dipertahankan tanpa rebranding.
+
+**Alternatif (jika ingin gelap):** gunakan navy `#0B1120` sebagai latar utama, `#111C2F` untuk permukaan, teks `#E8EEF7`. Semua token di bawah tinggal dibalik (surface ↔ background, text-primary ↔ text-inverse).
+
+### 7.2 Token warna
+
+| Token | Nilai | Pemakaian |
+|---|---|---|
+| `color.brand.navy` | `#0B1120` | header/footer, teks kuat, tombol sekunder |
+| `color.brand.navy-soft` | `#111C2F` | permukaan gelap |
+| `color.brand.sky` | `#38BDF8` | tautan, fokus, aksen |
+| `color.brand.sky-strong` | `#087EAA` | tombol primer alternatif |
+| `color.brand.orange` | `#EA741C` | **CTA utama** (beli, checkout) |
+| `color.brand.orange-hover` | `#C55F12` | hover CTA |
+| `color.surface` | `#FFFFFF` | kartu, panel |
+| `color.surface-muted` | `#F8FAFC` | latar halaman |
+| `color.border` | `#E2E8F0` | garis, pemisah |
+| `color.text.primary` | `#0F172A` | judul, teks utama |
+| `color.text.secondary` | `#475569` | deskripsi |
+| `color.text.muted` | `#94A3B8` | metadata, placeholder |
+| `color.success` | `#16A34A` / bg `#F0FDF4` | status selesai, lunas |
+| `color.warning` | `#D97706` / bg `#FFFBEB` | status menunggu |
+| `color.danger` | `#DC2626` / bg `#FEF2F2` | batal, gagal, hapus |
+| `color.info` | `#0284C7` / bg `#F0F9FF` | status dikirim, info |
+
+**Warna status pesanan:** Menunggu = warning · Dikemas = info · Dikirim = ungu `#7C3AED` · Selesai = success · Dibatalkan = danger.
+**Warna status pembayaran:** Pending = warning · Settlement/Lunas = success · Deny/Expire/Cancel = danger/muted.
+
+### 7.3 Tipografi
+
+| Peran | Ukuran / line-height | Weight |
+|---|---|---|
+| Display | 36 / 40 | 800 |
+| H1 | 30 / 36 | 700 |
+| H2 | 24 / 32 | 700 |
+| H3 | 18 / 28 | 600 |
+| Body | 16 / 24 | 400 |
+| Body kecil | 14 / 20 | 400 |
+| Caption / label | 12 / 16 | 500–600 |
+
+Keluarga: **Inter** (fallback: system sans). Maks 2 baris untuk judul kartu produk.
+
+### 7.4 Spacing, radius, elevasi, layout
+
+| Token | Nilai |
+|---|---|
+| Spacing scale | 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 |
+| Radius | sm 8 · md 12 · lg 16 · xl 24 · full 999 |
+| Shadow | sm `0 1px 2px rgba(15,23,42,.06)` · md `0 4px 12px rgba(15,23,42,.08)` · lg `0 12px 32px rgba(15,23,42,.12)` |
+| Container | maks 1280 px; padding 16 (mobile) / 24 (tablet) / 64 (desktop) |
+| Grid | 4 kolom (mobile) · 8 (tablet) · 12 (desktop); gutter 16 / 24 |
+| Breakpoint | 360 (base) · 640 · 768 · 1024 · 1280 |
+| Target sentuh | minimal 44×44 px |
+| Fokus | outline 2 px `#38BDF8` + offset 2 px (wajib untuk aksesibilitas) |
+
+---
+
+## 8. ATURAN KONTEN & COPY
+
+| Elemen | Aturan | Contoh |
+|---|---|---|
+| Harga | `Rp` + pemisah titik, tanpa desimal | `Rp 149.000` |
+| Tanggal | `d M Y` | `12 Nov 2026` |
+| Tanggal + jam | `d M Y, H:i` | `12 Nov 2026, 14:30` |
+| Angka besar | singkat pada kartu | `1,2 rb` (opsional) |
+| Tombol aksi utama | kata kerja tegas, huruf awal kapital | `Tambah ke Keranjang`, `Beli Sekarang`, `Konfirmasi Pesanan`, `Bayar Sekarang`, `Kirim Ulasan`, `Simpan Perubahan` |
+| Tombol sekunder | netral | `Lanjut Belanja`, `Kembali`, `Batal` |
+| Empty state | sebab + solusi | `Keranjang masih kosong. Yuk pilih produk favoritmu.` |
+| Error form | spesifik per field | `Nomor telepon wajib diisi.` |
+| Error sistem | tenang + jalan keluar | `Gagal memuat data. Periksa koneksi lalu coba lagi.` |
+| Sukses | singkat | `Produk ditambahkan ke keranjang.` |
+| Konfirmasi destruktif | akibat disebut jelas | `Batalkan pesanan? Stok produk akan dikembalikan.` |
+| Nada | ramah, ringkas, tanpa jargon teknis | — |
+
+**Larangan copy:** jangan menampilkan istilah internal (`purchase_price`, `snapshot`, `webhook`, `enum`), jangan mencampur bahasa Inggris pada label utama, jangan menampilkan pesan error mentah dari server.
+
+---
+
+## 9. BATASAN & LARANGAN (JANGAN DIRANCANG)
+
+Sistem **tidak memiliki** fitur berikut. AI desain **tidak boleh** membuat layar, tombol, atau alur untuknya:
+
+| Dilarang | Alasan |
+|---|---|
+| Multi-penjual / toko per UMKM / akun seller | Model data hanya punya satu `Store` |
+| Wishlist / favorit | Tidak ada tabel maupun route |
+| Kupon, voucher, diskon, poin | Tidak ada implementasi |
+| Varian produk (ukuran, warna, dll.) | Produk tidak punya varian; stok tunggal |
+| Kategori bertingkat / subkategori | Kategori satu level |
+| Guest checkout | Checkout wajib login |
+| Banyak alamat tersimpan | Hanya satu kolom `address` di profil |
+| Ulasan diedit/dihapus oleh customer | Route ada, tetapi tidak ada UI yang memakainya |
+| Moderasi ulasan oleh admin | Tidak ada resource ulasan di admin |
+| Manajemen user/customer di admin | Tidak ada UserResource |
+| Chat penjual, COD, cicilan, pembayaran manual transfer | Tidak ada |
+| Lacak resi mandiri oleh customer | Endpoint tersedia, UI belum ada |
+| Ekspor laporan / analitik lanjutan | Hanya 4 widget dasar |
+| Reset password via email | Belum ada route & UI (boleh dicatat sebagai *future*, bukan dirancang) |
+| Notifikasi in-app / push | Hanya WhatsApp eksternal |
+| Halaman pembayaran multi-metode kustom | Metode hanya Midtrans Snap |
+
+**Batasan model data yang memengaruhi UI:**
+- Keranjang hilang saat sesi berakhir → jangan merancang "keranjang tersimpan".
+- Badge keranjang = jumlah **baris** produk, bukan total kuantitas.
+- Total transaksi sudah termasuk ongkir → **jangan menambahkan ongkir dua kali** saat menampilkan ringkasan.
+- Satu ulasan per kombinasi (customer, produk, transaksi).
+- Nomor resi baru muncul setelah status "Dikirim".
+- Ongkir dihitung dari berat (`weight × qty`; default 1.000 g per item bila berat kosong).
+
+---
+
+## 10. FORMAT OUTPUT YANG DIMINTA DARI AI DESAIN
+
+Hasilkan berurutan:
+
+1. **Design principles** — 3–5 prinsip dengan implikasi konkret.
+2. **Sitemap & model navigasi** — termasuk perilaku mobile.
+3. **User flows** — 3 alur di §4, masing-masing dengan titik keputusan dan kondisi gagal.
+4. **Wireframe deskriptif per layar** — untuk setiap ID (C-01…C-16, A-00…A-11): hierarki konten, susunan section, komponen yang dipakai, 4 state, perilaku responsif. Gunakan format blok bernomor, bukan gambar.
+5. **Spesifikasi komponen** — anatomi, varian, state, ukuran, spacing.
+6. **Design token** — keluarkan sebagai JSON siap pakai (warna, tipografi, spacing, radius, shadow, breakpoint).
+7. **Copy deck** — tabel: lokasi · teks Indonesia · catatan.
+8. **Checklist aksesibilitas & responsif** — kontras ≥ 4.5:1, target sentuh 44 px, urutan fokus, label form, teks alternatif gambar, dukungan keyboard, tidak ada informasi yang hanya dibedakan warna.
+9. **Handoff mapping** — tabel ID layar → berkas implementasi (lihat §11).
+10. **Open questions** — maksimal 5, hanya untuk hal yang benar-benar ambigu.
+
+### Kriteria evaluasi hasil desain
+
+- [ ] Semua 27 layar tercakup, tidak ada yang hilang.
+- [ ] Tidak ada fitur dari daftar larangan (§9) yang muncul.
+- [ ] Setiap layar punya 4 state (default, loading, kosong, error).
+- [ ] Harga yang ditampilkan adalah harga jual.
+- [ ] Total pada ringkasan konsisten (subtotal + ongkir, tanpa duplikasi).
+- [ ] Dua status (pesanan & pembayaran) dibedakan jelas secara visual **dan** teks.
+- [ ] Mobile 360 px dapat digunakan tanpa scroll horizontal.
+- [ ] Semua copy berbahasa Indonesia dengan format Rupiah benar.
+- [ ] Komponen konsisten dengan inventaris §6 (tidak ada komponen baru tanpa alasan).
+- [ ] Token di §7 dipakai, bukan warna acak.
+
+---
+
+## 11. HANDOFF MAPPING (ID LAYAR → IMPLEMENTASI)
+
+| ID | Berkas target |
+|---|---|
+| C-01 | `resources/views/home.blade.php` |
+| C-02 | `resources/views/products.blade.php` |
+| C-03 | `resources/views/Detail.blade.php` |
+| C-04 | `resources/views/Cart.blade.php` |
+| C-05 | `resources/views/Checkout.blade.php` |
+| C-06 | `resources/views/Checkout/Payment.blade.php` |
+| C-07 | `resources/views/Checkout/Success.blade.php` |
+| C-08 | `resources/views/pesanan.blade.php` |
+| C-09 | `resources/views/detail-pesanan.blade.php` |
+| C-10 | `resources/views/Profil.blade.php` |
+| C-11 | `resources/views/Auth/login.blade.php` |
+| C-12 | `resources/views/Auth/register.blade.php` |
+| C-13 | `resources/views/articles/index.blade.php` |
+| C-14 | `resources/views/articles/show.blade.php` |
+| C-15 | `resources/views/kontak.blade.php` |
+| C-16 | `resources/views/review/create.blade.php` |
+| Semua C | `resources/views/layouts/app.blade.php` (layout & navigasi) |
+| Semua C | `resources/css/app.css` (token Tailwind v4) |
+| A-00…A-11 | `app/Providers/Filament/AdminPanelProvider.php` |
+| A-01 | `app/Filament/Pages/Dashboard.php` + `app/Filament/Widgets/*` |
+| A-02…A-04 | `app/Filament/Resources/Products/*` |
+| A-05, A-06 | `app/Filament/Resources/Categories/*` |
+| A-07, A-08 | `app/Filament/Resources/Transactions/*` |
+| A-09, A-10 | `app/Filament/Resources/Articles/*` |
+| A-11 | `app/Filament/Pages/Pengaturan.php` + `resources/views/filament/pages/pengaturan.blade.php` |
+
+---
+
+## 12. CATATAN PENUTUP
+
+- Brief ini **mengunci perilaku yang benar**, bukan meniru bug yang ada. Untuk daftar bug teknis lengkap, lihat `analisisweb.md` §12.
+- Jika hasil desain menuntut perilaku yang belum ada (mis. pencarian di mobile, undo hapus keranjang), tandai sebagai **"perlu dukungan backend"** dan jangan menganggapnya sudah tersedia.
+- Semua keputusan visual yang menyimpang dari §7 harus disertai alasan singkat agar konsisten saat implementasi.

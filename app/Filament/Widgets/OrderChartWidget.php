@@ -8,39 +8,56 @@ use Illuminate\Support\Carbon;
 
 class OrderChartWidget extends ChartWidget
 {
-    protected ?string $heading = 'Statistik Pesanan';
+    protected ?string $heading = 'Pesanan 7 Hari Terakhir';
+
+    protected ?string $description = 'Jumlah pesanan yang masuk setiap hari.';
 
     protected static ?int $sort = 2;
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
-  protected function getData(): array
-{
-    $data = [];
+    protected string $color = 'primary';
 
-    for ($i = 6; $i >= 0; $i--) {
-        $date = Carbon::now()->subDays($i);
-        $count = Transaction::whereDate('created_at', $date->toDateString())->count();
-        $data[] = $count;
+    protected function getData(): array
+    {
+        $data = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $data[] = Transaction::whereDate('created_at', $date->toDateString())->count();
+        }
+
+        return [
+            'datasets' => [
+                [
+                    'label' => 'Pesanan',
+                    'data' => $data,
+                    'backgroundColor' => 'rgba(30, 86, 252, 0.72)',
+                    'borderColor' => '#1e56fc',
+                    'borderWidth' => 1,
+                    'borderRadius' => 6,
+                    'maxBarThickness' => 34,
+                ],
+            ],
+            'labels' => collect(range(6, 0))
+                ->map(fn (int $daysAgo): string => Carbon::now()->subDays($daysAgo)->locale('id')->translatedFormat('d M'))
+                ->all(),
+        ];
     }
 
-    return [
-        'datasets' => [
-            [
-                'label' => 'Pesanan',
-                'data' => $data,
-                'backgroundColor' => 'rgba(75, 192, 192, 0.5)',
-                'borderColor' => 'rgb(75, 192, 192)',
-                'borderWidth' => 1,
+    protected function getType(): string
+    {
+        return 'bar';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
             ],
-        ],
-        'labels' => ['6 hari lalu', '5 hari lalu', '4 hari lalu', '3 hari lalu', '2 hari lalu', 'Kemarin', 'Hari ini'],
-    ];
+        ];
+    }
 }
-
-protected function getType(): string
-{
-    return 'bar'; // ubah dari 'line' ke 'bar'
-}
-
-} 

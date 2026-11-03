@@ -2,18 +2,19 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\Transactions\TransactionResource;
 use App\Models\Transaction;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class LatestOrdersWidget extends BaseWidget
 {
     protected static ?string $heading = 'Pesanan Terbaru';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 4;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
@@ -23,20 +24,53 @@ class LatestOrdersWidget extends BaseWidget
             )
             ->columns([
                 TextColumn::make('order_code')
+                    ->label('Kode Pesanan')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->copyable()
+                    ->weight('semibold'),
+
                 TextColumn::make('customer.name')
                     ->label('Pelanggan')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('Tanpa nama'),
+
                 TextColumn::make('status')
-                    ->badge(),
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'pending' => 'Menunggu',
+                        'packing' => 'Dikemas',
+                        'sent' => 'Dikirim',
+                        'done', 'success' => 'Selesai',
+                        'cancelled' => 'Dibatalkan',
+                        default => ucfirst((string) $state),
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'packing' => 'info',
+                        'sent' => 'primary',
+                        'done', 'success' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+
                 TextColumn::make('total')
+                    ->label('Total')
                     ->money('IDR')
                     ->sortable(),
+
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Dibuat')
+                    ->dateTime('d M Y • H:i')
                     ->sortable(),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->paginated(false)
+            ->recordUrl(fn (Transaction $record): string => TransactionResource::getUrl('edit', ['record' => $record]))
+            ->emptyStateIcon('heroicon-o-shopping-bag')
+            ->emptyStateHeading('Belum ada pesanan')
+            ->emptyStateDescription('Pesanan yang masuk dari pelanggan akan tampil di sini.');
     }
 }

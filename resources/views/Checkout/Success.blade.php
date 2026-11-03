@@ -1,167 +1,214 @@
 @extends('layouts.app')
 
-@section('title', 'Checkout Berhasil - InstanWeb')
+@section('title', 'Pesanan Berhasil | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-    <section class="py-16 bg-gray-100">
-        <div class="max-w-4xl mx-auto px-6 lg:px-16 text-center">
-            <div class="bg-white rounded-2xl shadow p-8">
-                <div class="text-green-500 mb-4">
-                    <svg class="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-4">Checkout Berhasil!</h1>
-                <p class="text-gray-600 mb-6">Pesanan Anda telah diterima dan sedang diproses.</p>
+    @php
+        $subtotal = $transaction->total - ($transaction->shipping_cost ?? 0);
+        $canReview = in_array($transaction->status, ['success', 'done'], true);
+    @endphp
 
-                @if (session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-                        {{ session('success') }}
+    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        {{-- Header sukses --}}
+        <div class="rounded-panel border border-success/30 bg-surface p-6 text-center shadow-sm sm:p-8">
+            <span
+                class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success"
+                aria-hidden="true">
+                <x-ui.icon name="check-circle" class="h-9 w-9" />
+            </span>
+
+            <h1 class="mt-4 text-2xl font-bold tracking-tight text-fg sm:text-3xl">Pesanan Berhasil Dibuat</h1>
+            <p class="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-fg-muted">
+                Terima kasih. Pesanan Anda sudah kami terima dan akan diproses oleh penjual.
+            </p>
+
+            <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+                <x-ui.status-badge type="order" :status="$transaction->status" />
+                <x-ui.status-badge type="payment" :status="$transaction->payment_status" />
+            </div>
+
+            <p class="mt-4 text-sm text-fg-muted">
+                Kode pesanan
+                <span class="ml-1 rounded-md bg-surface-soft px-2 py-1 font-mono text-sm font-semibold text-fg">
+                    {{ $transaction->order_code }}
+                </span>
+            </p>
+        </div>
+
+        {{-- Detail pesanan --}}
+        <section class="mt-5 rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6" aria-labelledby="detail-pesanan">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 id="detail-pesanan" class="text-lg font-semibold text-fg">Detail Pesanan</h2>
+                <a href="{{ route('orders') }}"
+                    class="text-sm font-semibold text-info underline underline-offset-2">Lihat semua pesanan</a>
+            </div>
+
+            <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Tanggal</dt>
+                    <dd class="mt-1 text-fg">{{ $transaction->created_at->format('d M Y, H:i') }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Total</dt>
+                    <dd class="mt-1 font-semibold text-fg">Rp {{ number_format($transaction->total, 0, ',', '.') }}</dd>
+                </div>
+                @if ($transaction->courier)
+                    <div>
+                        <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Kurir</dt>
+                        <dd class="mt-1 uppercase text-fg">{{ $transaction->courier }}</dd>
                     </div>
                 @endif
+                @if ($transaction->phone_number)
+                    <div>
+                        <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Nomor telepon</dt>
+                        <dd class="mt-1 text-fg">{{ $transaction->phone_number }}</dd>
+                    </div>
+                @endif
+                <div class="sm:col-span-2">
+                    <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Alamat pengiriman</dt>
+                    <dd class="mt-1 leading-relaxed text-fg">{{ $transaction->address }}</dd>
+                </div>
+                @if ($transaction->notes)
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Catatan</dt>
+                        <dd class="mt-1 leading-relaxed text-fg">{{ $transaction->notes }}</dd>
+                    </div>
+                @endif
+            </dl>
 
+            <dl class="mt-5 space-y-2 border-t border-line pt-4 text-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <dt class="text-fg-muted">Subtotal</dt>
+                    <dd class="font-medium text-fg">Rp {{ number_format($subtotal, 0, ',', '.') }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt class="text-fg-muted">Ongkos kirim</dt>
+                    <dd class="font-medium text-fg">Rp
+                        {{ number_format($transaction->shipping_cost ?? 0, 0, ',', '.') }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3 border-t border-line pt-3">
+                    <dt class="font-medium text-fg">Total pembayaran</dt>
+                    <dd class="text-xl font-bold text-fg">Rp {{ number_format($transaction->total, 0, ',', '.') }}</dd>
+                </div>
+            </dl>
+        </section>
 
+        {{-- Produk & ulasan --}}
+        <section class="mt-5 rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
+            aria-labelledby="produk-dipesan">
+            <h2 id="produk-dipesan" class="text-lg font-semibold text-fg">Produk yang Dipesan</h2>
 
-                <div class="bg-gray-50 rounded-lg p-6 mb-6 text-left">
-                    <h2 class="text-xl font-semibold mb-4">Detail Pesanan</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Kode Pesanan</p>
-                            <p class="font-semibold">{{ $transaction->order_code }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Status</p>
-                            <p class="font-semibold text-orange-600">{{ ucfirst($transaction->status) }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Status Pembayaran</p>
-                            @php
-                                $paymentStatusClass = match ($transaction->payment_status) {
-                                    'paid' => 'text-green-600',
-                                    'pending' => 'text-orange-600',
-                                    'failed' => 'text-red-600',
-                                    default => 'text-gray-600',
-                                };
-                            @endphp
-                            <p class="font-semibold {{ $paymentStatusClass }}">
-                                {{ ucfirst($transaction->payment_status) }}
+            <div class="mt-4 space-y-4">
+                @foreach ($transaction->items as $item)
+                    @php
+                        $product = $item->product;
+                        $productId = $product->id ?? null;
+                        $image = $product && $product->image
+                            ? asset('storage/' . $product->image)
+                            : asset('images/gambar3.jpeg');
+                    @endphp
+
+                    <article class="rounded-card border border-line bg-surface-muted p-4">
+                        <div class="flex gap-3">
+                            <img src="{{ $image }}" alt=""
+                                class="h-16 w-16 shrink-0 rounded-lg border border-line object-cover">
+
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-semibold text-fg">
+                                    {{ $product->product_name ?? 'Produk tidak tersedia' }}
+                                </p>
+                                <p class="mt-1 text-xs text-fg-muted">
+                                    {{ $item->quantity }} × Rp {{ number_format($item->price, 0, ',', '.') }}
+                                </p>
+                            </div>
+
+                            <p class="text-sm font-semibold text-fg">
+                                Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}
                             </p>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total</p>
-                            <p class="font-semibold">Rp {{ number_format($transaction->total, 0, ',', '.') }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Tanggal</p>
-                            <p class="font-semibold">{{ $transaction->created_at->format('d M Y, H:i') }}</p>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-sm text-gray-600">Alamat Pengiriman</p>
-                        <p class="font-semibold">{{ $transaction->address }}</p>
-                    </div>
-                    @if ($transaction->notes)
-                        <div class="mt-4">
-                            <p class="text-sm text-gray-600">Catatan</p>
-                            <p class="font-semibold">{{ $transaction->notes }}</p>
-                        </div>
-                    @endif
-                </div>
 
-                <div class="bg-gray-50 rounded-lg p-6 mb-6 text-left">
-                    <h3 class="text-lg font-semibold mb-4">Produk yang Dipesan</h3>
-                    <div class="space-y-4">
-                        @foreach ($transaction->items as $item)
-                            <div class="flex items-center gap-4">
-                                <img src="{{ $item->product->image ? asset('storage/' . $item->product->image) : 'https://via.placeholder.com/100' }}"
-                                    alt="{{ $item->product->product_name }}" class="w-16 h-16 object-cover rounded">
-                                <div class="flex-1">
-                                    <p class="font-semibold">{{ $item->product->product_name }}</p>
-                                    <p class="text-sm text-gray-600">Jumlah: {{ $item->quantity }} | Harga: Rp
-                                        {{ number_format($item->price, 0, ',', '.') }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold">Rp
-                                        {{ number_format($item->price * $item->quantity, 0, ',', '.') }}</p>
-                                </div>
-                            </div>
-                            <div class="mt-3 w-full">
-                                @auth
-                                    @php
-                                        $productId = $item->product->id;
-                                    @endphp
-                                    @if (isset($userRatings) && $userRatings->has($productId))
-                                        @php $r = $userRatings->get($productId); @endphp
-                                        <div class="mt-2 text-sm text-gray-700">
-                                            <div class="flex items-center gap-2">
-                                                <div class="text-yellow-400 flex items-center">
-                                                    @for ($i = 1; $i <= 5; $i++)
-                                                        @if ($i <= $r->rating)
-                                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path
-                                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 00.95-.69l1.286-3.947z" />
-                                                            </svg>
-                                                        @else
-                                                            <svg class="w-4 h-4 text-gray-300" fill="currentColor"
-                                                                viewBox="0 0 20 20">
-                                                                <path
-                                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 00.95-.69l1.286-3.947z" />
-                                                            </svg>
-                                                        @endif
-                                                    @endfor
-                                                </div>
-                                                <div class="text-gray-600 text-sm">Anda memberi rating:
-                                                    <strong>{{ $r->rating }}</strong>
-                                                </div>
-                                            </div>
-                                            @if ($r->comment)
-                                                <p class="mt-2 text-gray-700">"{{ $r->comment }}"</p>
-                                            @endif
+                        <div class="mt-4 border-t border-line pt-3">
+                            @auth
+                                @if ($productId && isset($userRatings) && $userRatings->has($productId))
+                                    @php $r = $userRatings->get($productId); @endphp
+                                    <div class="rounded-lg bg-surface p-3">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <x-ui.rating-stars :rating="$r->rating" />
+                                            <span class="text-xs text-fg-muted">Ulasan Anda sudah terkirim.</span>
                                         </div>
-                                    @else
-                                        <form action="{{ route('ratings.store') }}" method="POST"
-                                            enctype="multipart/form-data" class="mt-2">
-                                            @csrf
-                                            <input type="hidden" name="product_id" value="{{ $productId }}">
-                                            <input type="hidden" name="transaction_id" value="{{ $transaction->id }}">
-                                            <div class="flex items-center gap-2">
-                                                <label class="text-sm text-gray-700">Beri rating:</label>
-                                                <select name="rating" class="rounded border-gray-300 px-2 py-1">
-                                                    @for ($s = 1; $s <= 5; $s++)
-                                                        <option value="{{ $s }}">{{ $s }}</option>
+
+                                        @if ($r->comment)
+                                            <p class="mt-2 text-sm leading-relaxed text-fg-secondary">"{{ $r->comment }}"
+                                            </p>
+                                        @endif
+                                    </div>
+                                @elseif ($canReview)
+                                    <form action="{{ route('ratings.store') }}" method="POST"
+                                        enctype="multipart/form-data" class="space-y-3">
+                                        @csrf
+                                        <input type="hidden" name="product_id" value="{{ $productId }}">
+                                        <input type="hidden" name="transaction_id" value="{{ $transaction->id }}">
+
+                                        <div class="grid gap-3 sm:grid-cols-[auto_1fr]">
+                                            <div>
+                                                <label for="rating-{{ $productId }}"
+                                                    class="block text-xs font-medium text-fg-secondary">Rating</label>
+                                                <select name="rating" id="rating-{{ $productId }}" required
+                                                    class="mt-1 h-10 rounded-field border border-line-strong bg-surface px-2 text-sm text-fg">
+                                                    @for ($s = 5; $s >= 1; $s--)
+                                                        <option value="{{ $s }}"
+                                                            @selected($s === 5)>{{ $s }} bintang</option>
                                                     @endfor
                                                 </select>
-                                                <input type="file" name="image" accept="image/*" class="ml-2">
                                             </div>
-                                            <div class="mt-2">
-                                                <textarea name="comment" rows="2" class="w-full rounded border-gray-200" placeholder="Tulis ulasan singkat..."></textarea>
-                                            </div>
-                                            <div class="mt-2 text-right">
-                                                <button type="submit" class="px-4 py-2 bg-orange-600 text-white rounded">Kirim
-                                                    Ulasan</button>
-                                            </div>
-                                        </form>
-                                    @endif
-                                @endauth
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
 
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ route('home') }}"
-                        class="bg-orange-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-orange-700 transition">Lanjut
-                        Belanja</a>
-                    <a href="{{ route('orders') }}"
-                        class="bg-gray-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-700 transition">Lihat
-                        Pesanan</a>
-                </div>
+                                            <div>
+                                                <label for="comment-{{ $productId }}"
+                                                    class="block text-xs font-medium text-fg-secondary">Ulasan
+                                                    (opsional)</label>
+                                                <textarea name="comment" id="comment-{{ $productId }}" rows="2"
+                                                    placeholder="Bagikan pengalaman Anda tentang produk ini..."
+                                                    class="mt-1 w-full rounded-field border border-line-strong bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted"></textarea>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex flex-wrap items-center justify-between gap-3">
+                                            <div>
+                                                <label for="image-{{ $productId }}"
+                                                    class="block text-xs font-medium text-fg-secondary">Foto
+                                                    (opsional, maks 2 MB)</label>
+                                                <input type="file" name="image" id="image-{{ $productId }}"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    class="mt-1 block w-full text-xs text-fg-muted file:mr-3 file:rounded-md file:border-0 file:bg-surface-soft file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-fg">
+                                            </div>
+
+                                            <x-ui.button type="submit" size="sm">Kirim Ulasan</x-ui.button>
+                                        </div>
+                                    </form>
+                                @else
+                                    <p class="text-xs leading-relaxed text-fg-muted">
+                                        Ulasan dapat dikirim setelah status pesanan selesai. Anda dapat memantaunya di
+                                        <a href="{{ route('orders') }}"
+                                            class="font-semibold text-info underline underline-offset-2">Pesanan Saya</a>.
+                                    </p>
+                                @endif
+                            @else
+                                <p class="text-xs text-fg-muted">
+                                    <a href="{{ route('login.form') }}"
+                                        class="font-semibold text-info underline underline-offset-2">Masuk</a> untuk
+                                    mengirim ulasan.
+                                </p>
+                            @endauth
+                        </div>
+                    </article>
+                @endforeach
             </div>
+        </section>
+
+        {{-- Aksi --}}
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <x-ui.button :href="route('home')" size="lg">Lanjut Belanja</x-ui.button>
+            <x-ui.button :href="route('orders')" variant="outline" size="lg">Lihat Pesanan</x-ui.button>
         </div>
-    </section>
-
-
-
+    </div>
 @endsection

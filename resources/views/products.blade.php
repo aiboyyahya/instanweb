@@ -1,210 +1,306 @@
 @extends('layouts.app')
 
-@section('title', 'Produk')
+@section('title', 'Semua Produk | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-<section class="py-16 bg-white">
-    <div class="max-w-full mx-auto px-6 lg:px-16">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <x-ui.page-header eyebrow="Katalog" title="Semua Produk"
+            description="Temukan produk terbaik dari toko kami. Gunakan pencarian atau filter kategori untuk mempersempit pilihan.">
+            <x-ui.button :href="route('cart')" variant="outline">
+                <x-ui.icon name="shopping-bag" class="h-4 w-4" /> Keranjang
+            </x-ui.button>
+        </x-ui.page-header>
 
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">✨ Semua Produk</h1>
-            <p class="text-gray-500 text-base">Temukan produk terbaik kami dengan kualitas unggulan dan harga menarik.</p>
-        </div>
-
-        <div class="mb-10 bg-white rounded-2xl shadow-sm p-6">
-            <form id="filterForm" method="GET" action="{{ route('products') }}">
-                <div class="flex flex-row items-center gap-5">
-
-                    <div class="relative flex-1">
-                        <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
-                            placeholder="Ketik untuk mencari produk..."
-                            class="w-full px-4 py-3 pl-12 border border-gray-600 rounded-xl transition" autocomplete="off">
-                        <svg class="absolute left-4 top-3.5 h-5 w-5 text-gray-400" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+        {{-- Filter --}}
+        <section class="mt-8 rounded-panel border border-line bg-surface p-4 shadow-sm sm:p-5" aria-label="Filter produk">
+            <form id="filterForm" method="GET" action="{{ route('products') }}" role="search"
+                class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div class="flex-1">
+                    <label for="searchInput" class="mb-1.5 block text-sm font-medium text-fg-secondary">Cari produk</label>
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-fg-muted">
+                            <x-ui.icon name="search" class="h-5 w-5" />
+                        </span>
+                        <input type="search" name="search" id="searchInput" value="{{ request('search') }}"
+                            placeholder="Ketik nama produk..."
+                            class="h-12 w-full rounded-field border border-line-strong bg-surface pl-11 pr-11 text-sm text-fg placeholder:text-fg-muted"
+                            autocomplete="off">
 
                         @if (request('search'))
                             <a href="{{ route('products', ['category' => request('category')]) }}"
-                                class="absolute right-4 top-3 text-gray-500 hover:text-gray-700 transition"
-                                title="Hapus pencarian">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                                class="absolute inset-y-0 right-1 flex w-10 items-center justify-center rounded-md text-fg-muted transition hover:text-fg"
+                                aria-label="Hapus kata kunci pencarian">
+                                <x-ui.icon name="close" class="h-4 w-4" />
                             </a>
                         @endif
                     </div>
-
-                    <div class="flex-none w-48">
-                        <select name="category" id="categorySelect"
-                            class="w-full px-4 py-3 border border-gray-600 rounded-xl bg-white text-gray-700">
-                            <option value="">Semua Kategori</option>
-
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}"
-                                    {{ request('category') == $category->id ? 'selected' : '' }}>
-                                    {{ $category->category_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
                 </div>
+
+                <div class="sm:w-56">
+                    <label for="categorySelect" class="mb-1.5 block text-sm font-medium text-fg-secondary">Kategori</label>
+                    <select name="category" id="categorySelect"
+                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3 text-sm text-fg">
+                        <option value="">Semua kategori</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}"
+                                {{ (string) request('category') === (string) $category->id ? 'selected' : '' }}>
+                                {{ $category->category_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <noscript>
+                    <x-ui.button type="submit" variant="outline" class="sm:mb-0">Terapkan</x-ui.button>
+                </noscript>
             </form>
+
+            @if (request('search') || request('category'))
+                <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
+                    <span>Filter aktif:</span>
+
+                    @if (request('search'))
+                        <x-ui.badge variant="info">Pencarian: {{ request('search') }}</x-ui.badge>
+                    @endif
+
+                    @if (request('category'))
+                        @php $activeCategory = $categories->firstWhere('id', (int) request('category')); @endphp
+                        @if ($activeCategory)
+                            <x-ui.badge variant="info">Kategori: {{ $activeCategory->category_name }}</x-ui.badge>
+                        @endif
+                    @endif
+
+                    <a href="{{ route('products') }}"
+                        class="font-semibold text-info underline underline-offset-2 hover:text-fg">Reset filter</a>
+                </div>
+            @endif
+        </section>
+
+        <div class="mt-6 flex flex-wrap items-center justify-between gap-2">
+            <p class="text-sm text-fg-muted" aria-live="polite" id="productsCount">
+                @if ($products->total() > 0)
+                    Menampilkan <span class="font-semibold text-fg">{{ $products->total() }}</span> produk
+                @else
+                    Tidak ada produk yang cocok
+                @endif
+            </p>
         </div>
 
-        <div id="productsGrid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
-            @forelse($products as $product)
-                <div
-                    class="group bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden flex flex-col">
-                    <a href="{{ route('product.show', $product->id) }}">
-                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->product_name }}"
-                            class="w-full h-48 sm:h-52 lg:h-56 object-cover group-hover:scale-105 transition duration-300">
-                    </a>
+        {{-- Error state (fetch) --}}
+        <div id="productsError" class="mt-4 hidden">
+            <x-ui.alert variant="danger" title="Gagal memuat produk">
+                Periksa koneksi Anda, lalu coba lagi.
+                <button type="button" id="retryProducts"
+                    class="ml-1 font-semibold underline underline-offset-2">Coba lagi</button>
+            </x-ui.alert>
+        </div>
 
-                    <div class="p-5 flex flex-col flex-1 text-left">
-                        <h4 class="text-base md:text-lg font-bold text-black truncate mb-1">
-                            {{ $product->product_name }}
-                        </h4>
-
-                        @if ($product->ratingCount > 0)
-                            <div class="flex items-center justify gap-1 mb-2 ml-1">
-                                @php $avg = round($product->avgRating); @endphp
-                                @for ($i = 1; $i <= 5; $i++)
-                                    <svg class="w-4 h-4 {{ $i <= $avg ? 'text-yellow-400' : 'text-gray-300' }}"
-                                        fill="currentColor" viewBox="0 0 20 20">
-                                        <path
-                                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 00.95-.69l1.286-3.947z" />
-                                    </svg>
-                                @endfor
-                                <span class="text-xs text-gray-600 ml-1">({{ $product->ratingCount }})</span>
-                            </div>
-                        @endif
-
-                        @if ($product->description)
-                            <p class="text-sm text-gray-500 line-clamp-2 mb-3 ml-1">
-                                {{ $product->description }}
-                            </p>
-                        @endif
-
-                        <p class="text-xl font-extrabold text-gray-900 mb-5 tracking-tight">
-                            Rp {{ number_format($product->purchase_price ?? 0, 0, ',', '.') }}
-                        </p>
-
-                        <form action="{{ route('addToCart') }}" method="POST" class="mt-auto w-full">
-                            @csrf
-                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <input type="hidden" name="quantity" value="1">
-                            <button
-                                class="w-full bg-gray-800 text-white py-2 rounded-lg font-medium hover:bg-gray-900 transition text-sm">
-                                Tambah ke Keranjang
-                            </button>
-                        </form>
+        {{-- Loading skeleton --}}
+        <div id="productsLoading" class="mt-6 hidden grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
+            aria-hidden="true">
+            @for ($i = 0; $i < 8; $i++)
+                <div class="overflow-hidden rounded-card border border-line bg-surface">
+                    <div class="skeleton aspect-[4/3] w-full rounded-none"></div>
+                    <div class="space-y-3 p-4">
+                        <div class="skeleton h-4 w-4/5"></div>
+                        <div class="skeleton h-3 w-2/5"></div>
+                        <div class="skeleton h-5 w-1/2"></div>
+                        <div class="skeleton h-10 w-full"></div>
                     </div>
                 </div>
+            @endfor
+        </div>
+
+        {{-- Grid --}}
+        <div id="productsGrid" class="mt-6 grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+            @forelse ($products as $product)
+                <x-product-card :product="$product" />
             @empty
-                <p class="text-gray-500 text-center col-span-full">Belum ada produk tersedia.</p>
+                <div class="col-span-full">
+                    <x-ui.empty-state title="Tidak ada produk yang cocok"
+                        description="Coba kata kunci lain atau reset filter untuk melihat semua produk." icon="search">
+                        <x-ui.button :href="route('products')" variant="outline">Reset filter</x-ui.button>
+                    </x-ui.empty-state>
+                </div>
             @endforelse
         </div>
 
-        @if ($products->hasPages())
-            <div id="paginationLinks" class="mt-12 flex justify-center">
-                {{ $products->appends(request()->query())->links() }}
-            </div>
-        @else
-            <div id="paginationLinks" class="mt-12 flex justify-center"></div>
-        @endif
-
+        {{-- Pagination --}}
+        <div id="paginationLinks" class="mt-8">
+            <x-ui.pagination :paginator="$products" />
+        </div>
     </div>
-</section>
-
-<script>
-    const searchInput = document.getElementById('searchInput');
-    const categorySelect = document.getElementById('categorySelect');
-    const productsGrid = document.getElementById('productsGrid');
-    const paginationLinks = document.getElementById('paginationLinks');
-    const filterForm = document.getElementById('filterForm');
-
-    let debounceTimeout;
-
-    function debounce(func, delay) {
-        return function(...args) {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => func.apply(this, args), delay);
-        };
-    }
-
-    async function fetchProducts() {
-        const searchQuery = searchInput.value.trim();
-        const category = categorySelect.value;
-        const url = new URL("{{ route('products.search') }}", window.location.origin);
-        if (searchQuery) url.searchParams.append('q', searchQuery);
-        if (category) url.searchParams.append('category', category);
-
-        try {
-            const response = await fetch(url.toString());
-            const products = await response.json();
-            renderProducts(products);
-            paginationLinks.innerHTML = '';
-        } catch (error) {
-            console.error('Failed to fetch products:', error);
-        }
-    }
-
-    function renderProducts(products) {
-        if (!products.length) {
-            productsGrid.innerHTML = '<p class="text-gray-500 text-center col-span-full">Belum ada produk tersedia.</p>';
-            return;
-        }
-
-        productsGrid.innerHTML = '';
-
-        products.forEach(product => {
-            const avgRating = product.avgRating ?? 0;
-            const ratingCount = product.ratingCount ?? 0;
-            const starsHtml = Array.from({ length: 5 }, (_, i) =>
-                `<svg class="w-4 h-4 ${i < avgRating ? 'text-yellow-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 00.95-.69l1.286-3.947z" />
-                </svg>`).join('');
-
-            const productHtml = `
-                <div class="group bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden flex flex-col">
-                    <a href="/product/${product.id}">
-                        <img src="${product.image_url}" alt="${product.product_name}" class="w-full h-48 sm:h-52 lg:h-56 object-cover group-hover:scale-105 transition duration-300">
-                    </a>
-                    <div class="p-5 flex flex-col flex-1 text-left">
-                        <h4 class="text-base md:text-lg font-bold text-black truncate mb-1">${product.product_name}</h4>
-                        <div class="flex items-center justify gap-1 mb-2 ml-1">
-                            ${starsHtml}
-                            <span class="text-xs text-gray-600 ml-1">(${ratingCount})</span>
-                        </div>
-                        <p class="text-xl font-extrabold text-gray-900 mb-5 tracking-tight">
-                            Rp ${parseInt(product.purchase_price).toLocaleString('id-ID')}
-                        </p>
-                        <form action="{{ route('addToCart') }}" method="POST" class="mt-auto w-full">
-                            @csrf
-                            <input type="hidden" name="product_id" value="${product.id}">
-                            <input type="hidden" name="quantity" value="1">
-                            <button class="w-full bg-gray-800 text-white py-2 rounded-lg font-medium hover:bg-gray-900 transition text-sm">
-                                Tambah ke Keranjang
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            `;
-
-            productsGrid.insertAdjacentHTML('beforeend', productHtml);
-        });
-    }
-
-    const debouncedFetchProducts = debounce(fetchProducts, 300);
-
-    searchInput.addEventListener('input', debouncedFetchProducts);
-    categorySelect.addEventListener('change', () => {
-        filterForm.submit();
-    });
-</script>
-
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const categorySelect = document.getElementById('categorySelect');
+            const productsGrid = document.getElementById('productsGrid');
+            const paginationLinks = document.getElementById('paginationLinks');
+            const filterForm = document.getElementById('filterForm');
+            const loading = document.getElementById('productsLoading');
+            const errorBox = document.getElementById('productsError');
+            const retryButton = document.getElementById('retryProducts');
+            const countLabel = document.getElementById('productsCount');
+
+            if (!searchInput || !productsGrid) {
+                return;
+            }
+
+            let debounceTimeout;
+            let controller = null;
+
+            function setLoading(isLoading) {
+                loading?.classList.toggle('hidden', !isLoading);
+                if (isLoading) {
+                    loading?.classList.add('grid');
+                    productsGrid.classList.add('hidden');
+                } else {
+                    productsGrid.classList.remove('hidden');
+                }
+            }
+
+            function escapeHtml(value) {
+                const div = document.createElement('div');
+                div.textContent = value ?? '';
+                return div.innerHTML;
+            }
+
+            function starsHtml(rating) {
+                const rounded = Math.round(rating || 0);
+                let output = '';
+
+                for (let i = 1; i <= 5; i += 1) {
+                    output += `<svg class="h-3.5 w-3.5 ${i <= rounded ? 'text-rating' : 'text-line-strong'}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 0 0 .95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 0 0-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 0 0-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 0 0-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 0 0 .95-.69l1.286-3.947Z"/></svg>`;
+                }
+
+                return output;
+            }
+
+            function productCardHtml(product) {
+                const ratingCount = Number(product.ratingCount || 0);
+                const image = product.image_url || '{{ asset('images/gambar3.jpeg') }}';
+                const price = Number(product.purchase_price || 0).toLocaleString('id-ID');
+
+                return `
+                    <article class="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <a href="/product/${product.id}" class="relative block aspect-[4/3] overflow-hidden bg-surface-soft" tabindex="-1" aria-hidden="true">
+                            <img src="${escapeHtml(image)}" alt="" loading="lazy" class="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03]">
+                        </a>
+                        <div class="flex flex-1 flex-col gap-2 p-4">
+                            <h3 class="line-clamp-2 text-sm font-semibold leading-snug text-fg sm:text-base">
+                                <a href="/product/${product.id}" class="rounded transition hover:text-cta">${escapeHtml(product.product_name)}</a>
+                            </h3>
+                            <div class="flex items-center gap-1.5" role="img" aria-label="Rating ${Number(product.avgRating || 0).toFixed(1)} dari 5 berdasarkan ${ratingCount} ulasan">
+                                <div class="flex items-center gap-0.5" aria-hidden="true">${starsHtml(product.avgRating)}</div>
+                                ${ratingCount > 0 ? `<span class="text-xs text-fg-muted">(${ratingCount})</span>` : ''}
+                            </div>
+                            <p class="mt-auto pt-1 text-lg font-bold tracking-tight text-fg">Rp ${price}</p>
+                            <form action="{{ route('addToCart') }}" method="POST">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="product_id" value="${product.id}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-field border border-line-strong bg-surface px-3 text-sm font-semibold text-fg transition hover:border-cta hover:bg-cta hover:text-on-cta">
+                                    Tambah ke Keranjang
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                `;
+            }
+
+            function renderProducts(products) {
+                errorBox?.classList.add('hidden');
+
+                if (!products.length) {
+                    productsGrid.innerHTML = `
+                        <div class="col-span-full">
+                            <div class="flex flex-col items-center justify-center rounded-panel border border-dashed border-line-strong bg-surface px-6 py-12 text-center">
+                                <h2 class="text-lg font-semibold text-fg">Tidak ada produk yang cocok</h2>
+                                <p class="mt-1 max-w-md text-sm text-fg-muted">Coba kata kunci lain atau reset filter untuk melihat semua produk.</p>
+                                <a href="{{ route('products') }}" class="mt-6 inline-flex min-h-11 items-center justify-center rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg hover:bg-surface-soft">Reset filter</a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                productsGrid.innerHTML = products.map(productCardHtml).join('');
+            }
+
+            function updateCount(total) {
+                if (!countLabel) {
+                    return;
+                }
+
+                countLabel.innerHTML = total > 0
+                    ? `Menampilkan <span class="font-semibold text-fg">${total}</span> produk`
+                    : 'Tidak ada produk yang cocok';
+            }
+
+            async function fetchProducts() {
+                controller?.abort();
+                controller = new AbortController();
+                const activeController = controller;
+
+                const searchQuery = searchInput.value.trim();
+                const category = categorySelect.value;
+                const url = new URL("{{ route('products.search') }}", window.location.origin);
+
+                if (searchQuery) {
+                    url.searchParams.append('q', searchQuery);
+                }
+
+                if (category) {
+                    url.searchParams.append('category', category);
+                }
+
+                setLoading(true);
+                errorBox?.classList.add('hidden');
+
+                try {
+                    const response = await fetch(url.toString(), {
+                        signal: controller.signal,
+                        headers: { Accept: 'application/json' },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Gagal memuat produk');
+                    }
+
+                    const products = await response.json();
+                    renderProducts(products);
+                    updateCount(products.length);
+                    paginationLinks.innerHTML = '';
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        errorBox?.classList.remove('hidden');
+                    }
+                } finally {
+                    if (controller === activeController) {
+                        setLoading(false);
+                    }
+                }
+            }
+
+            function debounce(callback, delay) {
+                return function (...args) {
+                    clearTimeout(debounceTimeout);
+                    debounceTimeout = setTimeout(() => callback.apply(this, args), delay);
+                };
+            }
+
+            const debouncedFetch = debounce(fetchProducts, 300);
+
+            searchInput.addEventListener('input', debouncedFetch);
+
+            categorySelect.addEventListener('change', function () {
+                filterForm.submit();
+            });
+
+            retryButton?.addEventListener('click', fetchProducts);
+        });
+    </script>
+@endpush

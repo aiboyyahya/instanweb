@@ -20,7 +20,8 @@ class ArticleResource extends Resource
     protected static ?string $model = Article::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
-    protected static string |UnitEnum|null $navigationGroup = 'Manajemen Konten';
+    protected static string |UnitEnum|null $navigationGroup = 'Konten';
+    protected static ?int $navigationSort = 10;
     protected static ?string $navigationLabel = 'Artikel';
 
     protected static ?string $modelLabel = 'Artikel';

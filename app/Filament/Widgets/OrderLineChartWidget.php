@@ -10,9 +10,13 @@ class OrderLineChartWidget extends ChartWidget
 {
     protected ?string $heading = 'Tren Pesanan';
 
-    protected static ?int $sort = 2;
+    protected ?string $description = 'Perbandingan volume pesanan harian selama sepekan.';
+
+    protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = 1;
+
+    protected string $color = 'info';
 
     protected function getData(): array
     {
@@ -20,8 +24,7 @@ class OrderLineChartWidget extends ChartWidget
 
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $count = Transaction::whereDate('created_at', $date->toDateString())->count();
-            $data[] = $count;
+            $data[] = Transaction::whereDate('created_at', $date->toDateString())->count();
         }
 
         return [
@@ -29,17 +32,34 @@ class OrderLineChartWidget extends ChartWidget
                 [
                     'label' => 'Pesanan',
                     'data' => $data,
-                    'borderColor' => 'rgb(255, 99, 132)',
-                    'backgroundColor' => 'rgba(255, 99, 132, 0.2)',
+                    'borderColor' => '#1e56fc',
+                    'backgroundColor' => 'rgba(30, 86, 252, 0.14)',
+                    'pointBackgroundColor' => '#1e56fc',
+                    'pointBorderColor' => '#ffffff',
+                    'pointRadius' => 3,
                     'fill' => true,
+                    'tension' => 0.35,
                 ],
             ],
-            'labels' => ['6 hari lalu', '5 hari lalu', '4 hari lalu', '3 hari lalu', '2 hari lalu', 'Kemarin', 'Hari ini'],
+            'labels' => collect(range(6, 0))
+                ->map(fn (int $daysAgo): string => Carbon::now()->subDays($daysAgo)->locale('id')->translatedFormat('d M'))
+                ->all(),
         ];
     }
 
     protected function getType(): string
     {
         return 'line';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
+            ],
+        ];
     }
 }

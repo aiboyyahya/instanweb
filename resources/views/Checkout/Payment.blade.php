@@ -1,187 +1,293 @@
 @extends('layouts.app')
 
-@section('title', 'Pembayaran')
+@section('title', 'Pembayaran Pesanan | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-<section class="py-16 bg-white min-h-screen">
-    <div class="max-w-6xl mx-auto border border-gray-200 rounded-3xl bg-white shadow-md p-10">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Pembayaran Pesanan</h1>
-            <p class="text-gray-600 mt-2">Order #{{ $transaction->order_code }}</p>
-        </div>
+    @php
+        $store = store();
+        $whatsappNumber = $store && ! empty($store->whatsapp) ? preg_replace('/[^0-9]/', '', $store->whatsapp) : null;
+        $subtotal = $transaction->total - ($transaction->shipping_cost ?? 0);
+        $isPaid = in_array($transaction->payment_status, ['paid', 'settlement'], true);
+        $confirmMessage = rawurlencode(
+            'Halo, saya ingin mengonfirmasi pembayaran pesanan ' .
+                $transaction->order_code .
+                ' dengan total Rp ' .
+                number_format($transaction->total, 0, ',', '.') .
+                '.',
+        );
+    @endphp
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div class="space-y-6">
-                <h2 class="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">Detail Produk</h2>
-                <div class="space-y-4">
-                    @foreach($transaction->items as $item)
-                    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                        <img src="{{ $item->product->image ? asset('storage/' . $item->product->image) : 'https://via.placeholder.com/80' }}"
-                             alt="{{ $item->product->product_name }}"
-                             class="w-20 h-20 object-cover rounded-lg shadow-sm">
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-gray-900">{{ $item->product->product_name }}</h3>
-                            <p class="text-sm text-gray-600">Jumlah: {{ $item->quantity }}</p>
-                            <p class="text-sm text-gray-600">Harga: Rp {{ number_format($item->price, 0, ',', '.') }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-bold text-lg text-orange-600">Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}</p>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
+    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <x-ui.breadcrumb :items="[
+            ['label' => 'Beranda', 'url' => route('home')],
+            ['label' => 'Pesanan Saya', 'url' => route('orders')],
+            ['label' => 'Pembayaran'],
+        ]" />
 
-                <div class="bg-gray-50 rounded-xl p-6 space-y-3">
-                    <h3 class="text-lg font-semibold text-gray-900">Informasi Pengiriman</h3>
-                    <div>
-                        <p class="text-sm text-gray-600">Alamat</p>
-                        <p class="font-medium text-gray-900">{{ $transaction->address }}</p>
-                    </div>
-                    @if($transaction->province && $transaction->city && $transaction->subdistrict)
-                    <div>
-                        <p class="text-sm text-gray-600">Wilayah</p>
-                        <p class="font-medium text-gray-900">
-                            {{ $transaction->subdistrict }}, {{ $transaction->city }}, {{ $transaction->province }}
-                        </p>
-                    </div>
-                    @endif
-                    @if($transaction->courier)
-                    <div>
-                        <p class="text-sm text-gray-600">Kurir</p>
-                        <p class="font-medium text-gray-900 uppercase">{{ $transaction->courier }}</p>
-                    </div>
-                    @endif
-                    @if($transaction->courier_service)
-                    <div>
-                        <p class="text-sm text-gray-600">Layanan</p>
-                        <p class="font-medium text-gray-900">{{ $transaction->courier_service }}</p>
-                    </div>
-                    @endif
-                    @if($transaction->shipping_cost)
-                    <div>
-                        <p class="text-sm text-gray-600">Biaya Ongkir</p>
-                        <p class="font-medium text-gray-900">Rp {{ number_format($transaction->shipping_cost, 0, ',', '.') }}</p>
-                    </div>
-                    @endif
-                    @if($transaction->tracking_number)
-                    <div>
-                        <p class="text-sm text-gray-600">Nomor Resi</p>
-                        <p class="font-medium text-gray-900">{{ $transaction->tracking_number }}</p>
-                    </div>
-                    @endif
-                </div>
+        <div class="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">Pembayaran</p>
+                <h1 class="mt-1 text-3xl font-bold tracking-tight text-fg">Pesanan #{{ $transaction->order_code }}</h1>
+                <p class="mt-2 text-sm text-fg-muted">
+                    Dibuat {{ $transaction->created_at->format('d M Y, H:i') }}
+                </p>
             </div>
 
-            <div class="space-y-6">
-                <h2 class="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">Ringkasan Pembayaran</h2>
+            <div class="flex flex-wrap items-center gap-2">
+                <x-ui.status-badge type="order" :status="$transaction->status" />
+                <x-ui.status-badge type="payment" :status="$transaction->payment_status" />
+            </div>
+        </div>
 
-                <div class="bg-gray-50 rounded-xl p-6 space-y-4">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Subtotal</span>
-                        <span class="font-semibold">Rp {{ number_format($transaction->total - ($transaction->shipping_cost ?? 0), 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Biaya Pengiriman</span>
-                        <span class="font-semibold">Rp {{ number_format($transaction->shipping_cost ?? 0, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="border-t pt-4 flex justify-between">
-                        <span class="font-bold text-lg">Total Pembayaran</span>
-                        <span class="font-extrabold text-2xl text-orange-600">Rp {{ number_format($transaction->total, 0, ',', '.') }}</span>
-                    </div>
-                </div>
+        <div class="mt-8 grid gap-6 lg:grid-cols-2 lg:items-start">
+            <div class="space-y-5">
+                {{-- Produk --}}
+                <section class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
+                    aria-labelledby="produk-pesanan">
+                    <h2 id="produk-pesanan" class="text-lg font-semibold text-fg">Detail Produk</h2>
 
-                <div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Status Pembayaran</h3>
-                    <div class="flex items-center gap-3">
-                        @php
-                            $statusColor = match($transaction->payment_status) {
-                                'paid' => 'bg-green-500',
-                                'pending' => 'bg-yellow-500',
-                                'failed' => 'bg-red-500',
-                                default => 'bg-gray-400'
-                            };
-                        @endphp
-                        <div class="w-4 h-4 rounded-full {{ $statusColor }}"></div>
-                        <span class="text-gray-700 capitalize">{{ $transaction->payment_status }}</span>
-                    </div>
-                </div>
+                    <ul class="mt-4 divide-y divide-line">
+                        @foreach ($transaction->items as $item)
+                            @php
+                                $image = $item->product && $item->product->image
+                                    ? asset('storage/' . $item->product->image)
+                                    : asset('images/gambar3.jpeg');
+                            @endphp
 
-                <div class="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                    <div id="payment-loading" class="space-y-4">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-                        <h3 class="text-lg font-semibold text-gray-900">Memproses Pembayaran...</h3>
-                        <p class="text-gray-600">Mohon tunggu sebentar, sedang mempersiapkan pembayaran Midtrans.</p>
-                    </div>
+                            <li class="flex gap-3 py-3 first:pt-0">
+                                <img src="{{ $image }}" alt=""
+                                    class="h-16 w-16 shrink-0 rounded-lg border border-line object-cover">
 
-                    <div id="payment-ready" class="hidden space-y-4">
-                        <div class="text-green-600">
-                            <svg class="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-fg">
+                                        {{ $item->product->product_name ?? 'Produk tidak tersedia' }}
+                                    </p>
+                                    <p class="mt-1 text-xs text-fg-muted">
+                                        {{ $item->quantity }} × Rp {{ number_format($item->price, 0, ',', '.') }}
+                                    </p>
+                                </div>
+
+                                <p class="text-sm font-semibold text-fg">
+                                    Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}
+                                </p>
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+
+                {{-- Pengiriman --}}
+                <section class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
+                    aria-labelledby="pengiriman">
+                    <h2 id="pengiriman" class="text-lg font-semibold text-fg">Informasi Pengiriman</h2>
+
+                    <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Alamat</dt>
+                            <dd class="mt-1 leading-relaxed text-fg">{{ $transaction->address }}</dd>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900">Pembayaran Siap</h3>
-                        <p class="text-gray-600">Modal pembayaran akan muncul dalam beberapa detik.</p>
-                        <button id="manual-pay-btn"
-                            class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition font-medium hidden">
-                            Buka Pembayaran Manual
-                        </button>
+
+                        @if ($transaction->province || $transaction->city || $transaction->district)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Wilayah</dt>
+                                <dd class="mt-1 text-fg">
+                                    {{ $transaction->district }}, {{ $transaction->city }}, {{ $transaction->province }}
+                                </dd>
+                            </div>
+                        @endif
+
+                        @if ($transaction->postal_code)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Kode Pos</dt>
+                                <dd class="mt-1 text-fg">{{ $transaction->postal_code }}</dd>
+                            </div>
+                        @endif
+
+                        @if ($transaction->courier)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Kurir</dt>
+                                <dd class="mt-1 uppercase text-fg">{{ $transaction->courier }}</dd>
+                            </div>
+                        @endif
+
+                        @if ($transaction->courier_service)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Layanan</dt>
+                                <dd class="mt-1 text-fg">{{ $transaction->courier_service }}</dd>
+                            </div>
+                        @endif
+
+                        @if ($transaction->tracking_number)
+                            <div>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Nomor Resi</dt>
+                                <dd class="mt-1 font-mono text-fg">{{ $transaction->tracking_number }}</dd>
+                            </div>
+                        @endif
+                    </dl>
+                </section>
+            </div>
+
+            <div class="space-y-5 lg:sticky lg:top-24">
+                {{-- Ringkasan --}}
+                <section class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
+                    aria-labelledby="ringkasan-pembayaran">
+                    <h2 id="ringkasan-pembayaran" class="text-lg font-semibold text-fg">Ringkasan Pembayaran</h2>
+
+                    <dl class="mt-4 space-y-2 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-fg-muted">Subtotal</dt>
+                            <dd class="font-medium text-fg">Rp {{ number_format($subtotal, 0, ',', '.') }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-fg-muted">Biaya pengiriman</dt>
+                            <dd class="font-medium text-fg">Rp
+                                {{ number_format($transaction->shipping_cost ?? 0, 0, ',', '.') }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 border-t border-line pt-3">
+                            <dt class="font-medium text-fg">Total pembayaran</dt>
+                            <dd class="text-2xl font-bold text-fg">Rp {{ number_format($transaction->total, 0, ',', '.') }}
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <div
+                        class="mt-4 flex items-center justify-between gap-3 rounded-card border border-line bg-surface-muted px-4 py-3">
+                        <span class="text-sm text-fg-secondary">Status pembayaran</span>
+                        <x-ui.status-badge type="payment" :status="$transaction->payment_status" />
                     </div>
-                </div>
+                </section>
+
+                {{-- Panel pembayaran --}}
+                <section class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
+                    aria-labelledby="panel-pembayaran">
+                    <h2 id="panel-pembayaran" class="text-lg font-semibold text-fg">Selesaikan Pembayaran</h2>
+
+                    <div id="payment-error" class="mt-4 hidden">
+                        <x-ui.alert variant="danger" title="Pembayaran online belum dapat dimulai">
+                            Silakan coba lagi, atau konfirmasi langsung ke penjual melalui WhatsApp.
+                        </x-ui.alert>
+                    </div>
+
+                    <div id="payment-ready" class="mt-4 space-y-3">
+                        @if ($isPaid)
+                            <x-ui.alert variant="success" title="Pembayaran diterima">
+                                Pembayaran pesanan ini sudah tercatat lunas. Penjual akan memproses pengiriman.
+                            </x-ui.alert>
+                        @else
+                            <x-ui.alert variant="info" title="Menunggu konfirmasi pembayaran">
+                                Pesanan sudah dibuat. Penjual akan mengirim rincian pembayaran melalui WhatsApp.
+                            </x-ui.alert>
+
+                            <button type="button" id="manual-pay-btn"
+                                class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field bg-cta px-4 text-sm font-semibold text-on-cta shadow-sm transition hover:bg-cta-hover">
+                                <x-ui.icon name="check-circle" class="h-4 w-4" />
+                                Coba Bayar Online
+                            </button>
+
+                            @if ($whatsappNumber)
+                                <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $confirmMessage }}"
+                                    target="_blank" rel="noopener noreferrer"
+                                    class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">
+                                    <x-ui.icon name="chat" class="h-4 w-4" /> Konfirmasi via WhatsApp
+                                </a>
+                            @endif
+                        @endif
+                    </div>
+
+                    <div id="payment-loading" class="mt-4 hidden items-center justify-center gap-3 rounded-card bg-surface-muted p-4 text-sm text-fg-secondary">
+                        <span
+                            class="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-cta"
+                            aria-hidden="true"></span>
+                        Menyiapkan pembayaran...
+                    </div>
+
+                    <div class="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
+                        <x-ui.button :href="route('orders')" variant="ghost" size="sm">Lihat Pesanan</x-ui.button>
+                        <x-ui.button :href="route('home')" variant="ghost" size="sm">Kembali ke Beranda</x-ui.button>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
-</section>
-
-<script src="https://app.sandbox.midtrans.com/snap/snap.js"
-    data-client-key="{{ config('services.midtrans.client_key') }}"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const loadingDiv = document.getElementById('payment-loading');
-    const readyDiv = document.getElementById('payment-ready');
-    const manualBtn = document.getElementById('manual-pay-btn');
-
-    setTimeout(() => {
-        loadingDiv.classList.add('hidden');
-        readyDiv.classList.remove('hidden');
-    }, 2000);
-
-    setTimeout(() => {
-        triggerPayment();
-    }, 3000);
-
-    manualBtn.addEventListener('click', triggerPayment);
-
-    function triggerPayment() {
-        fetch("{{ route('transaction.getSnapToken', $transaction->id) }}", {
-            method: 'GET',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
-            if (!data.snap_token) throw new Error("Snap token tidak ditemukan di server.");
-            snap.pay(data.snap_token, {
-                onSuccess: result => window.location.href = "{{ route('checkout.success', $transaction->id) }}",
-                onPending: result => window.location.href = "{{ route('checkout.success', $transaction->id) }}",
-                onError: result => {
-                    alert("Pembayaran gagal. Silakan coba lagi.");
-                    window.location.href = "{{ route('checkout.page') }}";
-                },
-                onClose: () => console.log("Modal pembayaran ditutup.")
-            });
-        })
-        .catch(err => {
-            alert("Tidak bisa memulai pembayaran. Coba refresh halaman");
-            console.error(err);
-        });
-    }
-});
-</script>
 @endsection
+
+@push('scripts')
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const button = document.getElementById('manual-pay-btn');
+            const loading = document.getElementById('payment-loading');
+            const errorBox = document.getElementById('payment-error');
+            const ready = document.getElementById('payment-ready');
+
+            if (!button) {
+                return;
+            }
+
+            function setLoading(isLoading) {
+                loading?.classList.toggle('hidden', !isLoading);
+                loading?.classList.toggle('flex', isLoading);
+                button.disabled = isLoading;
+                button.classList.toggle('opacity-60', isLoading);
+            }
+
+            function triggerPayment() {
+                errorBox?.classList.add('hidden');
+                setLoading(true);
+
+                fetch("{{ route('transaction.getSnapToken', $transaction->id) }}", {
+                        method: 'GET',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute(
+                                'content') || '',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('HTTP ' + response.status);
+                        }
+
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (!data.snap_token) {
+                            throw new Error('Snap token tidak tersedia.');
+                        }
+
+                        if (typeof window.snap === 'undefined') {
+                            throw new Error('Snap.js belum termuat.');
+                        }
+
+                        window.snap.pay(data.snap_token, {
+                            onSuccess: function () {
+                                window.location.href =
+                                    "{{ route('checkout.success', $transaction->id) }}";
+                            },
+                            onPending: function () {
+                                window.location.href =
+                                    "{{ route('checkout.success', $transaction->id) }}";
+                            },
+                            onError: function () {
+                                errorBox?.classList.remove('hidden');
+                            },
+                            onClose: function () {
+                                setLoading(false);
+                            }
+                        });
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        errorBox?.classList.remove('hidden');
+                    })
+                    .finally(function () {
+                        setLoading(false);
+                    });
+            }
+
+            button.addEventListener('click', triggerPayment);
+        });
+    </script>
+@endpush

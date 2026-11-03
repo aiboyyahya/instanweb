@@ -1,171 +1,213 @@
 @extends('layouts.app')
 
-@section('title', 'Checkout')
+@section('title', 'Checkout | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
+    @php
+        $items = isset($directCheckout) && ! empty($directCheckout) ? $directCheckout : $cart;
+        $hasZeroStock = false;
+        $subtotal = 0;
 
-    <section class="py-16 bg-white min-h-screen">
-        <div
-            class="max-w-6xl mx-auto border border-gray-200 rounded-3xl bg-white shadow-md p-10 grid grid-cols-1 md:grid-cols-2 gap-12">
+        foreach ($items as $id => $item) {
+            $subtotal += $item['price'] * $item['quantity'];
+            $productModel = \App\Models\Product::find($id);
+            $currentStock = $productModel ? $productModel->stock : ($item['stock'] ?? 0);
 
-            <div class="md:col-span-2 text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
-                <p class="text-gray-600 mt-2">Pastikan data dan pesanan Anda sudah benar sebelum melakukan pembayaran.</p>
-            </div>
+            if ($currentStock <= 0 || $currentStock < $item['quantity']) {
+                $hasZeroStock = true;
+            }
+        }
 
-            @php
-                $items = isset($directCheckout) && !empty($directCheckout) ? $directCheckout : $cart;
-                $hasZeroStock = false;
-            @endphp
+        $inputClass =
+            'h-12 w-full rounded-field border bg-surface px-3 text-sm text-fg placeholder:text-fg-muted focus:border-info';
+        $inputNormalClass = 'border-line-strong';    @endphp
 
-            <form id="checkout-form" action="{{ route('checkout') }}" method="POST" class="space-y-8">
+    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <x-ui.page-header eyebrow="Langkah 2 dari 3" title="Checkout"
+            description="Lengkapi data pengiriman. Pastikan nomor telepon dan alamat sudah benar.">
+            <x-ui.button :href="route('cart')" variant="outline">
+                <x-ui.icon name="arrow-left" class="h-4 w-4" /> Kembali ke Keranjang
+            </x-ui.button>
+        </x-ui.page-header>
+
+        <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
+            <form id="checkout-form" action="{{ route('checkout') }}" method="POST" class="space-y-5">
                 @csrf
-                <div class="border border-gray-200 rounded-3xl p-8 shadow-sm bg-white">
-                    <h2 class="text-2xl font-semibold text-gray-900 mb-6">Informasi Pengiriman</h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label for="recipient_name" class="block text-sm font-medium text-gray-700 mb-2">Nama
-                                Penerima</label>
-                            <input type="text" name="recipient_name" id="recipient_name" required
-                                class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-orange-600 focus:border-orange-600"
-                                value="{{ old('recipient_name', Auth::user()->name ?? '') }}">
-                        </div>
-
-                        <div>
-                            <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-2">Nomor
-                                Telepon</label>
-                            <input type="tel" name="phone_number" id="phone_number" required
-                                class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-orange-600 focus:border-orange-600"
-                                value="{{ old('phone_number', Auth::user()->phone_number ?? '') }}">
-                        </div>
+                <section class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
+                    aria-labelledby="info-pengiriman">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-soft text-sm font-bold text-fg">1</span>
+                        <h2 id="info-pengiriman" class="text-lg font-semibold text-fg">Informasi Pengiriman</h2>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Alamat Lengkap</label>
-                        <textarea name="address" id="address" rows="3" required
-                            class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-orange-600 focus:border-orange-600"
-                            placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, provinsi">{{ old('address', Auth::user()->address ?? '') }}</textarea>
-                    </div>
+                    <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                        <x-ui.field label="Nama Penerima" name="recipient_name" required>
+                            <input type="text" id="recipient_name" name="recipient_name" required
+                                autocomplete="name" value="{{ old('recipient_name', Auth::user()->name ?? '') }}"
+                                placeholder="Nama lengkap penerima"
+                                @class([$inputClass, $inputNormalClass])>
+                        </x-ui.field>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label for="courier" class="block text-sm font-medium text-gray-700 mb-2">Kurir Pengiriman</label>
-                            <select id="courier" name="courier" required
-                                class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-orange-600 focus:border-orange-600">
-                                <option value="">Pilih Kurir</option>
-                                <option value="JNE">JNE</option>
-                                <option value="J&T">J&T Express</option>
-                                <option value="Sicepat">SiCepat</option>
-                                <option value="AnterAja">AnterAja</option>
-                                <option value="COD / Kurir Toko">COD / Kurir Toko</option>
+                        <x-ui.field label="Nomor Telepon" name="phone_number" required
+                            hint="Gunakan format 08xxxx atau 62xxxx untuk konfirmasi via WhatsApp.">
+                            <input type="tel" id="phone_number" name="phone_number" required inputmode="numeric"
+                                autocomplete="tel" value="{{ old('phone_number', Auth::user()->phone_number ?? '') }}"
+                                placeholder="Contoh: 08123456789"
+                                @class([$inputClass, $inputNormalClass])>
+                        </x-ui.field>
+
+                        <div class="sm:col-span-2">
+                            <x-ui.field label="Alamat Lengkap" name="address" required
+                                hint="Sertakan nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, dan provinsi.">
+                                <textarea id="address" name="address" rows="3" required autocomplete="street-address"
+                                    placeholder="Contoh: Jl. Merdeka No. 10, RT 02/RW 05, Kel. Sukamaju, Kec. Cilodong, Depok, Jawa Barat"
+                                    @class([
+                                        'w-full rounded-field border bg-surface px-3 py-3 text-sm text-fg placeholder:text-fg-muted focus:border-info',
+                                        $inputNormalClass,
+                                    ])>{{ old('address', Auth::user()->address ?? '') }}</textarea>
+                            </x-ui.field>
+                        </div>
+
+                        <x-ui.field label="Kurir Pengiriman" name="courier" required>
+                            <select id="courier" name="courier" required @class([$inputClass, $inputNormalClass])>
+                                <option value="">Pilih kurir</option>
+                                <option value="JNE" @selected(old('courier') === 'JNE')>JNE</option>
+                                <option value="J&T" @selected(old('courier') === 'J&T')>J&T Express</option>
+                                <option value="Sicepat" @selected(old('courier') === 'Sicepat')>SiCepat</option>
+                                <option value="AnterAja" @selected(old('courier') === 'AnterAja')>AnterAja</option>
+                                <option value="COD / Kurir Toko" @selected(old('courier') === 'COD / Kurir Toko')>COD / Kurir
+                                    Toko</option>
                             </select>
-                        </div>
+                        </x-ui.field>
 
-                        <div>
-                            <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-2">Kode Pos</label>
-                            <input type="text" name="postal_code" id="postal_code" required
-                                class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-orange-600 focus:border-orange-600"
-                                placeholder="Masukkan kode pos">
+                        <x-ui.field label="Kode Pos" name="postal_code" required>
+                            <input type="text" id="postal_code" name="postal_code" required inputmode="numeric"
+                                autocomplete="postal-code" value="{{ old('postal_code') }}" placeholder="Contoh: 16415"
+                                @class([$inputClass, $inputNormalClass])>
+                        </x-ui.field>
+
+                        <div class="sm:col-span-2">
+                            <x-ui.field label="Catatan Pesanan" name="notes"
+                                hint="Opsional. Misalnya permintaan khusus atau patokan alamat.">
+                                <textarea id="notes" name="notes" rows="3" placeholder="Tambahkan catatan untuk penjual..."
+                                    @class([
+                                        'w-full rounded-field border border-line-strong bg-surface px-3 py-3 text-sm text-fg placeholder:text-fg-muted focus:border-info',
+                                    ])>{{ old('notes') }}</textarea>
+                            </x-ui.field>
                         </div>
                     </div>
 
-                    <!-- Input tersembunyi untuk ongkir default 0 (atau flat-rate manual jika diperlukan) -->
+                    {{-- Ongkir manual: nilai tetap 0, dihitung bersama penjual. --}}
                     <input type="hidden" id="shipping_cost" name="shipping_cost" value="0">
+                </section>
 
-                    <div class="mb-6">
-                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">Catatan Pesanan</label>
-                        <textarea name="notes" id="notes" rows="3"
-                            class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-orange-600 focus:border-orange-600"
-                            placeholder="Tambahkan catatan untuk penjual jika ada..."></textarea>
+                <section class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
+                    aria-labelledby="metode-pembayaran">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-soft text-sm font-bold text-fg">2</span>
+                        <h2 id="metode-pembayaran" class="text-lg font-semibold text-fg">Metode Pembayaran</h2>
                     </div>
-                </div>
+
+                    <div class="mt-4 rounded-card border border-info/30 bg-info-soft p-4">
+                        <div class="flex items-start gap-3">
+                            <x-ui.icon name="info" class="mt-0.5 h-5 w-5 text-info" />
+                            <div class="text-sm leading-relaxed text-info">
+                                <p class="font-semibold">Konfirmasi pembayaran bersama penjual</p>
+                                <p class="mt-1">
+                                    Setelah pesanan dibuat, penjual akan menghubungi Anda melalui WhatsApp untuk
+                                    rincian pembayaran dan pengiriman.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                @if ($hasZeroStock)
+                    <x-ui.alert variant="danger" title="Stok tidak mencukupi">
+                        Beberapa produk di keranjang tidak tersedia atau stoknya kurang. Hapus produk tersebut dari
+                        keranjang sebelum melanjutkan.
+                    </x-ui.alert>
+                @endif
+
+                <p class="text-xs leading-relaxed text-fg-muted">
+                    Dengan menekan tombol konfirmasi, pesanan akan dibuat dengan status menunggu. Tidak ada pembayaran
+                    yang diproses otomatis di halaman ini.
+                </p>
             </form>
 
-            <div class="flex flex-col max-w-lg h-fit space-y-8">
-                <div class="border border-gray-200 rounded-3xl p-8 shadow-sm bg-white">
-                    <h2 class="text-2xl font-semibold text-gray-900 mb-6">Detail Produk</h2>
-                    <ul class="space-y-6">
-                        @php $total = 0; @endphp
+            {{-- Ringkasan pesanan --}}
+            <aside class="space-y-5 lg:sticky lg:top-24" aria-labelledby="ringkasan-pesanan">
+                <div class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6">
+                    <h2 id="ringkasan-pesanan" class="text-lg font-semibold text-fg">Detail Produk</h2>
+
+                    <ul class="mt-4 divide-y divide-line">
                         @foreach ($items as $id => $item)
                             @php
-                                $subtotal = $item['price'] * $item['quantity'];
-                                $total += $subtotal;
-                                
-                                // Cek stok produk secara langsung
                                 $productModel = \App\Models\Product::find($id);
                                 $currentStock = $productModel ? $productModel->stock : ($item['stock'] ?? 0);
-                                if ($currentStock <= 0) {
-                                    $hasZeroStock = true;
-                                }
+                                $image = ! empty($item['image'])
+                                    ? asset('storage/' . $item['image'])
+                                    : asset('images/gambar3.jpeg');
                             @endphp
-                            <li class="flex gap-4 items-center border-b border-gray-100 pb-4">
-                                <img src="{{ $item['image'] ? asset('storage/' . $item['image']) : 'https://via.placeholder.com/100' }}"
-                                    alt="{{ $item['name'] }}" class="w-24 h-20 object-cover rounded-xl" />
-                                <div>
-                                    <p class="text-lg font-semibold text-gray-900">{{ $item['name'] }}</p>
-                                    <p class="text-sm text-gray-600">Jumlah: {{ $item['quantity'] }}</p>
-                                    
+
+                            <li class="flex gap-3 py-3 first:pt-0">
+                                <img src="{{ $image }}" alt=""
+                                    class="h-16 w-16 shrink-0 rounded-lg border border-line object-cover">
+
+                                <div class="min-w-0 flex-1">
+                                    <p class="line-clamp-2 text-sm font-semibold text-fg">{{ $item['name'] }}</p>
+                                    <p class="mt-1 text-xs text-fg-muted">
+                                        {{ $item['quantity'] }} × Rp {{ number_format($item['price'], 0, ',', '.') }}
+                                    </p>
+
                                     @if ($currentStock <= 0)
-                                        <span class="inline-block bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded mt-1">Stok Habis</span>
-                                    @else
-                                        <p class="text-xs text-gray-500">Stok tersedia: {{ $currentStock }}</p>
+                                        <x-ui.badge variant="danger" class="mt-1.5">Stok habis</x-ui.badge>
+                                    @elseif ($currentStock < $item['quantity'])
+                                        <x-ui.badge variant="warning" class="mt-1.5">Stok tersisa {{ $currentStock }}
+                                        </x-ui.badge>
                                     @endif
                                 </div>
-                                <div class="ml-auto font-semibold text-gray-900">
-                                    Rp{{ number_format($subtotal, 0, ',', '.') }}
-                                </div>
+
+                                <p class="text-sm font-semibold text-fg">
+                                    Rp {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}
+                                </p>
                             </li>
                         @endforeach
                     </ul>
 
-                    @if ($hasZeroStock)
-                        <div class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                            ⚠️ Beberapa produk di keranjang Anda habis atau stoknya tidak mencukupi. Harap hapus produk tersebut untuk melanjutkan.
+                    <dl class="mt-4 space-y-2 border-t border-line pt-4 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-fg-muted">Subtotal</dt>
+                            <dd class="font-medium text-fg">Rp {{ number_format($subtotal, 0, ',', '.') }}</dd>
                         </div>
-                    @endif
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-fg-muted">Ongkos kirim</dt>
+                            <dd class="font-medium text-fg">Dikonfirmasi penjual</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 border-t border-line pt-3">
+                            <dt class="font-medium text-fg">Total pembayaran</dt>
+                            <dd class="text-xl font-bold text-fg">Rp {{ number_format($subtotal, 0, ',', '.') }}</dd>
+                        </div>
+                    </dl>
 
-                    <div class="mt-8 border-t pt-6 text-gray-900">
-                        <h3 class="text-xl font-semibold mb-4">Ringkasan Pesanan</h3>
-                        <div class="flex justify-between mb-2">
-                            <span>Subtotal</span>
-                            <span id="display-subtotal">Rp{{ number_format($total, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="flex justify-between mb-6">
-                            <span>Ongkos Kirim</span>
-                            <span id="display-shipping">Rp0</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-lg border-t pt-4">
-                            <span>Total Pembayaran</span>
-                            <span id="display-total">Rp{{ number_format($total, 0, ',', '.') }}</span>
-                        </div>
-                    </div>
+                    <button type="submit" form="checkout-form" @disabled($hasZeroStock)
+                        class="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field bg-cta px-4 text-sm font-semibold text-on-cta shadow-sm transition hover:bg-cta-hover disabled:pointer-events-none disabled:opacity-50">
+                        <x-ui.icon name="check" class="h-4 w-4" />
+                        {{ $hasZeroStock ? 'Stok tidak mencukupi' : 'Konfirmasi Pesanan' }}
+                    </button>
+
+                    <x-ui.button :href="route('cart')" variant="ghost" block class="mt-2">
+                        Ubah Keranjang
+                    </x-ui.button>
                 </div>
 
-                <div class="border border-gray-200 rounded-3xl p-8 shadow-sm bg-white">
-                    <h2 class="text-2xl font-semibold text-gray-900 mb-6">Metode Pembayaran</h2>
-                    <div class="border border-gray-300 rounded-xl p-5 bg-gray-50 hover:bg-gray-100 transition">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="payment_method" value="midtrans" checked
-                                class="form-radio text-orange-600 focus:ring-orange-500" />
-                            <span class="ml-3 font-medium text-gray-900">
-                                Midtrans (QRIS / Virtual Account / E-Wallet)
-                            </span>
-                        </label>
-                    </div>
-                </div>
-
-                <button type="submit" form="checkout-form"
-                    class="mt-6 w-full py-3 rounded-xl font-semibold transition {{ $hasZeroStock ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800' }}"
-                    {{ $hasZeroStock ? 'disabled' : '' }}>
-                    {{ $hasZeroStock ? 'STOK KOSONG - TIDAK DAPAT CHECKOUT' : 'KONFIRMASI PESANAN' }}
-                </button>
-            </div>
+                <x-ui.alert variant="info" title="Data Anda aman">
+                    Alamat dan nomor telepon hanya digunakan untuk memproses pesanan ini.
+                </x-ui.alert>
+            </aside>
         </div>
-    </section>
-
-    <!-- Script Midtrans Snap (Opsional jika masih ingin menggunakan Midtrans pembayaran) -->
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
-        data-client-key="{{ config('services.midtrans.client_key') }}"></script>
-
+    </div>
 @endsection

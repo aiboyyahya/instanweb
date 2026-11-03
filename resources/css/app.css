@@ -5,7 +5,433 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/*
+ |--------------------------------------------------------------------------
+ | Typography
+ |--------------------------------------------------------------------------
+ | Inter Variable disajikan lokal (aset Filament) agar tidak menambah
+ | ketergantungan eksternal. Fallback ke font sistem.
+ */
+@font-face {
+    font-family: 'Inter Variable';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('/fonts/filament/filament/inter/inter-latin-wght-normal-NRMW37G5.woff2') format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+        U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Inter Variable';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('/fonts/filament/filament/inter/inter-latin-ext-wght-normal-HA22NDSG.woff2') format('woff2-variations');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+        U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/*
+ |--------------------------------------------------------------------------
+ | Design tokens (Tailwind CSS 4, CSS-first)
+ |--------------------------------------------------------------------------
+ | Nilai mengikuti docs/design-system.md + uiux-brief-new.md §7.
+ | Mode gelap hanya mengganti nilai token, bukan menimpa utility.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    /* Permukaan & garis — mode terang (default) */
+    --color-surface: #ffffff;
+    --color-surface-muted: #f8fafc;
+    --color-surface-soft: #f1f5f9;
+    --color-inverse: #0b1120;
+    --color-line: #e2e8f0;
+    --color-line-strong: #cbd5e1;
+
+    /* Teks */
+    --color-fg: #0f172a;
+    --color-fg-secondary: #475569;
+    --color-fg-muted: #64748b;
+    --color-fg-inverse: #ffffff;
+    --color-on-cta: #ffffff;
+
+    /* Brand & aksi — identitas instanweb */
+    --color-brand: #1e56fc;
+    --color-brand-text: #1e56fc;
+    --color-brand-hover: #1746d6;
+    --color-brand-soft: #eef2ff;
+    --color-brand-glow: #7c9bff;
+    --color-brand-navy: #0b1120;
+    --color-brand-sky: #60a5fa;
+    --color-rating: #f59e0b;
+    --color-cta: #1e56fc;
+    --color-cta-hover: #1746d6;
+    --color-cta-soft: #eef2ff;
+
+    /* Semantik status */
+    --color-success: #15803d;
+    --color-success-soft: #f0fdf4;
+    --color-success-strong: #15803d;
+    --color-warning: #b45309;
+    --color-warning-soft: #fffbeb;
+    --color-danger: #b91c1c;
+    --color-danger-soft: #fef2f2;
+    --color-danger-strong: #b91c1c;
+    --color-info: #0369a1;
+    --color-info-soft: #f0f9ff;
+    --color-shipping: #6d28d9;
+    --color-shipping-soft: #f5f3ff;
+    --color-neutral-ink: #475569;
+    --color-neutral-soft: #f8fafc;
+
+    /* Radius */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-field: 0.75rem;
+    --radius-card: 1rem;
+    --radius-panel: 1.5rem;
+
+    /* Elevasi */
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+
+    /* Skala teks semantik */
+    --text-display: 2.25rem;
+    --text-display--line-height: 2.5rem;
+    --text-display--font-weight: 800;
+    --text-h1: 1.875rem;
+    --text-h1--line-height: 2.25rem;
+    --text-h1--font-weight: 700;
+    --text-h2: 1.5rem;
+    --text-h2--line-height: 2rem;
+    --text-h2--font-weight: 700;
+    --text-h3: 1.125rem;
+    --text-h3--line-height: 1.75rem;
+    --text-h3--font-weight: 600;
+
+    --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-brand: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Mode gelap: hanya nilai token yang berubah (brief §7.5). */
+[data-theme='dark'] {
+    color-scheme: dark;
+
+    --color-surface: #111c2f;
+    --color-surface-muted: #0b1120;
+    --color-surface-soft: #16243a;
+    --color-inverse: #060a14;
+    --color-line: #26364d;
+    --color-line-strong: #556e93;
+
+    --color-fg: #e8eef7;
+    --color-fg-secondary: #a9b8cc;
+    --color-fg-muted: #8193ad;
+    --color-fg-inverse: #ffffff;
+    --color-on-cta: #ffffff;
+
+    --color-brand-navy: #060a14;
+    --color-brand: #1e56fc;
+    --color-brand-text: #7c9bff;
+    --color-brand-hover: #1746d6;
+    --color-brand-soft: #16244a;
+    --color-brand-glow: #93b0ff;
+    --color-brand-sky: #93c5fd;
+    --color-rating: #fbbf24;
+    --color-cta-soft: #16244a;
+
+    --color-success: #4ade80;
+    --color-success-soft: #052e16;
+    --color-success-strong: #166534;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #2e1f05;
+    --color-danger: #f87171;
+    --color-danger-soft: #3b0a0a;
+    --color-danger-strong: #991b1b;
+    --color-info: #38bdf8;
+    --color-info-soft: #082f49;
+    --color-shipping: #a78bfa;
+    --color-shipping-soft: #2a1b4a;
+    --color-neutral-ink: #94a3b8;
+    --color-neutral-soft: #16243a;
+
+    /* Elevasi di mode gelap dibatasi; kedalaman lewat permukaan + garis. */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.32);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@layer base {
+    html {
+        color-scheme: light;
+        -webkit-text-size-adjust: 100%;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background-color: var(--color-surface-muted);
+        color: var(--color-fg);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100vh;
+    }
+
+    :where(h1, h2, h3, h4) {
+        color: var(--color-fg);
+        text-wrap: balance;
+    }
+
+    :where(p) {
+        text-wrap: pretty;
+    }
+
+    /* Fokus terlihat di kedua mode (brief §7.4). */
+    :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+        border-radius: var(--radius-sm);
+    }
+
+    [data-theme='dark'] :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline-color: var(--color-brand-glow);
+    }
+
+    img,
+    video {
+        max-width: 100%;
+        height: auto;
+    }
+
+    ::selection {
+        background-color: color-mix(in oklab, var(--color-brand) 28%, transparent);
+        color: var(--color-fg);
+    }
+}
+
+@layer components {
+    .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -100px;
+        z-index: 100;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        background-color: var(--color-cta);
+        color: var(--color-on-cta);
+        font-weight: 600;
+        transition: top 150ms ease;
+    }
+
+    .skip-link:focus {
+        top: 1rem;
+    }
+
+    /*
+     * Wordmark instanweb: "instan" mengikuti warna teks (hitam di mode terang,
+     * putih di mode gelap), "web" selalu memakai warna primer. Keduanya tetap
+     * tersambung tanpa spasi.
+     */
+    .iw-wordmark {
+        display: inline-flex;
+        align-items: baseline;
+        font-family: var(--font-brand);
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .iw-brand-mark {
+        flex: 0 0 auto;
+        object-fit: contain;
+        transition: transform 180ms ease;
+    }
+
+    .iw-brand-link:hover .iw-brand-mark {
+        transform: translateY(-1px) scale(1.03);
+    }
+
+    /* Skeleton loading tanpa animasi berlebihan. */
+    .skeleton {
+        background-color: var(--color-surface-soft);
+        border-radius: var(--radius-md);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skeleton::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-surface) 65%, transparent), transparent);
+        transform: translateX(-100%);
+        animation: iw-shimmer 1.4s ease-in-out infinite;
+    }
+
+    .iw-fade-in {
+        animation: iw-fade-in 200ms ease-out both;
+    }
+
+    .iw-slide-up {
+        animation: iw-slide-up 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .iw-pop {
+        animation: iw-pop 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* Umpan balik halus untuk kartu yang dapat diklik. */
+    .iw-lift {
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .iw-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Konten rich text artikel */
+    .article-prose {
+        color: var(--color-fg-secondary);
+        font-size: 1rem;
+        line-height: 1.75;
+        overflow-wrap: anywhere;
+    }
+
+    .article-prose > * + * {
+        margin-top: 1rem;
+    }
+
+    .article-prose h2,
+    .article-prose h3,
+    .article-prose h4 {
+        color: var(--color-fg);
+        font-weight: 700;
+        line-height: 1.35;
+        margin-top: 1.75rem;
+    }
+
+    .article-prose h2 {
+        font-size: 1.5rem;
+    }
+
+    .article-prose h3 {
+        font-size: 1.25rem;
+    }
+
+    .article-prose a {
+        color: var(--color-info);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .article-prose img {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-line);
+        margin-inline: auto;
+    }
+
+    .article-prose ul,
+    .article-prose ol {
+        padding-left: 1.5rem;
+    }
+
+    .article-prose ul {
+        list-style: disc;
+    }
+
+    .article-prose ol {
+        list-style: decimal;
+    }
+
+    .article-prose blockquote {
+        border-left: 3px solid var(--color-brand);
+        padding-left: 1rem;
+        color: var(--color-fg-secondary);
+        font-style: italic;
+    }
+
+    .article-prose code {
+        background-color: var(--color-surface-soft);
+        border-radius: var(--radius-sm);
+        padding: 0.15rem 0.35rem;
+        font-size: 0.9em;
+    }
+}
+
+@keyframes iw-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes iw-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes iw-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes iw-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Hormati preferensi pengguna yang tidak menginginkan animasi. */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Cetak: paksa permukaan terang agar struk/pesanan terbaca. */
+@media print {
+    body {
+        background: #fff !important;
+        color: #0f172a !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
 }

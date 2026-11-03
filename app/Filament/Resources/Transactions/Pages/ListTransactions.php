@@ -10,6 +10,8 @@ class ListTransactions extends ListRecords
 {
     protected static string $resource = TransactionResource::class;
 
+    protected ?string $subheading = 'Pantau dan proses pesanan pelanggan dari satu tempat.';
+
     protected function getHeaderActions(): array
     {
         return [

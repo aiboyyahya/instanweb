@@ -1,197 +1,304 @@
 @extends('layouts.app')
 
-@section('title', $product->product_name)
+@section('title', $product->product_name . ' | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-    <section class="min-h-screen bg-white py-20">
-        <div class="max-w-7xl mx-auto px-6 lg:px-16">
-            <div class="bg-white rounded-3xl shadow-md border border-gray-200 overflow-hidden">
+    @php
+        $stock = (int) ($product->stock ?? 0);
+        $price = $product->purchase_price ?? 0;
+        $avg = (float) ($avgRating ?? 0);
+        $count = (int) ($ratingCount ?? 0);
+        $mainImage = $product->image ? asset('storage/' . $product->image) : asset('images/gambar3.jpeg');
+        $gallery = $product->images ?? collect();
+    @endphp
 
-                <div class="px-10 pt-10 text-center border-b border-gray-100 pb-8">
-                    <h1 class="text-4xl font-bold text-gray-900">Detail Produk</h1>
-                    <p class="text-blue-600 mt-3 text-lg">{{ $product->product_name }}</p>
-                </div>
+    <div class="mx-auto max-w-7xl px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-10 lg:pb-10">
+        <x-ui.breadcrumb :items="[
+            ['label' => 'Beranda', 'url' => route('home')],
+            ['label' => 'Produk', 'url' => route('products')],
+            ['label' => $product->product_name],
+        ]" />
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 p-10">
-                    <div class="space-y-8">
-                        <div
-                            class="aspect-square bg-gray-50 rounded-3xl flex items-center justify-center border border-gray-200 shadow-inner">
-                            <img id="main-product-image"
-                                src="{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/500x500' }}"
-                                alt="{{ $product->product_name }}" class="object-contain w-full h-full rounded-2xl p-6">
-                        </div>
-
-                        @if ($product->images && $product->images->count())
-                            <div class="flex flex-wrap justify-center gap-4">
-                                @foreach ($product->images as $img)
-                                    <button type="button"
-                                        onclick="document.getElementById('main-product-image').src='{{ asset('storage/' . $img->image_file) }}'"
-                                        class="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 hover:border-orange-500 transition-all duration-200 shadow-sm">
-                                        <img src="{{ asset('storage/' . $img->image_file) }}"
-                                            class="object-cover w-full h-full">
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
-
-                        <div
-                            class="bg-gray-50 rounded-3xl border border-gray-200 p-4 max-h-[300px] overflow-y-auto shadow-inner">
-                            <h3 class="text-lg font-bold text-gray-900 mb-3">Ulasan Produk</h3>
-                            @if (isset($ratings) && $ratings->count())
-                                <div class="space-y-4">
-                                    @foreach ($ratings as $rating)
-                                        <div
-                                            class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row gap-4">
-                                            <div class="flex flex-col items-center sm:w-28">
-                                                <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-200 shadow-sm">
-                                                    <img src="{{ $rating->customer && $rating->customer->profile_photo ? asset('storage/' . $rating->customer->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode($rating->customer->name ?? 'User') }}"
-                                                        class="object-cover w-full h-full">
-                                                </div>
-                                                <p
-                                                    class="text-xs font-semibold text-gray-800 mt-2 text-center truncate w-20">
-                                                    {{ $rating->customer->name ?? 'Pengguna' }}
-                                                </p>
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="flex items-center text-yellow-400 mb-1">
-                                                    @for ($i = 1; $i <= 5; $i++)
-                                                        <svg class="w-4 h-4 {{ $i <= $rating->rating ? 'text-yellow-400' : 'text-gray-300' }}"
-                                                            fill="currentColor" viewBox="0 0 20 20">
-                                                            <path
-                                                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 00.95-.69l1.286-3.947z" />
-                                                        </svg>
-                                                    @endfor
-                                                </div>
-                                                @if ($rating->comment)
-                                                    <p class="text-gray-800 text-sm leading-snug mb-2">
-                                                        "{{ $rating->comment }}"</p>
-                                                @endif
-                                                @if ($rating->image)
-                                                    <img src="{{ asset('storage/' . $rating->image) }}"
-                                                        class="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm">
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <div
-                                    class="bg-white border border-gray-200 rounded-xl p-4 text-center text-gray-500 shadow-sm text-sm">
-                                    Belum ada ulasan.
-                                </div>
-                            @endif
-                        </div>
+        <div class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-10">
+            {{-- Galeri & ulasan --}}
+            <div class="space-y-8">
+                <section aria-label="Galeri produk" class="rounded-panel border border-line bg-surface p-4 shadow-sm sm:p-6">
+                    <div class="overflow-hidden rounded-xl border border-line bg-surface-soft">
+                        <img id="main-product-image" src="{{ $mainImage }}" alt="{{ $product->product_name }}"
+                            class="aspect-square w-full object-contain p-4 sm:p-8">
                     </div>
 
-                    <div
-                        class="flex flex-col max-w-lg border border-gray-200 rounded-3xl p-10 shadow-sm bg-white sticky top-10 h-fit space-y-8">
+                    @if ($gallery->count())
+                        <div class="mt-4 flex flex-wrap gap-3" role="group" aria-label="Pilih gambar produk">
+                            <button type="button" data-gallery-thumb data-src="{{ $mainImage }}"
+                                class="h-16 w-16 overflow-hidden rounded-lg border-2 border-cta bg-surface-soft p-1 transition"
+                                aria-label="Tampilkan gambar utama" aria-pressed="true">
+                                <img src="{{ $mainImage }}" alt="" class="h-full w-full rounded object-cover">
+                            </button>
 
+                            @foreach ($gallery as $img)
+                                @php $thumb = asset('storage/' . $img->image_file); @endphp
+                                <button type="button" data-gallery-thumb data-src="{{ $thumb }}"
+                                    class="h-16 w-16 overflow-hidden rounded-lg border-2 border-line bg-surface-soft p-1 transition hover:border-line-strong"
+                                    aria-label="Tampilkan gambar {{ $loop->iteration }}"
+                                    aria-pressed="false">
+                                    <img src="{{ $thumb }}" alt="" class="h-full w-full rounded object-cover">
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+                </section>
+
+                {{-- Ulasan --}}
+                <section aria-labelledby="ulasan-produk"
+                    class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h2 class="text-4xl font-semibold text-gray-900">{{ $product->product_name }}</h2>
-                            <p class="mt-2 text-gray-700 leading-relaxed">{{ $product->description }}</p>
+                            <h2 id="ulasan-produk" class="text-lg font-semibold text-fg">Ulasan Produk</h2>
+                            <p class="mt-1 text-sm text-fg-muted">
+                                {{ $count > 0 ? 'Rata-rata ' . number_format($avg, 1, ',', '.') . ' dari 5' : 'Belum ada penilaian' }}
+                            </p>
                         </div>
 
-                        <div class="flex items-center mt-4 space-x-2">
-                            <div class="flex items-center text-yellow-400">
-                                @php $avg = isset($avgRating) ? round($avgRating) : 0; @endphp
-                                @for ($i = 1; $i <= 5; $i++)
-                                    <svg class="w-5 h-5 {{ $i <= $avg ? 'text-yellow-400' : 'text-gray-300' }}"
-                                        fill="currentColor" viewBox="0 0 20 20">
-                                        <path
-                                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 00.95-.69l1.286-3.947z" />
-                                    </svg>
-                                @endfor
-                            </div>
-                            <span class="text-gray-600 text-sm font-medium">({{ $ratingCount ?? 0 }} ulasan) • rata-rata
-                                {{ number_format($avgRating ?? 0, 1) }}</span>
-                        </div>
+                        <x-ui.rating-stars :rating="$avg" :count="$count" size="md" show-value />
+                    </div>
 
-                        <p class="text-3xl font-bold text-gray-900">
-                            Rp {{ number_format($product->purchase_price ?? 0, 0, ',', '.') }}
-                        </p>
+                    <div class="mt-5 space-y-4">
+                        @forelse ($ratings as $rating)
+                            <article class="rounded-card border border-line bg-surface-muted p-4">
+                                <div class="flex gap-3">
+                                    @if ($rating->customer && $rating->customer->profile_photo)
+                                        <img src="{{ asset('storage/' . $rating->customer->profile_photo) }}" alt=""
+                                            class="h-10 w-10 shrink-0 rounded-full object-cover">
+                                    @else
+                                        <span
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-sm font-bold text-fg-secondary"
+                                            aria-hidden="true">
+                                            {{ strtoupper(substr($rating->customer->name ?? 'P', 0, 1)) }}
+                                        </span>
+                                    @endif
 
-                        <div class="flex items-center gap-4">
-                            <button type="button" id="decrement-btn"
-                                class="w-12 h-12 rounded-full bg-gray-200 text-gray-800 font-bold hover:bg-gray-300">−</button>
-                            <input type="number" id="product-quantity" value="1" min="1"
-                                max="{{ $product->stock }}" readonly
-                                class="w-20 text-center rounded-lg border border-gray-300 py-3 font-semibold text-lg">
-                            <button type="button" id="increment-btn"
-                                class="w-12 h-12 rounded-full bg-gray-200 text-gray-800 font-bold hover:bg-gray-300">+</button>
-                        </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                            <p class="text-sm font-semibold text-fg">
+                                                {{ $rating->customer->name ?? 'Pengguna' }}
+                                            </p>
+                                            <x-ui.rating-stars :rating="$rating->rating" />
+                                        </div>
 
-                        <p class="text-sm text-gray-600 font-semibold">Hanya tersisa {{ $product->stock }} barang</p>
+                                        @if ($rating->comment)
+                                            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-fg-secondary">
+                                                {{ $rating->comment }}</p>
+                                        @else
+                                            <p class="mt-2 text-sm italic text-fg-muted">Tanpa komentar.</p>
+                                        @endif
 
-                        <div class="flex gap-4 w-full">
-                            <form id="buy-now-form" method="GET" action="{{ route('checkout.page') }}" class="flex-1">
-                                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                <input type="hidden" name="quantity" id="buy-now-qty" value="1">
-                                <input type="hidden" name="direct" value="1">
-                                <button type="submit"
-                                    class="w-full py-4 bg-black text-white rounded-lg font-semibold hover:bg-gray-700 transition">
-                                    Beli Sekarang
-                                </button>
-                            </form>
-
-                            <form id="add-to-cart-form" method="POST" action="{{ route('addToCart') }}" class="flex-1">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                <input type="hidden" name="quantity" id="addcart-qty" value="1">
-                                <button type="submit"
-                                    class="w-full py-4 border border-black text-gray-700 rounded-lg font-semibold hover:bg-green-50 transition">
-                                    Tambah ke Keranjang
-                                </button>
-                            </form>
-                        </div>
-
-
-                        <div class="border-t border-gray-200 pt-6 space-y-6 text-gray-700 text-sm">
-                            <div class="flex items-start gap-4">
-                                <svg class="w-6 h-6 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor"
-                                    stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                <div>
-                                    <h3 class="font-semibold text-gray-900">Pengembalian Barang</h3>
-                                    <p>Gratis pengembalian dalam 30 hari.</p>
+                                        @if ($rating->image)
+                                            <img src="{{ asset('storage/' . $rating->image) }}"
+                                                alt="Foto ulasan dari {{ $rating->customer->name ?? 'pengguna' }}"
+                                                class="mt-3 h-24 w-24 rounded-lg border border-line object-cover"
+                                                loading="lazy">
+                                        @endif
+                                    </div>
                                 </div>
+                            </article>
+                        @empty
+                            <x-ui.empty-state title="Belum ada ulasan" icon="chat"
+                                description="Ulasan akan muncul setelah pembeli menyelesaikan pesanan dan mengirim penilaian." />
+                        @endforelse
+                    </div>
+                </section>
+            </div>
+
+            {{-- Panel pembelian --}}
+            <div id="panel-beli" class="scroll-mt-24 lg:sticky lg:top-24 lg:h-fit">
+                <div class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6">
+                    @if ($product->category)
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">
+                            {{ $product->category->category_name }}</p>
+                    @endif
+
+                    <h1 class="mt-1 text-2xl font-bold leading-tight tracking-tight text-fg sm:text-3xl">
+                        {{ $product->product_name }}
+                    </h1>
+
+                    <div class="mt-3 flex flex-wrap items-center gap-3">
+                        <x-ui.rating-stars :rating="$avg" :count="$count" size="md" show-value />
+                        <span class="text-xs text-fg-muted">{{ $count }} ulasan</span>
+                    </div>
+
+                    <p class="mt-5 text-3xl font-extrabold tracking-tight text-fg">
+                        Rp {{ number_format($price, 0, ',', '.') }}
+                    </p>
+
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        @if ($stock > 0)
+                            <x-ui.badge :variant="$stock <= 5 ? 'warning' : 'success'">
+                                Stok tersedia: {{ $stock }}
+                            </x-ui.badge>
+                        @else
+                            <x-ui.badge variant="danger">Stok habis</x-ui.badge>
+                        @endif
+                    </div>
+
+                    @if ($product->description)
+                        <div class="mt-5 border-t border-line pt-5">
+                            <h2 class="text-sm font-semibold text-fg">Deskripsi</h2>
+                            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-fg-secondary">
+                                {{ $product->description }}
+                            </p>
+                        </div>
+                    @endif
+
+                    {{-- Jumlah --}}
+                    <div class="mt-6">
+                        <label for="product-quantity" class="block text-sm font-medium text-fg-secondary">Jumlah</label>
+
+                        <div class="mt-2 flex items-center gap-3">
+                            <button type="button" id="decrement-btn" @disabled($stock <= 0)
+                                class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-surface text-fg transition hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-40"
+                                aria-label="Kurangi jumlah">
+                                <x-ui.icon name="minus" class="h-4 w-4" />
+                            </button>
+
+                            <input type="number" id="product-quantity" value="1" min="1"
+                                max="{{ max($stock, 1) }}" readonly
+                                class="h-11 w-16 rounded-field border border-line-strong bg-surface text-center text-base font-semibold text-fg"
+                                aria-live="polite">
+
+                            <button type="button" id="increment-btn" @disabled($stock <= 0)
+                                class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-surface text-fg transition hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-40"
+                                aria-label="Tambah jumlah">
+                                <x-ui.icon name="plus" class="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Aksi pembelian --}}
+                    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                        <form id="buy-now-form" method="GET" action="{{ route('checkout.page') }}">
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <input type="hidden" name="quantity" id="buy-now-qty" value="1">
+                            <input type="hidden" name="direct" value="1">
+                            <button type="submit" @disabled($stock <= 0)
+                                class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field bg-cta px-4 text-sm font-semibold text-on-cta shadow-sm transition hover:bg-cta-hover disabled:pointer-events-none disabled:opacity-50">
+                                <x-ui.icon name="shopping-bag" class="h-4 w-4" />
+                                {{ $stock > 0 ? 'Beli Sekarang' : 'Stok habis' }}
+                            </button>
+                        </form>
+
+                        <form id="add-to-cart-form" method="POST" action="{{ route('addToCart') }}">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <input type="hidden" name="quantity" id="addcart-qty" value="1">
+                            <button type="submit" @disabled($stock <= 0)
+                                class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-50">
+                                <x-ui.icon name="package" class="h-4 w-4" />
+                                Tambah ke Keranjang
+                            </button>
+                        </form>
+                    </div>
+
+                    @guest
+                        <p class="mt-3 text-xs leading-relaxed text-fg-muted">
+                            Anda perlu <a href="{{ route('login.form') }}"
+                                class="font-semibold text-info underline underline-offset-2">masuk</a> untuk menambahkan
+                            produk ke keranjang atau melakukan checkout.
+                        </p>
+                    @endguest
+
+                    <div class="mt-6 space-y-3 border-t border-line pt-5 text-sm text-fg-secondary">
+                        <div class="flex items-start gap-3">
+                            <x-ui.icon name="shield" class="mt-0.5 h-5 w-5 text-success" />
+                            <div>
+                                <p class="font-semibold text-fg">Pengembalian barang</p>
+                                <p class="text-fg-muted">Gratis pengembalian dalam 30 hari.</p>
                             </div>
                         </div>
-
+                        <div class="flex items-start gap-3">
+                            <x-ui.icon name="truck" class="mt-0.5 h-5 w-5 text-info" />
+                            <div>
+                                <p class="font-semibold text-fg">Pengiriman</p>
+                                <p class="text-fg-muted">Kurir dipilih saat checkout.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
             </div>
         </div>
-    </section>
+    </div>
 
+    {{-- Bar aksi mobile --}}
+    <div
+        class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 p-3 backdrop-blur lg:hidden">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
+            <div class="min-w-0">
+                <p class="truncate text-xs text-fg-muted">{{ $product->product_name }}</p>
+                <p class="text-lg font-bold text-fg">Rp {{ number_format($price, 0, ',', '.') }}</p>
+            </div>
+            <a href="#panel-beli"
+                class="inline-flex min-h-11 items-center justify-center rounded-field bg-cta px-5 text-sm font-semibold text-on-cta">
+                {{ $stock > 0 ? 'Beli Sekarang' : 'Stok habis' }}
+            </a>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function () {
             const inc = document.getElementById('increment-btn');
             const dec = document.getElementById('decrement-btn');
             const qtyInput = document.getElementById('product-quantity');
-            const max = parseInt(qtyInput.getAttribute('max'));
             const buyQty = document.getElementById('buy-now-qty');
             const cartQty = document.getElementById('addcart-qty');
 
-            function sync() {
-                buyQty.value = qtyInput.value;
-                cartQty.value = qtyInput.value;
+            if (qtyInput) {
+                const max = parseInt(qtyInput.getAttribute('max'), 10) || 1;
+
+                function sync() {
+                    if (buyQty) buyQty.value = qtyInput.value;
+                    if (cartQty) cartQty.value = qtyInput.value;
+                }
+
+                inc?.addEventListener('click', function () {
+                    const value = parseInt(qtyInput.value, 10) || 1;
+                    if (value < max) {
+                        qtyInput.value = value + 1;
+                    }
+                    sync();
+                });
+
+                dec?.addEventListener('click', function () {
+                    const value = parseInt(qtyInput.value, 10) || 1;
+                    if (value > 1) {
+                        qtyInput.value = value - 1;
+                    }
+                    sync();
+                });
+
+                sync();
             }
 
-            inc.addEventListener('click', () => {
-                let val = parseInt(qtyInput.value);
-                if (val < max) qtyInput.value = val + 1;
-                sync();
-            });
+            // Galeri: tombol thumbnail mengganti gambar utama.
+            const mainImage = document.getElementById('main-product-image');
+            const thumbs = document.querySelectorAll('[data-gallery-thumb]');
 
-            dec.addEventListener('click', () => {
-                let val = parseInt(qtyInput.value);
-                if (val > 1) qtyInput.value = val - 1;
-                sync();
-            });
+            thumbs.forEach(function (thumb) {
+                thumb.addEventListener('click', function () {
+                    if (!mainImage) {
+                        return;
+                    }
 
-            sync();
+                    mainImage.src = thumb.dataset.src;
+
+                    thumbs.forEach(function (item) {
+                        item.setAttribute('aria-pressed', item === thumb ? 'true' : 'false');
+                        item.classList.toggle('border-cta', item === thumb);
+                        item.classList.toggle('border-line', item !== thumb);
+                    });
+                });
+            });
         });
     </script>
-@endsection
+@endpush

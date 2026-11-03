@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Categories\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\ImageColumn;
@@ -15,11 +16,41 @@ class CategoriesTable
     {
         return $table
             ->columns([
-                TextColumn::make('id')->sortable(),
-                TextColumn::make('category_name')->searchable()->sortable()->label('Nama Kategori'),
-                TextColumn::make('slug'),
-                ImageColumn::make('icon')->label('Ikon')->square(),
-                TextColumn::make('created_at')->dateTime('d M Y'),
+                ImageColumn::make('icon')
+                    ->label('Ikon')
+                    ->disk('public')
+                    ->square()
+                    ->imageSize(36)
+                    ->placeholder('—'),
+
+                TextColumn::make('category_name')
+                    ->label('Nama Kategori')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('semibold'),
+
+                TextColumn::make('slug')
+                    ->label('Slug')
+                    ->searchable()
+                    ->copyable()
+                    ->color('gray'),
+
+                TextColumn::make('products_count')
+                    ->label('Jumlah Produk')
+                    ->counts('products')
+                    ->badge()
+                    ->color('info'),
+
+                TextColumn::make('id')
+                    ->label('#')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -31,6 +62,15 @@ class CategoriesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+            ])
+            ->defaultSort('category_name', 'asc')
+            ->striped()
+            ->emptyStateIcon('heroicon-o-tag')
+            ->emptyStateHeading('Belum ada kategori')
+            ->emptyStateDescription('Kelompokkan produk dengan kategori agar pelanggan mudah menemukannya.')
+            ->emptyStateActions([
+                CreateAction::make()
+                    ->label('Tambah Kategori'),
             ]);
     }
 }

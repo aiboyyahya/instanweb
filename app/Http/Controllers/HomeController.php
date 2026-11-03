@@ -118,7 +118,7 @@ class HomeController extends Controller
         $ratingCount = (int) Rating::where('product_id', $product->id)->count();
         $ratings = Rating::where('product_id', $product->id)->with('customer')->latest()->get();
 
-        return view('detail', compact('product', 'avgRating', 'ratingCount', 'ratings'));
+        return view('Detail', compact('product', 'avgRating', 'ratingCount', 'ratings'));
     }
 
     public function addToCart(Request $request)
@@ -154,7 +154,7 @@ class HomeController extends Controller
     public function viewCart()
     {
         $cart = session()->get('cart', []);
-        return view('cart', compact('cart'));
+        return view('Cart', compact('cart'));
     }
 
     public function removeCart($id)

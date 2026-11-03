@@ -9,13 +9,25 @@ use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\RajaOngkirController;
 use App\Http\Controllers\ArticleController;
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/beranda', [HomeController::class, 'index'])->name('home');
 
-   Route::get('/google/redirect', [GoogleLoginController::class, 'redirectToGoogle'])->name('google.redirect');
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('home');
+    }
+    return view('selamatdatang');
+})->name('selamatdatang');
+
+// Alias publik untuk tautan lama/berbagi.
+Route::view('/selamatdatang', 'selamatdatang')->name('welcome');
+
+Route::get('/google/redirect', [GoogleLoginController::class, 'redirectToGoogle'])->name('google.redirect');
 Route::get('/login', [GoogleLoginController::class, 'loginForm'])->name('login.form');
 Route::post('/login/email', [GoogleLoginController::class, 'loginEmail'])->name('login.email');
 Route::get('/register', [GoogleLoginController::class, 'registerForm'])->name('register.form');
 Route::post('/register/email', [GoogleLoginController::class, 'registerEmail'])->name('register.email');
+Route::get('/register/toko', [GoogleLoginController::class, 'storeRegisterForm'])->name('register.store.form');
+Route::post('/register/toko', [GoogleLoginController::class, 'storeRegister'])->name('register.store');
 Route::get('/google/callback', [GoogleLoginController::class, 'handleGoogleCallback'])->name('google.callback');
 
 Route::post('/logout', [GoogleLoginController::class, 'logout'])->name('logout');
@@ -49,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/pesanan/{id}', [HomeController::class, 'deleteOrder'])->name('order.delete');
     Route::get('/profile', [ProfilController::class, 'index'])->name('profil');
     Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
+    Route::put('/profil/toko', [ProfilController::class, 'updateStore'])->name('profil.store.update');
     // Ratings
     Route::post('/ratings', [\App\Http\Controllers\ReviewController::class, 'store'])->name('ratings.store');
     Route::get('/ratings/create', [\App\Http\Controllers\ReviewController::class, 'create'])->name('ratings.create');

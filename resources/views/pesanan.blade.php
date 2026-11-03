@@ -1,216 +1,247 @@
 @extends('layouts.app')
 
-@section('title', 'Pesanan Saya')
-
-@if (session('success'))
-    <div class="fixed top-6 right-6 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 animate-bounce">
-        {{ session('success') }}
-    </div>
-@endif
+@section('title', 'Pesanan Saya | ' . (store()->store_name ?? 'instanweb'))
 
 @section('content')
-    <section class="py-20 bg-white min-h-screen">
-        <div class="max-w-6xl mx-auto px-6 lg:px-12 ">
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-10 text-center gap-3 ">Pesanan Saya</h1>
+    @php
+        $tabs = [
+            'all' => ['label' => 'Semua', 'empty' => 'Belum ada pesanan.', 'count' => $transactions->count()],
+            'pending' => [
+                'label' => 'Belum Bayar',
+                'empty' => 'Belum ada pesanan yang menunggu pembayaran.',
+                'count' => $transactions->where('status', 'pending')->count(),
+            ],
+            'packing' => [
+                'label' => 'Dikemas',
+                'empty' => 'Belum ada pesanan yang sedang dikemas.',
+                'count' => $transactions->where('status', 'packing')->count(),
+            ],
+            'sent' => [
+                'label' => 'Dikirim',
+                'empty' => 'Belum ada pesanan yang sedang dikirim.',
+                'count' => $transactions->where('status', 'sent')->count(),
+            ],
+            'done' => [
+                'label' => 'Selesai',
+                'empty' => 'Belum ada pesanan yang telah selesai.',
+                'count' => $transactions->where('status', 'done')->count(),
+            ],
+        ];
+    @endphp
 
-            <div class="mb-8 border-b border-gray-200 ">
-                <nav class="-mb-px flex justify-center space-x-8 " aria-label="Tabs">
-                    <a href="{{ route('orders', ['status' => 'all']) }}"
-                        class="tab-link {{ isset($status) && $status == 'all' ? 'border-orange-500 text-orange-600' : 'border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-600' }} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                        data-status="all">Semua</a>
-                    <a href="{{ route('orders', ['status' => 'pending']) }}"
-                        class="tab-link {{ isset($status) && $status == 'pending' ? 'border-orange-500 text-orange-600' : 'border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-600' }} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                        data-status="pending">Belum Bayar</a>
-                    <a href="{{ route('orders', ['status' => 'packing']) }}"
-                        class="tab-link {{ isset($status) && $status == 'packing' ? 'border-orange-500 text-orange-600' : 'border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-600' }} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                        data-status="packing">Dikemas</a>
-                    <a href="{{ route('orders', ['status' => 'sent']) }}"
-                        class="tab-link {{ isset($status) && $status == 'sent' ? 'border-orange-500 text-orange-600' : 'border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-600' }} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                        data-status="sent">Dikirim</a>
-                    <a href="{{ route('orders', ['status' => 'done']) }}"
-                        class="tab-link {{ isset($status) && $status == 'done' ? 'border-orange-500 text-orange-600' : 'border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-600' }} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                        data-status="done">Selesai</a>
-                </nav>
-            </div>
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <x-ui.page-header eyebrow="Akun saya" title="Pesanan Saya"
+            description="Pantau status pesanan dan konfirmasi pembayaran Anda.">
+            <x-ui.button :href="route('products')" variant="outline">
+                <x-ui.icon name="shopping-bag" class="h-4 w-4" /> Belanja Lagi
+            </x-ui.button>
+        </x-ui.page-header>
 
-            <div id="orders-container" class="space-y-8">
-                @foreach (['all', 'pending', 'packing', 'sent', 'done'] as $statusKey)
-                    @php
-                        $filtered = $statusKey === 'all' ? $transactions : $transactions->where('status', $statusKey);
-                    @endphp
-
-                    <div class="order-section {{ $statusKey }} space-y-8" data-status="{{ $statusKey }}">
-                        @foreach ($filtered as $transaction)
-                            @php
-                                $statusClass = match ($transaction->status) {
-                                    'pending' => 'bg-yellow-100 text-yellow-800',
-                                    'packing' => 'bg-blue-100 text-blue-800',
-                                    'sent' => 'bg-purple-100 text-purple-800',
-                                    'done' => 'bg-green-100 text-green-800',
-                                    default => 'bg-red-100 text-red-800',
-                                };
-                            @endphp
-
-                            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-lg transition order-item"
-                                data-status="{{ $transaction->status }}">
-                                <div class="flex justify-between mb-4">
-                                    <p class="text-gray-500 text-sm font-medium">Tanggal:
-                                        {{ $transaction->created_at->format('d M Y, H:i') }}</p>
-                                    <span
-                                        class="inline-flex px-4 py-1.5 rounded-full text-sm font-medium {{ $statusClass }}">{{ ucfirst($transaction->status) }}</span>
-                                </div>
-
-                                @if ($transaction->status == 'sent' && $transaction->tracking_number)
-                                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-                                        <div class="flex items-center gap-2">
-                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4">
-                                                </path>
-                                            </svg>
-                                            <div>
-                                                <p class="text-sm font-medium text-blue-900">Nomor Resi</p>
-                                                <p class="text-sm font-mono text-blue-800">
-                                                    {{ $transaction->tracking_number }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                <div class="space-y-5">
-                                    @foreach ($transaction->items as $item)
-                                        <div class="bg-gray-50 p-5 rounded-2xl">
-                                            <div class="flex items-center gap-4">
-                                                <img src="{{ $item->product->image ? asset('storage/' . $item->product->image) : 'https://via.placeholder.com/80' }}"
-                                                    class="w-20 h-20 object-cover rounded-xl shadow-sm">
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="font-semibold text-gray-900 text-lg truncate">
-                                                        {{ $item->product->product_name }}</p>
-                                                    <p class="text-sm text-gray-500 mt-1">Jumlah: {{ $item->quantity }} ×
-                                                        Rp {{ number_format($item->price, 0, ',', '.') }}</p>
-                                                </div>
-                                                <p class="text-gray-800 font-bold text-lg">Rp
-                                                    {{ number_format($item->price * $item->quantity, 0, ',', '.') }}</p>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-
-                                <div class="mt-6 flex justify-between items-center border-t pt-5">
-                                    <div>
-                                        <p class="text-sm text-gray-500 mb-1">Total Pembayaran</p>
-                                        <p class="text-xl font-bold text-orange-600">Rp
-                                            {{ number_format($transaction->total, 0, ',', '.') }}</p>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <a href="{{ route('order.detail', $transaction->id) }}"
-                                            class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-md transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                            <span>Detail</span>
-                                        </a>
-
-                                        @if ($transaction->status == 'done')
-                                            @php
-                                                $allRated = $transaction->items->every(function ($item) use (
-                                                    $transaction,
-                                                ) {
-                                                    return \App\Models\Rating::where('customer_id', auth()->id())
-                                                        ->where('product_id', $item->product->id)
-                                                        ->where('transaction_id', $transaction->id)
-                                                        ->exists();
-                                                });
-                                            @endphp
-                                            @if (!$allRated)
-                                                <a href="{{ route('ratings.create', ['product_id' => $transaction->items->first()->product->id, 'transaction_id' => $transaction->id]) }}"
-                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
-                                                    Kirim Ulasan
-                                                </a>
-                                            @endif
-                                        @endif
-
-                                        @if ($transaction->status == 'pending')
-                                            <form method="POST" action="{{ route('order.delete', $transaction->id) }}"
-                                                onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2.5 rounded-lg font-medium transition shadow-sm">Batal</button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        @if ($filtered->isEmpty())
-                            <div class="empty-state {{ $statusKey }}" data-status="{{ $statusKey }}">
-                                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-5.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H3" />
-                                    </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada pesanan</h3>
-                                    <p class="mt-1 text-sm text-gray-500">
-                                        @switch($statusKey)
-                                            @case('pending')
-                                                Belum ada pesanan yang belum dibayar.
-                                            @break
-
-                                            @case('packing')
-                                                Belum ada pesanan yang sedang dikemas.
-                                            @break
-
-                                            @case('sent')
-                                                Belum ada pesanan yang sedang dikirim.
-                                            @break
-
-                                            @case('done')
-                                                Belum ada pesanan yang telah selesai.
-                                            @break
-                                        @endswitch
-                                    </p>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
+        {{-- Tab status --}}
+        <div class="mt-8 overflow-x-auto">
+            <div role="tablist" aria-label="Filter status pesanan"
+                class="flex min-w-max items-center gap-1 border-b border-line pb-px">
+                @foreach ($tabs as $key => $tab)
+                    <a href="{{ route('orders', ['status' => $key]) }}" role="tab"
+                        data-order-tab="{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}"
+                        aria-controls="orders-panel" tabindex="{{ $loop->first ? '0' : '-1' }}"
+                        class="order-tab inline-flex min-h-11 items-center gap-2 rounded-t-lg border-b-2 px-4 text-sm font-medium transition-colors {{ $loop->first ? 'border-cta text-fg' : 'border-transparent text-fg-muted hover:text-fg' }}">
+                        {{ $tab['label'] }}
+                        <span
+                            class="rounded-full bg-surface-soft px-1.5 py-0.5 text-[11px] font-semibold text-fg-secondary">{{ $tab['count'] }}</span>
+                    </a>
                 @endforeach
             </div>
         </div>
-    </section>
 
+        <div id="orders-panel" role="tabpanel" class="mt-6 space-y-5">
+            @forelse ($transactions as $transaction)
+                @php
+                    $statusClass = match ($transaction->status) {
+                        'packing' => 'border-info/30',
+                        'sent' => 'border-shipping/30',
+                        'done' => 'border-success/30',
+                        'cancelled' => 'border-danger/30',
+                        default => 'border-warning/30',
+                    };
+
+                    $allRated =
+                        $transaction->status === 'done' &&
+                        $transaction->items->every(function ($item) use ($transaction) {
+                            return \App\Models\Rating::where('customer_id', auth()->id())
+                                ->where('product_id', $item->product->id)
+                                ->where('transaction_id', $transaction->id)
+                                ->exists();
+                        });
+                @endphp
+
+                <article data-order-item data-status="{{ $transaction->status }}"
+                    class="rounded-panel border {{ $statusClass }} bg-surface shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-4 sm:px-5">
+                        <div>
+                            <p class="font-mono text-sm font-semibold text-fg">#{{ $transaction->order_code }}</p>
+                            <p class="mt-1 text-xs text-fg-muted">
+                                {{ $transaction->created_at->format('d M Y, H:i') }}
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <x-ui.status-badge type="order" :status="$transaction->status" />
+                            <x-ui.status-badge type="payment" :status="$transaction->payment_status" />
+                        </div>
+                    </div>
+
+                    @if ($transaction->status === 'sent' && $transaction->tracking_number)
+                        <div class="mx-4 mt-4 flex items-start gap-3 rounded-card border border-shipping/30 bg-shipping-soft p-3 sm:mx-5">
+                            <x-ui.icon name="truck" class="mt-0.5 h-5 w-5 text-shipping" />
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-shipping">Nomor resi</p>
+                                <p class="mt-0.5 font-mono text-sm text-shipping">{{ $transaction->tracking_number }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    <ul class="divide-y divide-line px-4 sm:px-5">
+                        @foreach ($transaction->items as $item)
+                            @php
+                                $image = $item->product && $item->product->image
+                                    ? asset('storage/' . $item->product->image)
+                                    : asset('images/gambar3.jpeg');
+                            @endphp
+
+                            <li class="flex items-center gap-3 py-4">
+                                <img src="{{ $image }}" alt=""
+                                    class="h-16 w-16 shrink-0 rounded-lg border border-line object-cover">
+
+                                <div class="min-w-0 flex-1">
+                                    <p class="line-clamp-2 text-sm font-semibold text-fg">
+                                        {{ $item->product->product_name ?? 'Produk tidak tersedia' }}
+                                    </p>
+                                    <p class="mt-1 text-xs text-fg-muted">
+                                        {{ $item->quantity }} × Rp {{ number_format($item->price, 0, ',', '.') }}
+                                    </p>
+                                </div>
+
+                                <p class="text-sm font-semibold text-fg">
+                                    Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}
+                                </p>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-4 sm:px-5">
+                        <div>
+                            <p class="text-xs text-fg-muted">Total pembayaran</p>
+                            <p class="text-lg font-bold text-fg">Rp
+                                {{ number_format($transaction->total, 0, ',', '.') }}</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <x-ui.button :href="route('order.detail', $transaction->id)" variant="outline" size="sm">
+                                <x-ui.icon name="search" class="h-4 w-4" /> Detail
+                            </x-ui.button>
+
+                            @if ($transaction->status === 'done' && ! $allRated)
+                                <x-ui.button :href="route('ratings.create', [
+                                    'product_id' => $transaction->items->first()->product->id,
+                                    'transaction_id' => $transaction->id,
+                                ])" size="sm">
+                                    Kirim Ulasan
+                                </x-ui.button>
+                            @endif
+
+                            @if ($transaction->status === 'pending')
+                                <form method="POST" action="{{ route('order.delete', $transaction->id) }}"
+                                    data-confirm="Batalkan pesanan #{{ $transaction->order_code }}? Stok produk akan dikembalikan.">
+                                    @csrf
+                                    @method('DELETE')
+                                    <x-ui.button type="submit" variant="danger" size="sm">Batalkan</x-ui.button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                </article>
+            @empty
+                <div data-orders-empty="all">
+                    <x-ui.empty-state title="Belum ada pesanan"
+                        description="Pesanan Anda akan tampil di sini setelah Anda melakukan checkout." icon="package">
+                        <x-ui.button :href="route('products')">Mulai Belanja</x-ui.button>
+                    </x-ui.empty-state>
+                </div>
+            @endforelse
+
+            @foreach ($tabs as $key => $tab)
+                @if ($key !== 'all')
+                    <div data-orders-empty="{{ $key }}" class="hidden">
+                        <x-ui.empty-state :title="'Belum ada pesanan ' . strtolower($tab['label'])"
+                            :description="$tab['empty']" icon="package">
+                            <x-ui.button :href="route('products')" variant="outline">Lihat Produk</x-ui.button>
+                        </x-ui.empty-state>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabs = document.querySelectorAll('.tab-link');
-            const sections = document.querySelectorAll('.order-section');
-            const emptyStates = document.querySelectorAll('.empty-state');
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = Array.from(document.querySelectorAll('[data-order-tab]'));
+            const items = Array.from(document.querySelectorAll('[data-order-item]'));
+            const emptyStates = Array.from(document.querySelectorAll('[data-orders-empty]'));
 
-            tabs.forEach(tab => {
-                tab.addEventListener('click', e => {
-                    e.preventDefault();
-                    tabs.forEach(t => t.classList.remove('border-orange-500', 'text-orange-600'));
-                    tab.classList.add('border-orange-500', 'text-orange-600');
-                    const status = tab.dataset.status;
-                    sections.forEach(section => {
-                        section.classList.toggle('hidden', !(status === 'all' ? section
-                            .dataset.status === 'all' : section.dataset.status ===
-                            status));
-                    });
-                    emptyStates.forEach(emptyState => {
-                        emptyState.classList.toggle('hidden', !(status !== 'all' &&
-                            emptyState.dataset.status === status));
-                    });
+            if (!tabs.length) {
+                return;
+            }
+
+            function activate(status) {
+                tabs.forEach(function (tab) {
+                    const active = tab.dataset.orderTab === status;
+                    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+                    tab.setAttribute('tabindex', active ? '0' : '-1');
+                    tab.classList.toggle('border-cta', active);
+                    tab.classList.toggle('text-fg', active);
+                    tab.classList.toggle('border-transparent', !active);
+                    tab.classList.toggle('text-fg-muted', !active);
+                });
+
+                let visible = 0;
+
+                items.forEach(function (item) {
+                    const show = status === 'all' || item.dataset.status === status;
+                    item.classList.toggle('hidden', !show);
+                    if (show) {
+                        visible += 1;
+                    }
+                });
+
+                emptyStates.forEach(function (empty) {
+                    const show = visible === 0 && empty.dataset.ordersEmpty === status;
+                    empty.classList.toggle('hidden', !show);
+                });
+            }
+
+            tabs.forEach(function (tab, index) {
+                tab.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    activate(tab.dataset.orderTab);
+                });
+
+                tab.addEventListener('keydown', function (event) {
+                    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    const direction = event.key === 'ArrowRight' ? 1 : -1;
+                    const next = tabs[(index + direction + tabs.length) % tabs.length];
+                    next.focus();
+                    activate(next.dataset.orderTab);
                 });
             });
 
-            document.querySelector('.tab-link[data-status="all"]').click();
+            activate('all');
         });
     </script>
-@endsection
+@endpush

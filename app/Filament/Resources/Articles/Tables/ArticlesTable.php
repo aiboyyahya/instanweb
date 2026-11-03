@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Articles\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\ImageColumn;
@@ -15,27 +16,41 @@ class ArticlesTable
     {
         return $table
             ->columns([
+                ImageColumn::make('image')
+                    ->label('Gambar')
+                    ->disk('public')
+                    ->square()
+                    ->imageSize(44),
+
                 TextColumn::make('title')
+                    ->label('Judul')
                     ->searchable()
                     ->sortable()
-                    ->label('Judul'),
+                    ->weight('semibold')
+                    ->wrap(),
+
                 TextColumn::make('user.name')
+                    ->label('Penulis')
                     ->searchable()
-                    ->label('Penulis'),
-                ImageColumn::make('image')
-                    ->label('Gambar Utama')
-                    ->disk('public')
-                    ->circular(),
+                    ->placeholder('Tanpa penulis'),
+
+                TextColumn::make('category.category_name')
+                    ->label('Kategori')
+                    ->badge()
+                    ->color('gray')
+                    ->placeholder('Tanpa kategori'),
+
                 ImageColumn::make('thumbnail')
                     ->label('Thumbnail')
                     ->disk('public')
-                    ->circular(),
-                TextColumn::make('category.category_name')
-                    ->label('Kategori')
-                    ->placeholder('Tidak ada kategori'),
+                    ->square()
+                    ->imageSize(36)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->label('Ditulis pada'),
+                    ->label('Ditulis pada')
+                    ->dateTime('d M Y')
+                    ->sortable(),
             ])
             ->filters([
                 //
@@ -47,6 +62,15 @@ class ArticlesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->emptyStateIcon('heroicon-o-document-text')
+            ->emptyStateHeading('Belum ada artikel')
+            ->emptyStateDescription('Bagikan informasi dan cerita toko melalui artikel.')
+            ->emptyStateActions([
+                CreateAction::make()
+                    ->label('Tulis Artikel'),
             ]);
     }
 }
