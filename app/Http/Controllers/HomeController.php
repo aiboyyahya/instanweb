@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\CheckoutException;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Rating;
 use App\Models\Store;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Services\RegionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class HomeController extends Controller
 {
@@ -30,6 +35,10 @@ class HomeController extends Controller
 
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
+        }
+
+        if ($request->filled('store')) {
+            $query->where('store_id', $request->store);
         }
 
         $products = $query->with('category')->limit(12)->get();
@@ -56,11 +65,80 @@ class HomeController extends Controller
         return response()->json($result);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::latest()->take(8)->get();
+        // Beranda pembeli menampilkan direktori toko UMKM. Setiap kartu
+        // mengarah ke storefront mandiri milik pemilik toko.
+        $search = trim((string) $request->input('q', ''));
 
+        $stores = Store::query()
+            ->withCount(['products' => fn ($query) => $query->where('status', 'active')])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('store_name', 'like', '%' . $search . '%')
+                        ->orWhere('description', 'like', '%' . $search . '%')
+                        ->orWhere('address', 'like', '%' . $search . '%');
+                });
+            })
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('home', compact('stores', 'search'));
+    }
+
+    public function storeShow(Store $store)
+    {
+        session(['active_store_id' => $store->id]);
+
+        $products = $store->products()
+            ->where('status', 'active')
+            ->latest()
+            ->take(8)
+            ->get();
+
+        $this->attachRatings($products);
+
+        return view('store.show', compact('store', 'products'));
+    }
+
+    public function storeProducts(Request $request, Store $store)
+    {
+        session(['active_store_id' => $store->id]);
+
+        $query = $store->products()->where('status', 'active');
+
+        if ($request->filled('search')) {
+            $query->where('product_name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        $products = $query->paginate(12)->withQueryString();
+        $categories = $store->categories()
+            ->orderBy('category_name')
+            ->get();
+
+        $this->attachRatings($products);
+
+        return view('products', compact('products', 'categories', 'store'));
+    }
+
+    /**
+     * Halaman kontak khusus satu toko.
+     */
+    public function storeContact(Store $store)
+    {
+        session(['active_store_id' => $store->id]);
+
+        return view('kontak', compact('store'));
+    }
+
+    protected function attachRatings($products): void
+    {
         $productIds = $products->pluck('id');
+
         $ratings = Rating::whereIn('product_id', $productIds)
             ->selectRaw('product_id, AVG(rating) as avg_rating, COUNT(*) as rating_count')
             ->groupBy('product_id')
@@ -71,8 +149,6 @@ class HomeController extends Controller
             $product->avgRating = $ratings->has($product->id) ? (float) $ratings[$product->id]->avg_rating : null;
             $product->ratingCount = $ratings->has($product->id) ? (int) $ratings[$product->id]->rating_count : 0;
         }
-
-        return view('home', compact('products'));
     }
 
     public function kontak()
@@ -93,27 +169,22 @@ class HomeController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        $products = $query->paginate(12);
+        $products = $query->paginate(12)->withQueryString();
         $categories = Category::all();
 
-        $productIds = $products->pluck('id');
-        $ratings = Rating::whereIn('product_id', $productIds)
-            ->selectRaw('product_id, AVG(rating) as avg_rating, COUNT(*) as rating_count')
-            ->groupBy('product_id')
-            ->get()
-            ->keyBy('product_id');
-
-        foreach ($products as $product) {
-            $product->avgRating = $ratings->has($product->id) ? (float) $ratings[$product->id]->avg_rating : null;
-            $product->ratingCount = $ratings->has($product->id) ? (int) $ratings[$product->id]->rating_count : 0;
-        }
+        $this->attachRatings($products);
 
         return view('products', compact('products', 'categories'));
     }
 
     public function Product($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('store')->findOrFail($id);
+
+        if ($product->store_id) {
+            session(['active_store_id' => $product->store_id]);
+        }
+
         $avgRating = (float) Rating::where('product_id', $product->id)->avg('rating');
         $ratingCount = (int) Rating::where('product_id', $product->id)->count();
         $ratings = Rating::where('product_id', $product->id)->with('customer')->latest()->get();
@@ -133,16 +204,23 @@ class HomeController extends Controller
         }
 
         $product = Product::findOrFail($request->product_id);
+
+        if ($product->store_id) {
+            session(['active_store_id' => $product->store_id]);
+        }
+
         $cart = session()->get('cart', []);
 
         if (isset($cart[$request->product_id])) {
             $cart[$request->product_id]['quantity'] += $request->quantity;
+            $cart[$request->product_id]['store_id'] = $product->store_id;
         } else {
             $cart[$request->product_id] = [
                 'name' => $product->product_name,
                 'price' => $product->purchase_price,
                 'quantity' => $request->quantity,
                 'image' => $product->image,
+                'store_id' => $product->store_id,
             ];
         }
 
@@ -153,7 +231,8 @@ class HomeController extends Controller
 
     public function viewCart()
     {
-        $cart = session()->get('cart', []);
+        $cart = cart_items();
+
         return view('Cart', compact('cart'));
     }
 
@@ -182,13 +261,18 @@ class HomeController extends Controller
         return redirect()->route('cart')->with('success', 'Jumlah produk berhasil diperbarui!');
     }
 
-    public function checkoutPage(Request $request)
+    public function checkoutPage(Request $request, RegionService $regions)
     {
-        $cart = session()->get('cart', []);
+        $cart = cart_items();
         $directCheckout = null;
 
         if ($request->has('product_id') && $request->has('quantity') && $request->has('direct')) {
             $product = Product::findOrFail($request->product_id);
+
+            if ($product->store_id) {
+                session(['active_store_id' => $product->store_id]);
+            }
+
             $directCheckout = [
                 $request->product_id => [
                     'name' => $product->product_name,
@@ -215,19 +299,48 @@ class HomeController extends Controller
         $originDistrictId = config('services.rajaongkir.origin_district_id');
         $defaultItemWeight = 1000;
 
-        return view('Checkout', compact('cart', 'directCheckout', 'totalWeight', 'originCityId', 'originDistrictId', 'defaultItemWeight'));
+        $selectedProvince = old('province_id') ? $regions->findProvince((string) old('province_id')) : null;
+        $selectedCity = old('city_id') ? $regions->findRegency((string) old('city_id')) : null;
+        $selectedDistrict = old('district_id') ? $regions->findDistrict((string) old('district_id')) : null;
+
+        $selectedRegions = [
+            'province' => $selectedProvince['name'] ?? null,
+            'city' => $selectedCity['name'] ?? null,
+            'district' => $selectedDistrict['name'] ?? null,
+        ];
+
+        return view('Checkout', compact('cart', 'directCheckout', 'totalWeight', 'originCityId', 'originDistrictId', 'defaultItemWeight', 'selectedRegions'));
     }
 
-public function checkout(Request $request)
+    public function checkout(Request $request, RegionService $regions)
     {
         $request->validate([
+            'province_id' => 'required|string|max:20',
+            'city_id' => 'required|string|max:20',
+            'district_id' => 'required|string|max:20',
             'phone_number' => 'required|string|max:20',
             'address' => 'required|string',
             'notes' => 'nullable|string',
             'postal_code' => 'required|string',
             'courier' => 'required|string',
-            'shipping_cost' => 'required|numeric|min:0',
+            // 'shipping_cost' => 'required|numeric|min:0',
         ]);
+
+        $province = $regions->findProvince((string) $request->province_id);
+        $regency = $regions->findRegency((string) $request->city_id);
+        $district = $regions->findDistrict((string) $request->district_id);
+
+        if (
+            ! $province
+            || ! $regency
+            || ! $district
+            || $regency['province_id'] !== $province['id']
+            || $district['regency_id'] !== $regency['id']
+        ) {
+            throw ValidationException::withMessages([
+                'province_id' => 'Pilih provinsi, kota/kabupaten, dan kecamatan yang sesuai.',
+            ]);
+        }
 
         $phone = $request->phone_number;
 
@@ -241,7 +354,7 @@ public function checkout(Request $request)
 
         $request->merge(['phone_number' => $phone]);
 
-        $cart = session()->get('cart', []);
+        $cart = cart_items();
         $directCheckout = session()->get('direct_checkout', []);
 
         $itemsToProcess = !empty($directCheckout) ? $directCheckout : $cart;
@@ -250,54 +363,87 @@ public function checkout(Request $request)
             return redirect()->route('checkout.page')->with('error', 'Keranjang kosong!');
         }
 
-        $total = 0;
-        foreach ($itemsToProcess as $id => $item) {
-            $product = Product::find($id);
-            if (!$product) {
-                return back()->with('error', "Produk {$item['name']} tidak ditemukan.");
-            }
+        try {
+            $transaction = DB::transaction(function () use ($itemsToProcess, $request, $province, $regency, $district) {
+                $productIds = array_map('intval', array_keys($itemsToProcess));
 
-            if ($product->stock < $item['quantity']) {
-                return back()->with('error', "Stok {$item['name']} tidak cukup.");
-            }
+                // Kunci baris produk agar stok tidak berubah di tengah proses checkout.
+                $products = Product::query()
+                    ->whereIn('id', $productIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
 
-            $total += $item['price'] * $item['quantity'];
-        }
+                $total = 0;
+                $preparedItems = [];
 
-        $total += $request->shipping_cost;
+                foreach ($itemsToProcess as $id => $item) {
+                    $product = $products->get((int) $id);
+                    $quantity = (int) ($item['quantity'] ?? 0);
 
-        $orderCode = 'ORD-' . time() . '-' . Auth::id();
+                    if (! $product) {
+                        throw new CheckoutException('Produk pada keranjang tidak ditemukan. Silakan perbarui keranjang.');
+                    }
 
-        // Simpan transaksi tanpa Midtrans (Metode Pembayaran Manual / Transfer / COD)
-        $transaction = Transaction::create([
-            'order_code' => $orderCode,
-            'customer_id' => Auth::id(),
-            'phone_number' => $request->phone_number,
-            'address' => $request->address,
-            'status' => 'pending',
-            'total' => $total,
-            'shipping_cost' => $request->shipping_cost,
-            'notes' => $request->notes,
-            'payment_method' => 'manual',
-            'payment_status' => 'pending',
-            'province' => '-', 
-            'city' => '-',     
-            'district' => '-', 
-            'postal_code' => $request->postal_code,
-            'courier' => $request->courier,
-            'courier_service' => 'Reguler / Manual',
-        ]);
+                    if ($quantity < 1) {
+                        throw new CheckoutException('Jumlah produk pada keranjang tidak valid.');
+                    }
 
-        foreach ($itemsToProcess as $id => $item) {
-            $product = Product::find($id);
-            $product->decrement('stock', $item['quantity']);
+                    if ($product->stock < $quantity) {
+                        throw new CheckoutException("Stok {$product->product_name} tidak cukup.");
+                    }
 
-            TransactionItem::create([
-                'transaction_id' => $transaction->id,
-                'product_id' => $id,
-                'price' => $item['price'],
-                'quantity' => $item['quantity'],
-            ]);
+                    // Harga selalu diambil dari database, bukan dari session/keranjang.
+                    $unitPrice = (float) $product->purchase_price;
+                    $total += $unitPrice * $quantity;
+
+                    $preparedItems[] = [
+                        'product' => $product,
+                        'price' => $unitPrice,
+                        'quantity' => $quantity,
+                    ];
+                }
+
+                $shippingCost = (float) $request->shipping_cost;
+                $total += $shippingCost;
+
+                $orderCode = 'ORD-' . now()->format('YmdHis') . '-' . Auth::id() . '-' . Str::upper(Str::random(4));
+
+                // Simpan transaksi tanpa Midtrans (Metode Pembayaran Manual / Transfer / COD)
+                $transaction = Transaction::create([
+                    'order_code' => $orderCode,
+                    'customer_id' => Auth::id(),
+                    'phone_number' => $request->phone_number,
+                    'address' => $request->address,
+                    'status' => 'pending',
+                    'total' => $total,
+                    // 'shipping_cost' => $shippingCost,
+                    'notes' => $request->notes,
+                    'payment_method' => 'manual',
+                    'payment_status' => 'pending',
+                    'province' => $province['name'],
+                    'city' => $regency['name'],
+                    'district' => $district['name'],
+                    'postal_code' => $request->postal_code,
+                    'courier' => $request->courier,
+                    'courier_service' => 'Reguler / Manual',
+                ]);
+
+                foreach ($preparedItems as $prepared) {
+                    $prepared['product']->decrement('stock', $prepared['quantity']);
+
+                    TransactionItem::create([
+                        'transaction_id' => $transaction->id,
+                        'product_id' => $prepared['product']->id,
+                        'price' => $prepared['price'],
+                        'quantity' => $prepared['quantity'],
+                    ]);
+                }
+
+                return $transaction;
+            });
+        } catch (CheckoutException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
 
         // Kirim konfirmasi via WhatsApp (Fonnte)
@@ -310,7 +456,13 @@ public function checkout(Request $request)
         if (!empty($directCheckout)) {
             session()->forget('direct_checkout');
         } else {
-            session()->forget('cart');
+            $remainingCart = session()->get('cart', []);
+
+            foreach (array_keys($itemsToProcess) as $productId) {
+                unset($remainingCart[$productId]);
+            }
+
+            session()->put('cart', $remainingCart);
         }
 
         // Langsung arahkan ke halaman sukses atau halaman instruksi pembayaran manual
@@ -320,13 +472,18 @@ public function checkout(Request $request)
 
     public function checkoutPayment($id)
     {
-        $transaction = Transaction::with('items.product')->findOrFail($id);
+        $transaction = Transaction::with('items.product')
+            ->where('customer_id', Auth::id())
+            ->findOrFail($id);
+
         return view('Checkout.Payment', compact('transaction'));
     }
 
     public function checkoutSuccess($id)
     {
-        $transaction = Transaction::with('items.product')->findOrFail($id);
+        $transaction = Transaction::with('items.product')
+            ->where('customer_id', Auth::id())
+            ->findOrFail($id);
         $userRatings = collect();
 
         if (Auth::check()) {
@@ -360,16 +517,18 @@ public function checkout(Request $request)
 
     public function deleteOrder($id)
     {
-        $transaction = Transaction::where('customer_id', Auth::id())
+        $transaction = Transaction::with('items.product')
+            ->where('customer_id', Auth::id())
             ->where('status', 'pending')
             ->findOrFail($id);
 
-        foreach ($transaction->items as $item) {
-            $product = $item->product;
-            $product->increment('stock', $item->quantity);
-        }
+        DB::transaction(function () use ($transaction) {
+            foreach ($transaction->items as $item) {
+                $item->product?->increment('stock', $item->quantity);
+            }
 
-        $transaction->delete();
+            $transaction->delete();
+        });
 
         return redirect()->route('orders')->with('success', 'Pesanan berhasil dibatalkan.');
     }
@@ -466,14 +625,26 @@ public function checkout(Request $request)
 
     public function sendOrderConfirmation($transaction)
     {
-        $store = Store::first();
-        $storeName = $store ? $store->store_name : 'Toko Kami';
+        $transaction->loadMissing(['items.product.store', 'customer']);
+
+        // Gunakan toko pemilik produk pada transaksi, bukan toko pertama.
+        $store = $transaction->items
+            ->map(fn ($item) => $item->product?->store)
+            ->filter()
+            ->first();
+
+        $store ??= $transaction->customer?->store;
+        $storeName = $store?->store_name ?: config('app.name', 'Toko Kami');
 
         $customer = $transaction->customer;
-        $phone_number = $transaction->phone_number ?? $customer->phone_number ?? $customer->phone;
+        $phone_number = $transaction->phone_number ?? $customer?->phone_number ?? $customer?->phone;
 
-        if (!$phone_number) {
-            Log::warning('No phone number found for transaction', ['transaction_id' => $transaction->id, 'customer_id' => $customer->id]);
+        if (! $phone_number) {
+            Log::warning('No phone number found for transaction', [
+                'transaction_id' => $transaction->id,
+                'customer_id' => $transaction->customer_id,
+            ]);
+
             return false;
         }
 

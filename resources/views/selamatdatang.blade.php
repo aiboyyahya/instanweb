@@ -7,9 +7,10 @@
         $welcomeStore = store();
         $welcomeStoreName = $welcomeStore->store_name ?? 'instanweb';
         $isAdmin = auth()->check() && auth()->user()->role === 'admin';
-        $whatsappNumber = $welcomeStore && ! empty($welcomeStore->whatsapp)
-            ? preg_replace('/[^0-9]/', '', $welcomeStore->whatsapp)
-            : null;
+        $whatsappNumber =
+            $welcomeStore && !empty($welcomeStore->whatsapp)
+                ? preg_replace('/[^0-9]/', '', $welcomeStore->whatsapp)
+                : null;
     @endphp
 
     {{-- Hero --}}
@@ -24,17 +25,19 @@
                 </div>
 
                 <div class="relative">
-                    <p class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold">
+                    <p
+                        class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold">
                         <x-ui.icon name="sparkles" class="h-3.5 w-3.5" />
                         Selamat datang
                     </p>
 
-                    <h1 class="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                        @auth
+                    <h1 class="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl text-white">
+                        Bangun <br>Toko Online</br> Anda Sendiri
+                        {{-- @auth
                             Halo, {{ auth()->user()->name }}.
                         @else
                             Bangun <br>Toko Online</br> Anda Sendiri
-                        @endauth
+                        @endauth --}}
                     </h1>
 
                     <p class="mt-4 max-w-lg text-sm leading-relaxed text-white/80 sm:text-base">
@@ -122,6 +125,47 @@
                 </div>
             </div>
         </div>
+    </section>
+
+    {{-- Nilai layanan --}}
+    <section class="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Kenapa belanja di sini">
+        <ul class="grid gap-3 sm:grid-cols-3">
+            <li class="rounded-card border border-line bg-surface p-5 shadow-sm">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-soft text-brand-text"
+                    aria-hidden="true">
+                    <x-ui.icon name="sparkles" class="h-5 w-5" />
+                </span>
+                <p class="mt-3 text-sm font-semibold text-fg">Produk UMKM pilihan</p>
+                <p class="mt-1 text-xs leading-relaxed text-fg-muted">Dikurasi dari pelaku usaha lokal di berbagai daerah.
+                </p>
+            </li>
+            <li class="rounded-card border border-line bg-surface p-5 shadow-sm">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-soft text-info"
+                    aria-hidden="true">
+                    <x-ui.icon name="shopping-bag" class="h-5 w-5" />
+                </span>
+                <p class="mt-3 text-sm font-semibold text-fg">Checkout mudah</p>
+                <p class="mt-1 text-xs leading-relaxed text-fg-muted">Masuk, isi alamat pengiriman, lalu konfirmasi
+                    pesanan.</p>
+            </li>
+            <li class="rounded-card border border-line bg-surface p-5 shadow-sm">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-soft text-success"
+                    aria-hidden="true">
+                    <x-ui.icon name="chat" class="h-5 w-5" />
+                </span>
+                <p class="mt-3 text-sm font-semibold text-fg">Tanya langsung</p>
+                <p class="mt-1 text-xs leading-relaxed text-fg-muted">
+                    {{-- @if ($whatsappNumber)
+                        <a href="https://wa.me/{{ $whatsappNumber }}" target="_blank" rel="noopener noreferrer"
+                            class="font-medium text-info underline underline-offset-2">Hubungi penjual via WhatsApp</a>
+                    @else
+                        <a href="{{ route('kontak') }}" class="font-medium text-info underline underline-offset-2">Lihat
+                            kanal kontak toko</a>
+                    @endif --}}
+                    Untuk pertanyaan sebelum membeli.
+                </p>
+            </li>
+        </ul>
     </section>
 
     {{-- Pilihan jalur --}}
@@ -216,7 +260,8 @@
     {{-- Catatan transparan --}}
     <section class="mx-auto mt-8 max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
         <div class="rounded-panel border border-line bg-surface-soft p-6">
-            <h2 class="text-base font-semibold text-fg">Tentang {{ $welcomeStoreName }}</h2>
+            <h2 class="text-base font-semibold text-fg">Tentang <x-brand-wordmark variant="inverse" size="sm" />
+            </h2>
             <p class="mt-1 text-sm leading-relaxed text-fg-secondary">
                 Ini adalah toko online dari satu penjual. Produk, harga, dan ketersediaan mengikuti data yang
                 dikelola penjual. Untuk pertanyaan sebelum membeli, gunakan kanal kontak toko agar mendapat jawaban

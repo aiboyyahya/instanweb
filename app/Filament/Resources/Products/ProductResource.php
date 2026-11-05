@@ -15,6 +15,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class ProductResource extends Resource
@@ -45,6 +46,20 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return ProductsTable::configure($table);
+    }
+
+    /**
+     * Batasi daftar produk pada toko milik pemilik yang sedang masuk.
+     * Admin lama tanpa relasi toko tetap melihat seluruh data.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $store = auth()->user()?->store;
+
+        return $store
+            ? $query->where('store_id', $store->id)
+            : $query;
     }
 
     public static function getRelations(): array

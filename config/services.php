@@ -39,6 +39,15 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+        'endpoint' => env('SMS_ENDPOINT'),
+        'token' => env('SMS_TOKEN'),
+        'sender' => env('SMS_SENDER'),
+        'auth_header' => env('SMS_AUTH_HEADER', 'Authorization'),
+        'auth_scheme' => env('SMS_AUTH_SCHEME', 'Bearer'),
+        'timeout' => env('SMS_TIMEOUT', 10),
+    ],
     'rajaongkir' => [
         'key' => env('RAJAONGKIR_API_KEY'),
         'base_url' => env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1/'),

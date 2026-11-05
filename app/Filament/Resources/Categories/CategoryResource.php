@@ -12,6 +12,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class CategoryResource extends Resource
@@ -26,6 +27,20 @@ class CategoryResource extends Resource
     protected static ?string $navigationLabel = 'Kategori';
 
     protected static ?string $pluralModelLabel = 'Kategori';
+
+    /**
+     * Setiap pemilik toko hanya melihat kategori miliknya sendiri.
+     * Admin platform tanpa toko tetap melihat seluruh data.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $store = auth()->user()?->store;
+
+        return $store
+            ? $query->where('store_id', $store->id)
+            : $query;
+    }
 
     public static function form(Schema $schema): Schema
     {

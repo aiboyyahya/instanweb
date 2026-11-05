@@ -11,6 +11,7 @@ class Category extends Model
     use HasFactory;
 
     protected $fillable = [
+        'store_id',
         'category_name',
         'slug',
         'icon',
@@ -26,6 +27,14 @@ class Category extends Model
         });
     }
 
+
+    /**
+     * Toko pemilik kategori ini.
+     */
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     public function products()
     {

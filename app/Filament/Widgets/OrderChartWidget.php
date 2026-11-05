@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Transaction;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class OrderChartWidget extends ChartWidget
@@ -21,10 +22,11 @@ class OrderChartWidget extends ChartWidget
     protected function getData(): array
     {
         $data = [];
+        $orders = $this->orderQuery();
 
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $data[] = Transaction::whereDate('created_at', $date->toDateString())->count();
+            $data[] = (clone $orders)->whereDate('created_at', $date->toDateString())->count();
         }
 
         return [
@@ -43,6 +45,20 @@ class OrderChartWidget extends ChartWidget
                 ->map(fn (int $daysAgo): string => Carbon::now()->subDays($daysAgo)->locale('id')->translatedFormat('d M'))
                 ->all(),
         ];
+    }
+
+    /**
+     * Hanya hitung pesanan yang memuat produk milik toko yang sedang masuk.
+     */
+    private function orderQuery(): Builder
+    {
+        return Transaction::query()->when(
+            auth()->user()?->store?->id,
+            fn (Builder $query, int $storeId) => $query->whereHas(
+                'items.product',
+                fn (Builder $query) => $query->where('store_id', $storeId),
+            ),
+        );
     }
 
     protected function getType(): string

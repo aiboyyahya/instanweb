@@ -1,7 +1,11 @@
 {{-- Akses cepat ke storefront agar admin dapat meninjau tampilan toko. --}}
+@php
+    $activeStore = auth()->user()?->store ?: store();
+    $storefrontUrl = $activeStore ? route('store.show', $activeStore) : route('home');
+@endphp
 <a
     class="iw-topbar-link"
-    href="{{ route('home') }}"
+    href="{{ $storefrontUrl }}"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Lihat toko di tab baru"

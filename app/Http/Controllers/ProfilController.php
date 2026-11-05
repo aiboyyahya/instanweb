@@ -6,10 +6,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Product;
 use App\Models\Store;
+use App\Services\ContactVerificationService;
+use App\Services\StoreBannerService;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ProfilController extends Controller
 {
+    public function __construct(
+        protected ContactVerificationService $verification,
+        protected StoreBannerService $storeBanners,
+    ) {
+    }
 
     public function index()
     {
@@ -46,9 +56,32 @@ class ProfilController extends Controller
 
 
         $user->name = $validated['name'];
+
+        $emailChanged = $validated['email'] !== $user->email;
+        $phoneChanged = ($validated['phone_number'] ?? null) !== $user->phone_number;
+
         $user->email = $validated['email'];
         $user->phone_number = $validated['phone_number'] ?? $user->phone_number;
+        $user->phone = $user->phone_number;
         $user->address = $validated['address'] ?? $user->address;
+
+        if ($emailChanged) {
+            $user->forceFill([
+                'email_verified_at' => null,
+                'email_verification_code' => null,
+                'email_verification_expires_at' => null,
+                'email_verification_sent_at' => null,
+            ]);
+        }
+
+        if ($phoneChanged) {
+            $user->forceFill([
+                'phone_verified_at' => null,
+                'phone_verification_code' => null,
+                'phone_verification_expires_at' => null,
+                'phone_verification_sent_at' => null,
+            ]);
+        }
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
@@ -70,7 +103,31 @@ class ProfilController extends Controller
 
         $user->save();
 
-        return redirect()->route('profil')->with('success', 'Profil berhasil diperbarui!');
+        $verificationMessage = '';
+
+        if ($emailChanged && ! $user->hasVerifiedEmail()) {
+            try {
+                $this->verification->sendEmailCode($user);
+                $verificationMessage = ' Kode verifikasi email telah dikirim.';
+            } catch (ValidationException $exception) {
+                // Cooldown pengiriman; pengguna tetap bisa meminta kode dari halaman verifikasi.
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        if ($phoneChanged && filled($user->phone_number) && ! $user->hasVerifiedPhone()) {
+            try {
+                $this->verification->sendPhoneCode($user);
+                $verificationMessage .= ' Kode verifikasi SMS telah dikirim.';
+            } catch (ValidationException $exception) {
+                //
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        return redirect()->route('profil')->with('success', 'Profil berhasil diperbarui!' . $verificationMessage);
     }
 
     /**
@@ -93,6 +150,12 @@ class ProfilController extends Controller
             'address' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'banner_1' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'banner_2' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'banner_3' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'remove_banner_1' => ['nullable', 'boolean'],
+            'remove_banner_2' => ['nullable', 'boolean'],
+            'remove_banner_3' => ['nullable', 'boolean'],
             'whatsapp' => ['nullable', 'string', 'max:30'],
             'instagram' => ['nullable', 'string', 'max:255'],
             'tiktok' => ['nullable', 'string', 'max:255'],
@@ -103,7 +166,21 @@ class ProfilController extends Controller
             'origin_district_id' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $store->fill($validated);
+        $storeData = $request->only([
+            'store_name',
+            'address',
+            'description',
+            'whatsapp',
+            'instagram',
+            'tiktok',
+            'facebook',
+            'shopee',
+            'tokopedia',
+            'origin_city_id',
+            'origin_district_id',
+        ]);
+
+        $store->fill($storeData);
 
         if ($request->hasFile('logo')) {
             if ($store->logo && Storage::disk('public')->exists($store->logo)) {
@@ -118,6 +195,14 @@ class ProfilController extends Controller
         }
 
         $store->save();
+
+        $this->storeBanners->sync($store, $request);
+
+        if (Store::count() === 1) {
+            Product::query()
+                ->whereNull('store_id')
+                ->update(['store_id' => $store->id]);
+        }
 
         cache()->forget('store_data');
 

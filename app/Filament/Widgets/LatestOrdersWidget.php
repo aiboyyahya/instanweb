@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class LatestOrdersWidget extends BaseWidget
 {
@@ -19,9 +20,7 @@ class LatestOrdersWidget extends BaseWidget
     public function table(Table $table): Table
     {
         return $table
-            ->query(
-                Transaction::query()->latest()->limit(10)
-            )
+            ->query($this->ordersQuery())
             ->columns([
                 TextColumn::make('order_code')
                     ->label('Kode Pesanan')
@@ -72,5 +71,22 @@ class LatestOrdersWidget extends BaseWidget
             ->emptyStateIcon('heroicon-o-shopping-bag')
             ->emptyStateHeading('Belum ada pesanan')
             ->emptyStateDescription('Pesanan yang masuk dari pelanggan akan tampil di sini.');
+    }
+
+    /**
+     * Pesanan terbaru hanya dari produk milik toko yang sedang masuk.
+     */
+    private function ordersQuery(): Builder
+    {
+        return Transaction::query()
+            ->when(
+                auth()->user()?->store?->id,
+                fn (Builder $query, int $storeId) => $query->whereHas(
+                    'items.product',
+                    fn (Builder $query) => $query->where('store_id', $storeId),
+                ),
+            )
+            ->latest()
+            ->limit(10);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Transaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class OverviewStatsWidget extends BaseWidget
@@ -15,40 +16,76 @@ class OverviewStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
+        $products = $this->productQuery();
+        $categories = $this->categoryQuery();
+        $orders = $this->orderQuery();
+
         return [
-            Stat::make('Total Produk UMKM', Product::count())
-                ->description('Produk yang dikelola di instanweb')
+            Stat::make('Total Produk UMKM', (clone $products)->count())
+                ->description('Produk yang dikelola di toko Anda')
                 ->descriptionIcon('heroicon-m-cube')
                 ->color('primary')
-                ->chart($this->dailyTrend(Product::class))
+                ->chart($this->dailyTrend($products))
                 ->chartColor('primary'),
 
-            Stat::make('Kategori Produk', Category::count())
+            Stat::make('Kategori Produk', (clone $categories)->count())
                 ->description('Kategori untuk memudahkan pencarian')
                 ->descriptionIcon('heroicon-m-tag')
                 ->color('info')
-                ->chart($this->dailyTrend(Category::class))
+                ->chart($this->dailyTrend($categories))
                 ->chartColor('info'),
 
-            Stat::make('Total Pesanan', Transaction::count())
-                ->description('Transaksi pelanggan dari berbagai daerah')
+            Stat::make('Total Pesanan', (clone $orders)->count())
+                ->description('Transaksi pelanggan untuk toko Anda')
                 ->descriptionIcon('heroicon-m-shopping-cart')
                 ->color('success')
-                ->chart($this->dailyTrend(Transaction::class))
+                ->chart($this->dailyTrend($orders))
                 ->chartColor('success'),
         ];
+    }
+
+    private function storeId(): ?int
+    {
+        return auth()->user()?->store?->id;
+    }
+
+    private function productQuery(): Builder
+    {
+        return Product::query()->when(
+            $this->storeId(),
+            fn (Builder $query, int $storeId) => $query->where('store_id', $storeId),
+        );
+    }
+
+    private function categoryQuery(): Builder
+    {
+        return Category::query()->when(
+            $this->storeId(),
+            fn (Builder $query, int $storeId) => $query->where('store_id', $storeId),
+        );
+    }
+
+    private function orderQuery(): Builder
+    {
+        return Transaction::query()->when(
+            $this->storeId(),
+            fn (Builder $query, int $storeId) => $query->whereHas(
+                'items.product',
+                fn (Builder $query) => $query->where('store_id', $storeId),
+            ),
+        );
     }
 
     /**
      * Tren jumlah data baru selama tujuh hari terakhir.
      *
-     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $model
+     * @param  \Illuminate\Database\Eloquent\Builder<*>  $query
      * @return array<int, int>
      */
-    private function dailyTrend(string $model): array
+    private function dailyTrend(Builder $query): array
     {
         return collect(range(6, 0))
-            ->map(fn (int $daysAgo): int => $model::query()
+            ->map(fn (int $daysAgo): int => (clone $query)
                 ->whereDate('created_at', Carbon::now()->subDays($daysAgo)->toDateString())
                 ->count())
             ->all();

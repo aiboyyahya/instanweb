@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
-@section('title', $article->title . ' | ' . (store()->store_name ?? 'instanweb'))
+@php
+    $articleListUrl = $store ? route('store.articles.index', $store) : route('articles.index');
+    $productsUrl = $store ? route('store.products', $store) : route('products');
+    $homeUrl = $store ? route('store.show', $store) : route('home');
+@endphp
+
+@section('title', $article->title . ' | ' . ($store->store_name ?? config('app.name', 'instanweb')))
 
 @section('content')
     @php
@@ -12,8 +18,8 @@
 
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <x-ui.breadcrumb :items="[
-            ['label' => 'Beranda', 'url' => route('home')],
-            ['label' => 'Artikel', 'url' => route('articles.index')],
+            ['label' => 'Beranda', 'url' => $homeUrl],
+            ['label' => 'Artikel', 'url' => $articleListUrl],
             ['label' => \Illuminate\Support\Str::limit($article->title, 40)],
         ]" />
 
@@ -106,7 +112,7 @@
                         </div>
                     </div>
 
-                    <x-ui.button :href="route('articles.index')" variant="outline" block>
+                    <x-ui.button :href="$articleListUrl" variant="outline" block>
                         <x-ui.icon name="arrow-left" class="h-4 w-4" /> Kembali ke Artikel
                     </x-ui.button>
                 </aside>
@@ -115,7 +121,7 @@
 
         <div class="mx-auto mt-10 flex max-w-5xl flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
             <p class="text-sm text-fg-muted">Butuh produk untuk dicoba?</p>
-            <x-ui.button :href="route('products')" variant="outline">
+            <x-ui.button :href="$productsUrl" variant="outline">
                 Jelajahi Produk <x-ui.icon name="arrow-right" class="h-4 w-4" />
             </x-ui.button>
         </div>

@@ -60,14 +60,35 @@
 
                         <div class="sm:col-span-2">
                             <x-ui.field label="Alamat Lengkap" name="address" required
-                                hint="Sertakan nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, dan provinsi.">
+                                hint="Sertakan nama jalan, nomor rumah, RT/RW, dan patokan alamat. Provinsi, kota, dan kecamatan dipilih pada kolom di bawah.">
                                 <textarea id="address" name="address" rows="3" required autocomplete="street-address"
-                                    placeholder="Contoh: Jl. Merdeka No. 10, RT 02/RW 05, Kel. Sukamaju, Kec. Cilodong, Depok, Jawa Barat"
+                                    placeholder="Contoh: Jl. Merdeka No. 10, RT 02/RW 05, Kel. Sukamaju"
                                     @class([
                                         'w-full rounded-field border bg-surface px-3 py-3 text-sm text-fg placeholder:text-fg-muted focus:border-info',
                                         $inputNormalClass,
                                     ])>{{ old('address', Auth::user()->address ?? '') }}</textarea>
                             </x-ui.field>
+                        </div>
+
+                        <div class="grid gap-5 sm:col-span-2 sm:grid-cols-2 lg:grid-cols-3">
+                            <x-ui.searchable-select label="Provinsi" name="province_id"
+                                endpoint="{{ route('regions.provinces') }}" placeholder="Cari provinsi..."
+                                :selected="old('province_id')" :selected-label="$selectedRegions['province'] ?? null"
+                                empty-text="Provinsi tidak ditemukan." required />
+
+                            <x-ui.searchable-select label="Kota/Kabupaten" name="city_id"
+                                endpoint="{{ route('regions.regencies') }}" parent="province_id"
+                                parent-param="province_id" placeholder="Cari kota atau kabupaten..."
+                                :selected="old('city_id')" :selected-label="$selectedRegions['city'] ?? null"
+                                empty-text="Kota/kabupaten tidak ditemukan."
+                                parent-placeholder="Pilih provinsi terlebih dahulu." required />
+
+                            <x-ui.searchable-select label="Kecamatan" name="district_id"
+                                endpoint="{{ route('regions.districts') }}" parent="city_id" parent-param="city_id"
+                                placeholder="Cari kecamatan..." :selected="old('district_id')"
+                                :selected-label="$selectedRegions['district'] ?? null"
+                                empty-text="Kecamatan tidak ditemukan."
+                                parent-placeholder="Pilih kota/kabupaten terlebih dahulu." required />
                         </div>
 
                         <x-ui.field label="Kurir Pengiriman" name="courier" required>

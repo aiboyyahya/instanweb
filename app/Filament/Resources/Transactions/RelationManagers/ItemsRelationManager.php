@@ -13,11 +13,25 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Builder;
 
 
 class ItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'items';
+
+    /**
+     * Rincian item dibatasi pada produk milik toko pemilik yang masuk.
+     */
+    protected function getTableQuery(): Builder
+    {
+        $query = parent::getTableQuery();
+        $store = auth()->user()?->store;
+
+        return $store
+            ? $query->whereHas('product', fn (Builder $query) => $query->where('store_id', $store->id))
+            : $query;
+    }
 
     public function form(Schema $schema): Schema
     {

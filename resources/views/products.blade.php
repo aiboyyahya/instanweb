@@ -1,11 +1,26 @@
 @extends('layouts.app')
 
-@section('title', 'Semua Produk | ' . (store()->store_name ?? 'instanweb'))
+@php
+    $activeStore = $store ?? null;
+    $productsUrl = $activeStore ? route('store.products', $activeStore) : route('products');
+@endphp
+
+@section('title', ($activeStore->store_name ?? 'Semua Produk') . ' | ' . config('app.name', 'instanweb'))
 
 @section('content')
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <x-ui.page-header eyebrow="Katalog" title="Semua Produk"
-            description="Temukan produk terbaik dari toko kami. Gunakan pencarian atau filter kategori untuk mempersempit pilihan.">
+    <section class="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+        <x-ui.button :href="route('home')" variant="ghost">
+            <x-ui.icon name="arrow-left" class="h-4 w-4" /> Kembali ke Beranda
+        </x-ui.button>
+    </section>
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-8">
+        <x-ui.page-header eyebrow="Katalog" :title="$activeStore ? 'Produk ' . $activeStore->store_name : 'Semua Produk'"
+            description="{{ $activeStore ? 'Produk yang dijual oleh ' . $activeStore->store_name . '.' : 'Temukan produk terbaik dari toko-toko UMKM. Gunakan pencarian atau filter kategori untuk mempersempit pilihan.' }}">
+            @if ($activeStore)
+                <x-ui.button :href="route('store.show', $activeStore)" variant="outline">
+                    <x-ui.icon name="arrow-left" class="h-4 w-4" /> Kembali ke Toko
+                </x-ui.button>
+            @endif
             <x-ui.button :href="route('cart')" variant="outline">
                 <x-ui.icon name="shopping-bag" class="h-4 w-4" /> Keranjang
             </x-ui.button>
@@ -13,7 +28,7 @@
 
         {{-- Filter --}}
         <section class="mt-8 rounded-panel border border-line bg-surface p-4 shadow-sm sm:p-5" aria-label="Filter produk">
-            <form id="filterForm" method="GET" action="{{ route('products') }}" role="search"
+            <form id="filterForm" method="GET" action="{{ $productsUrl }}" role="search"
                 class="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div class="flex-1">
                     <label for="searchInput" class="mb-1.5 block text-sm font-medium text-fg-secondary">Cari produk</label>
@@ -27,7 +42,7 @@
                             autocomplete="off">
 
                         @if (request('search'))
-                            <a href="{{ route('products', ['category' => request('category')]) }}"
+                            <a href="{{ $activeStore ? route('store.products', [$activeStore, 'category' => request('category')]) : route('products', ['category' => request('category')]) }}"
                                 class="absolute inset-y-0 right-1 flex w-10 items-center justify-center rounded-md text-fg-muted transition hover:text-fg"
                                 aria-label="Hapus kata kunci pencarian">
                                 <x-ui.icon name="close" class="h-4 w-4" />
@@ -70,7 +85,7 @@
                         @endif
                     @endif
 
-                    <a href="{{ route('products') }}"
+                    <a href="{{ $productsUrl }}"
                         class="font-semibold text-info underline underline-offset-2 hover:text-fg">Reset filter</a>
                 </div>
             @endif
@@ -90,8 +105,8 @@
         <div id="productsError" class="mt-4 hidden">
             <x-ui.alert variant="danger" title="Gagal memuat produk">
                 Periksa koneksi Anda, lalu coba lagi.
-                <button type="button" id="retryProducts"
-                    class="ml-1 font-semibold underline underline-offset-2">Coba lagi</button>
+                <button type="button" id="retryProducts" class="ml-1 font-semibold underline underline-offset-2">Coba
+                    lagi</button>
             </x-ui.alert>
         </div>
 
@@ -119,7 +134,7 @@
                 <div class="col-span-full">
                     <x-ui.empty-state title="Tidak ada produk yang cocok"
                         description="Coba kata kunci lain atau reset filter untuk melihat semua produk." icon="search">
-                        <x-ui.button :href="route('products')" variant="outline">Reset filter</x-ui.button>
+                        <x-ui.button :href="$productsUrl" variant="outline">Reset filter</x-ui.button>
                     </x-ui.empty-state>
                 </div>
             @endforelse
@@ -134,7 +149,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             const categorySelect = document.getElementById('categorySelect');
             const productsGrid = document.getElementById('productsGrid');
@@ -173,7 +188,8 @@
                 let output = '';
 
                 for (let i = 1; i <= 5; i += 1) {
-                    output += `<svg class="h-3.5 w-3.5 ${i <= rounded ? 'text-rating' : 'text-line-strong'}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 0 0 .95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 0 0-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 0 0-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 0 0-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 0 0 .95-.69l1.286-3.947Z"/></svg>`;
+                    output +=
+                        `<svg class="h-3.5 w-3.5 ${i <= rounded ? 'text-rating' : 'text-line-strong'}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 0 0 .95.69h4.148c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 0 0-.364 1.118l1.287 3.948c.3.921-.755 1.688-1.538 1.118l-3.36-2.44a1 1 0 0 0-1.175 0l-3.36 2.44c-.783.57-1.838-.197-1.538-1.118l1.286-3.947a1 1 0 0 0-.364-1.118L2.037 9.374c-.783-.57-.38-1.81.588-1.81h4.148a1 1 0 0 0 .95-.69l1.286-3.947Z"/></svg>`;
                 }
 
                 return output;
@@ -220,7 +236,7 @@
                             <div class="flex flex-col items-center justify-center rounded-panel border border-dashed border-line-strong bg-surface px-6 py-12 text-center">
                                 <h2 class="text-lg font-semibold text-fg">Tidak ada produk yang cocok</h2>
                                 <p class="mt-1 max-w-md text-sm text-fg-muted">Coba kata kunci lain atau reset filter untuk melihat semua produk.</p>
-                                <a href="{{ route('products') }}" class="mt-6 inline-flex min-h-11 items-center justify-center rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg hover:bg-surface-soft">Reset filter</a>
+                                <a href="{{ $productsUrl }}" class="mt-6 inline-flex min-h-11 items-center justify-center rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg hover:bg-surface-soft">Reset filter</a>
                             </div>
                         </div>
                     `;
@@ -235,9 +251,9 @@
                     return;
                 }
 
-                countLabel.innerHTML = total > 0
-                    ? `Menampilkan <span class="font-semibold text-fg">${total}</span> produk`
-                    : 'Tidak ada produk yang cocok';
+                countLabel.innerHTML = total > 0 ?
+                    `Menampilkan <span class="font-semibold text-fg">${total}</span> produk` :
+                    'Tidak ada produk yang cocok';
             }
 
             async function fetchProducts() {
@@ -248,6 +264,10 @@
                 const searchQuery = searchInput.value.trim();
                 const category = categorySelect.value;
                 const url = new URL("{{ route('products.search') }}", window.location.origin);
+
+                @if ($activeStore)
+                    url.searchParams.append('store', "{{ $activeStore->id }}");
+                @endif
 
                 if (searchQuery) {
                     url.searchParams.append('q', searchQuery);
@@ -263,7 +283,9 @@
                 try {
                     const response = await fetch(url.toString(), {
                         signal: controller.signal,
-                        headers: { Accept: 'application/json' },
+                        headers: {
+                            Accept: 'application/json'
+                        },
                     });
 
                     if (!response.ok) {
@@ -286,7 +308,7 @@
             }
 
             function debounce(callback, delay) {
-                return function (...args) {
+                return function(...args) {
                     clearTimeout(debounceTimeout);
                     debounceTimeout = setTimeout(() => callback.apply(this, args), delay);
                 };
@@ -296,7 +318,7 @@
 
             searchInput.addEventListener('input', debouncedFetch);
 
-            categorySelect.addEventListener('change', function () {
+            categorySelect.addEventListener('change', function() {
                 filterForm.submit();
             });
 

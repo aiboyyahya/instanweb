@@ -2,16 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
+use App\Models\Store;
 use App\Models\User;
+use App\Services\ContactVerificationService;
+use App\Services\StoreBannerService;
 use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class GoogleLoginController extends Controller
 {
+    public function __construct(
+        protected ContactVerificationService $verification,
+        protected StoreBannerService $storeBanners,
+    ) {
+    }
+
     public function redirectToGoogle()
     {
         if (blank(config('services.google.client_id')) || blank(config('services.google.client_secret'))) {
@@ -44,6 +55,12 @@ class GoogleLoginController extends Controller
                 'password' => Hash::make(rand(100000, 999999)),
                 'role' => 'user',
             ]);
+
+            // Email dari Google sudah diverifikasi oleh penyedia identitas.
+            $user->forceFill(['email_verified_at' => now()])->save();
+        } elseif (! $user->hasVerifiedEmail()) {
+            // Email dari Google sudah diverifikasi oleh penyedia identitas.
+            $user->forceFill(['email_verified_at' => now()])->save();
         }
 
         Auth::login($user);
@@ -121,19 +138,24 @@ class GoogleLoginController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'phone_number' => 'nullable|string|max:20',
             'password' => 'required|min:8|confirmed'
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'phone' => $request->phone_number,
             'password' => Hash::make($request->password),
             'role' => 'user',
         ]);
 
         Auth::login($user);
 
-        return redirect('/')->with('success', 'Akun berhasil dibuat dan Anda telah masuk.');
+        $this->sendVerificationCodes($user);
+
+        return redirect('/')->with('success', 'Akun berhasil dibuat dan Anda telah masuk. Lengkapi verifikasi email untuk mulai bertransaksi.');
     }
 
     /**
@@ -206,17 +228,43 @@ class GoogleLoginController extends Controller
                 $user = User::create([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
+                    'phone_number' => $validated['phone_number'] ?? null,
+                    'phone' => $validated['phone_number'] ?? null,
                     'password' => Hash::make($validated['password']),
                     'role' => 'admin',
                 ]);
             } else {
-                $user->update(['role' => 'admin']);
+                $user->role = 'admin';
+
+                if (! empty($validated['phone_number']) && $validated['phone_number'] !== $user->phone_number) {
+                    $user->forceFill([
+                        'phone_number' => $validated['phone_number'],
+                        'phone' => $validated['phone_number'],
+                        'phone_verified_at' => null,
+                        'phone_verification_code' => null,
+                        'phone_verification_expires_at' => null,
+                        'phone_verification_sent_at' => null,
+                    ]);
+                }
+
+                $user->save();
             }
 
-            $user->store()->create($storeData);
+            $store = $user->store()->create($storeData);
+
+            // Produk lama yang belum memiliki toko menjadi milik toko pertama.
+            if (Store::count() === 1) {
+                Product::query()
+                    ->whereNull('store_id')
+                    ->update(['store_id' => $store->id]);
+            }
 
             return $user;
         });
+
+        $store = $user->store()->first();
+        $this->storeBanners->sync($store, $request);
+        $this->sendVerificationCodes($user);
 
         cache()->forget('store_data');
 
@@ -243,6 +291,10 @@ class GoogleLoginController extends Controller
             'address' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'banner_1' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'banner_2' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'banner_3' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'phone_number' => ['nullable', 'string', 'max:20'],
             'whatsapp' => ['nullable', 'string', 'max:30'],
             'instagram' => ['nullable', 'string', 'max:255'],
             'tiktok' => ['nullable', 'string', 'max:255'],
@@ -252,5 +304,32 @@ class GoogleLoginController extends Controller
             'origin_city_id' => ['nullable', 'string', 'max:50'],
             'origin_district_id' => ['nullable', 'string', 'max:50'],
         ];
+    }
+
+    /**
+     * Kirim kode verifikasi email/nomor tanpa menggagalkan pendaftaran bila
+     * layanan pengiriman belum dikonfigurasi.
+     */
+    private function sendVerificationCodes(User $user): void
+    {
+        try {
+            $this->verification->sendEmailCode($user);
+        } catch (ValidationException $exception) {
+            // Cooldown pengiriman; kode sebelumnya masih berlaku.
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        if (blank($user->phone_number) || $user->hasVerifiedPhone()) {
+            return;
+        }
+
+        try {
+            $this->verification->sendPhoneCode($user);
+        } catch (ValidationException $exception) {
+            //
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

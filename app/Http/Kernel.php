@@ -51,5 +51,6 @@ class Kernel extends HttpKernel
         // ✅ Middleware custom kamu
         'isAdmin' => \App\Http\Middleware\IsAdmin::class,
         'isUser' => \App\Http\Middleware\IsUser::class,
+        'contact.verified' => \App\Http\Middleware\EnsureContactVerified::class,
     ];
 }

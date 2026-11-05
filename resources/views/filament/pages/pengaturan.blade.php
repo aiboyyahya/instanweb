@@ -1,4 +1,8 @@
 <x-filament-panels::page>
+    @php
+        $activeStore = auth()->user()?->store ?: store();
+        $storefrontUrl = $activeStore ? route('store.show', $activeStore) : route('home');
+    @endphp
     <form wire:submit.prevent="save">
         {{ $this->form }}
 
@@ -11,7 +15,7 @@
             <div class="iw-settings-footer__actions">
                 <a
                     class="iw-settings-link"
-                    href="{{ route('home') }}"
+                    href="{{ $storefrontUrl }}"
                     target="_blank"
                     rel="noopener noreferrer"
                 >

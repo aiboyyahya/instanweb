@@ -10,7 +10,7 @@
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">Akun baru</p>
             <h1 class="mt-1 text-2xl font-bold tracking-tight text-fg">Buat akun pembeli</h1>
             <p class="mt-2 text-sm leading-relaxed text-fg-muted">
-                Cukup isi nama, email, dan password. Akun langsung aktif setelah didaftarkan.
+                Cukup isi nama, email, dan password. Kami akan mengirim kode verifikasi untuk mengamankan akun Anda.
             </p>
 
             {{-- Pilihan jenis akun --}}
@@ -65,6 +65,14 @@
                     <input type="email" id="email" name="email" value="{{ old('email') }}" required autocomplete="email"
                         placeholder="nama@email.com"
                         @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
+                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                </x-ui.field>
+
+                <x-ui.field label="Nomor telepon" name="phone_number"
+                    hint="Opsional. Kode verifikasi SMS dikirim ke nomor ini.">
+                    <input type="tel" id="phone_number" name="phone_number" value="{{ old('phone_number') }}"
+                        autocomplete="tel" inputmode="tel" placeholder="08123456789"
+                        @error('phone_number') aria-invalid="true" aria-describedby="phone_number-error" @enderror
                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                 </x-ui.field>
 

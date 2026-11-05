@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn () => route('login.form'));
+
+        $middleware->alias([
+            'contact.verified' => \App\Http\Middleware\EnsureContactVerified::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

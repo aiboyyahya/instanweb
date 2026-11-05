@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Articles\Schemas;
 
+use App\Models\Store;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -13,6 +15,17 @@ class ArticleForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $store = auth()->user()?->store;
+
+        $storeField = $store
+            ? Hidden::make('store_id')->default($store->id)
+            : Select::make('store_id')
+                ->label('Toko')
+                ->options(Store::query()->orderBy('store_name')->pluck('store_name', 'id'))
+                ->searchable()
+                ->preload()
+                ->required();
+
         return $schema
             ->components([
                 Section::make('Konten Artikel')
@@ -20,6 +33,8 @@ class ArticleForm
                     ->icon('heroicon-o-document-text')
                     ->columns(2)
                     ->schema([
+                        $storeField,
+
                         TextInput::make('title')
                             ->label('Judul')
                             ->placeholder('Contoh: Tips Merawat Produk Kulit')

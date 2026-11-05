@@ -6,14 +6,23 @@
     @php
         $isOwner = $user->role === 'admin';
         $hasStore = $store && $store->exists;
+        $profileNavStore = store_context();
+        $profileHomeUrl = $profileNavStore ? route('store.show', $profileNavStore) : route('home');
         $roleLabel = $isOwner ? 'Pemilik Toko' : 'Pembeli';
         $initial = strtoupper(substr($user->name, 0, 1));
         $storeLogo = $store && $store->logo ? asset('storage/' . $store->logo) : null;
+        $needsEmailVerification = ! $user->hasVerifiedEmail();
+        $needsPhoneVerification = filled($user->phone_number) && ! $user->hasVerifiedPhone();
+        $banners = [
+            1 => $store->banner_1 ?? null,
+            2 => $store->banner_2 ?? null,
+            3 => $store->banner_3 ?? null,
+        ];
     @endphp
 
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <x-ui.breadcrumb :items="[
-            ['label' => 'Beranda', 'url' => route('home')],
+            ['label' => 'Beranda', 'url' => $profileHomeUrl],
             ['label' => 'Profil Saya'],
         ]" />
 
@@ -62,12 +71,29 @@
                                 class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/70">
                                 Bergabung {{ $user->created_at?->translatedFormat('M Y') }}
                             </span>
+                            @if ($needsEmailVerification || $needsPhoneVerification)
+                                <a href="{{ route('verification.notice') }}"
+                                    class="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/15 px-2.5 py-1 text-xs font-semibold text-warning transition hover:bg-warning/25">
+                                    <x-ui.icon name="shield" class="h-3.5 w-3.5" />
+                                    Verifikasi akun
+                                </a>
+                            @else
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-full border border-success/40 bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
+                                    <x-ui.icon name="check-circle" class="h-3.5 w-3.5" />
+                                    Terverifikasi
+                                </span>
+                            @endif
                         </div>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap gap-2 sm:justify-end">
                     @if ($isOwner && $hasStore)
+                        <a href="{{ route('store.show', $store) }}" target="_blank" rel="noopener noreferrer"
+                            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-field border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/20">
+                            <x-ui.icon name="external" class="h-4 w-4" /> Lihat Toko
+                        </a>
                         <a href="{{ url('/admin') }}"
                             class="inline-flex min-h-11 items-center justify-center gap-2 rounded-field bg-white px-4 text-sm font-semibold text-inverse transition hover:bg-white/90">
                             <x-ui.icon name="shield" class="h-4 w-4" /> Panel Toko
@@ -187,6 +213,22 @@
                                     value="{{ old('phone_number', $user->phone_number) }}" inputmode="numeric"
                                     pattern="[0-9]*" autocomplete="tel" placeholder="08123456789"
                                     class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+
+                                @if (filled($user->phone_number))
+                                    <div class="pt-1.5">
+                                        @if ($user->hasVerifiedPhone())
+                                            <x-ui.badge variant="success">
+                                                <x-ui.icon name="check" class="h-3 w-3" /> Nomor terverifikasi
+                                            </x-ui.badge>
+                                        @else
+                                            <a href="{{ route('verification.notice') }}">
+                                                <x-ui.badge variant="warning">
+                                                    <x-ui.icon name="alert-circle" class="h-3 w-3" /> Verifikasi nomor
+                                                </x-ui.badge>
+                                            </a>
+                                        @endif
+                                    </div>
+                                @endif
                             </x-ui.field>
 
                             <x-ui.field label="Alamat" name="address">
@@ -228,7 +270,7 @@
                     </section>
 
                     <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                        <x-ui.button :href="route('home')" variant="outline">Batal</x-ui.button>
+                        <x-ui.button :href="$profileHomeUrl" variant="outline">Batal</x-ui.button>
                         <x-ui.button type="submit">
                             <x-ui.icon name="check" class="h-4 w-4" /> Simpan Perubahan
                         </x-ui.button>
@@ -328,10 +370,67 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="sm:col-span-2">
+                                    <div class="flex flex-wrap items-end justify-between gap-2">
+                                        <div>
+                                            <p class="block text-sm font-medium text-fg-secondary">Banner toko</p>
+                                            <p class="mt-1 text-xs leading-relaxed text-fg-muted">
+                                                Maksimal 3 banner untuk hero carousel storefront. Jika kosong, banner bawaan
+                                                digunakan.
+                                            </p>
+                                        </div>
+                                        <x-ui.badge variant="info">{{ count(array_filter($banners)) }}/3 terpasang</x-ui.badge>
+                                    </div>
+
+                                    <div class="mt-3 grid gap-4 sm:grid-cols-3">
+                                        @foreach ($banners as $index => $bannerPath)
+                                            @php
+                                                $bannerUrl = $bannerPath ? asset('storage/' . $bannerPath) : null;
+                                                $bannerInputId = 'store_banner_' . $index;
+                                            @endphp
+
+                                            <div class="rounded-card border border-line bg-surface-muted p-3">
+                                                <p class="text-xs font-semibold text-fg-secondary">Banner {{ $index }}</p>
+
+                                                <div
+                                                    class="mt-2 flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-line bg-surface">
+                                                    <img id="store-banner-preview-{{ $index }}"
+                                                        src="{{ $bannerUrl ?? '' }}" alt="Pratinjau banner {{ $index }}"
+                                                        class="{{ $bannerUrl ? '' : 'hidden' }} h-full w-full object-cover">
+                                                    <x-ui.icon name="sparkles"
+                                                        class="h-6 w-6 text-fg-muted {{ $bannerUrl ? 'hidden' : '' }}"
+                                                        data-store-banner-placeholder="{{ $index }}" />
+                                                </div>
+
+                                                <label for="{{ $bannerInputId }}"
+                                                    class="mt-3 inline-flex min-h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-field border border-line-strong bg-surface px-3 text-xs font-semibold text-fg transition hover:bg-surface-soft">
+                                                    <x-ui.icon name="plus" class="h-3.5 w-3.5" />
+                                                    Pilih banner
+                                                </label>
+                                                <input type="file" name="banner_{{ $index }}"
+                                                    id="{{ $bannerInputId }}" accept="image/*" class="sr-only"
+                                                    data-store-banner-input data-banner-index="{{ $index }}">
+
+                                                @if ($bannerPath)
+                                                    <label
+                                                        class="mt-2 flex items-center gap-2 text-xs text-fg-muted">
+                                                        <input type="checkbox" name="remove_banner_{{ $index }}"
+                                                            value="1"
+                                                            class="h-4 w-4 rounded border-line-strong text-danger focus:ring-danger">
+                                                        Hapus banner ini
+                                                    </label>
+                                                @endif
+
+                                                @error('banner_' . $index)
+                                                    <p class="mt-1 text-xs font-medium text-danger" role="alert">
+                                                        {{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        {{-- Kontak --}}
                         <div class="border-t border-line pt-6">
                             <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Kontak & Sosial Media</h3>
 
@@ -396,7 +495,7 @@
                         </div>
 
                         <div class="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-end">
-                            <x-ui.button :href="route('home')" variant="outline">Batal</x-ui.button>
+                            <x-ui.button :href="$profileHomeUrl" variant="outline">Batal</x-ui.button>
                             <x-ui.button type="submit">
                                 <x-ui.icon name="check" class="h-4 w-4" /> Simpan Pengaturan Toko
                             </x-ui.button>
@@ -438,7 +537,7 @@
                                     <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
                                         <x-ui.icon name="check" class="h-3.5 w-3.5" />
                                     </span>
-                                    Asal pengiriman
+                                    Web pribadi
                                 </li>
                                 <li class="flex items-start gap-2.5">
                                     <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
@@ -452,7 +551,7 @@
                                 <x-ui.button :href="route('register.store.form')" size="lg">
                                     <x-ui.icon name="shield" class="h-4 w-4" /> Buat Toko Sekarang
                                 </x-ui.button>
-                                <x-ui.button :href="route('kontak')" variant="outline">Tanya Pengelola</x-ui.button>
+                                {{-- <x-ui.button :href="route('kontak')" variant="outline">Tanya Pengelola</x-ui.button> --}}
                             </div>
                         </div>
 
@@ -541,6 +640,35 @@
                     reader.readAsDataURL(file);
                 });
             }
+
+            // Pratinjau banner toko (maksimal 3)
+            document.querySelectorAll('[data-store-banner-input]').forEach(function (input) {
+                input.addEventListener('change', function (event) {
+                    const file = event.target.files && event.target.files[0];
+
+                    if (!file || !file.type.startsWith('image/')) {
+                        return;
+                    }
+
+                    const index = input.dataset.bannerIndex;
+                    const preview = document.getElementById('store-banner-preview-' + index);
+                    const placeholder = document.querySelector('[data-store-banner-placeholder="' + index + '"]');
+
+                    const reader = new FileReader();
+
+                    reader.onload = function (loadEvent) {
+                        if (!preview) {
+                            return;
+                        }
+
+                        preview.src = loadEvent.target.result;
+                        preview.classList.remove('hidden');
+                        placeholder?.classList.add('hidden');
+                    };
+
+                    reader.readAsDataURL(file);
+                });
+            });
 
             // Nomor telepon hanya angka
             const phoneInput = document.getElementById('phone_number');

@@ -10,14 +10,25 @@
         $count = (int) ($ratingCount ?? 0);
         $mainImage = $product->image ? asset('storage/' . $product->image) : asset('images/gambar3.jpeg');
         $gallery = $product->images ?? collect();
+
+        $breadcrumbs = $product->store
+            ? [['label' => 'Beranda', 'url' => route('store.show', $product->store)]]
+            : [['label' => 'Beranda', 'url' => route('home')]];
+
+        if ($product->store) {
+            $breadcrumbs[] = [
+                'label' => 'Produk',
+                'url' => route('store.products', $product->store),
+            ];
+        } else {
+            $breadcrumbs[] = ['label' => 'Produk', 'url' => route('products')];
+        }
+
+        $breadcrumbs[] = ['label' => $product->product_name];
     @endphp
 
     <div class="mx-auto max-w-7xl px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-10 lg:pb-10">
-        <x-ui.breadcrumb :items="[
-            ['label' => 'Beranda', 'url' => route('home')],
-            ['label' => 'Produk', 'url' => route('products')],
-            ['label' => $product->product_name],
-        ]" />
+        <x-ui.breadcrumb :items="$breadcrumbs" />
 
         <div class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-10">
             {{-- Galeri & ulasan --}}
@@ -118,6 +129,14 @@
                             {{ $product->category->category_name }}</p>
                     @endif
 
+                    @if ($product->store)
+                        <a href="{{ route('store.show', $product->store) }}"
+                            class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-info underline underline-offset-2 hover:text-fg">
+                            <x-ui.icon name="shield" class="h-3.5 w-3.5" />
+                            Dijual oleh {{ $product->store->store_name }}
+                        </a>
+                    @endif
+
                     <h1 class="mt-1 text-2xl font-bold leading-tight tracking-tight text-fg sm:text-3xl">
                         {{ $product->product_name }}
                     </h1>
@@ -208,13 +227,13 @@
                     @endguest
 
                     <div class="mt-6 space-y-3 border-t border-line pt-5 text-sm text-fg-secondary">
-                        <div class="flex items-start gap-3">
+                        {{-- <div class="flex items-start gap-3">
                             <x-ui.icon name="shield" class="mt-0.5 h-5 w-5 text-success" />
                             <div>
-                                <p class="font-semibold text-fg">Pengembalian barang</p>
-                                <p class="text-fg-muted">Gratis pengembalian dalam 30 hari.</p>
+                                <p class="font-semibold text-fg">Pembayaran</p>
+                                <p class="text-fg-muted">Beragam metode pembayaran.</p>
                             </div>
-                        </div>
+                        </div> --}}
                         <div class="flex items-start gap-3">
                             <x-ui.icon name="truck" class="mt-0.5 h-5 w-5 text-info" />
                             <div>

@@ -11,6 +11,7 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
+        'store_id',
         'product_name',
         'slug',
         'description',
@@ -30,6 +31,11 @@ class Product extends Model
                 $product->slug = Str::slug($product->product_name);
             }
         });
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
     }
 
     public function category()

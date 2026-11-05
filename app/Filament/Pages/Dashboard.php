@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Resources\Articles\ArticleResource;
+use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\Transactions\TransactionResource;
 use App\Models\Store;
@@ -32,15 +33,21 @@ class Dashboard extends BaseDashboard
 
     protected function getViewData(): array
     {
-        $store = Store::first();
+        $store = auth()->user()?->store ?: Store::first();
         $userName = auth()->user()?->name ?? 'Admin';
         $firstName = str($userName)->trim()->before(' ')->toString();
 
         return [
             'firstName' => $firstName !== '' ? $firstName : 'Admin',
             'storeName' => $store?->store_name,
-            'storeUrl' => route('home'),
+            'storeUrl' => $store ? route('store.show', $store) : route('home'),
             'quickActions' => [
+                [
+                    'label' => 'Tambah Kategori',
+                    'description' => 'Tambahkan kategori produk',
+                    'url' => CategoryResource::getUrl('create'),
+                    'icon' => 'heroicon-o-plus-circle',
+                ],
                 [
                     'label' => 'Tambah Produk',
                     'description' => 'Publikasikan produk baru',

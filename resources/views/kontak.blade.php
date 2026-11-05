@@ -1,20 +1,35 @@
 @extends('layouts.app')
 
-@section('title', 'Kontak | ' . (store()->store_name ?? 'instanweb'))
+@section('title', 'Kontak | ' . ($store?->store_name ?? config('app.name', 'instanweb')))
 
 @section('content')
     @php
-        $contactStore = store();
-        $contactWhatsapp = $contactStore && ! empty($contactStore->whatsapp)
-            ? preg_replace('/[^0-9]/', '', $contactStore->whatsapp)
-            : null;
+        $contactStore = $store ?? null;
+        $contactWhatsapp =
+            $contactStore && !empty($contactStore->whatsapp)
+                ? preg_replace('/[^0-9]/', '', $contactStore->whatsapp)
+                : null;
+        $contactProductsUrl = $contactStore ? route('store.products', $contactStore) : route('products');
+        $contactHomeUrl = $contactStore ? route('store.show', $contactStore) : route('home');
     @endphp
 
-    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <x-ui.breadcrumb :items="[
+    {{-- <section class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.button :href="route('home')" variant="ghost">
+            <x-ui.icon name="arrow-left" class="h-4 w-4" /> Kembali ke Beranda
+        </x-ui.button>
+    </section> --}}
+
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <section>
+            <x-ui.button :href="route('home')" variant="ghost">
+                <x-ui.icon name="arrow-left" class="h-4 w-4" /> Kembali ke Beranda
+            </x-ui.button>
+        </section>
+        {{-- <x-ui.breadcrumb :items="array_values(array_filter([
             ['label' => 'Beranda', 'url' => route('home')],
+            $contactStore ? ['label' => $contactStore->store_name, 'url' => route('store.show', $contactStore)] : null,
             ['label' => 'Kontak'],
-        ]" />
+        ]))" /> --}}
 
         <x-ui.page-header class="mt-4" eyebrow="Bantuan" title="Kontak Kami"
             description="Hubungi kami untuk informasi lebih lanjut atau bantuan seputar produk dan pesanan." />
@@ -31,9 +46,9 @@
                                 class="h-20 w-20 shrink-0 rounded-2xl border border-line object-cover">
                         @else
                             <span
-                                class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-line bg-surface-soft p-2">
-                                <img src="{{ asset('images/instanweb-logo.png') }}" alt="instanweb" width="560"
-                                    height="564" class="iw-brand-mark h-full w-full" decoding="async">
+                                class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-line bg-surface-soft text-2xl font-extrabold text-fg-secondary"
+                                aria-hidden="true">
+                                {{ strtoupper(substr($contactStore->store_name, 0, 1)) }}
                             </span>
                         @endif
 
@@ -59,13 +74,12 @@
 
                     <div class="mt-6 flex flex-wrap gap-3 border-t border-line pt-6">
                         @if ($contactWhatsapp)
-                            <x-ui.button :href="'https://wa.me/' . $contactWhatsapp" target="_blank"
-                                rel="noopener noreferrer">
+                            <x-ui.button :href="'https://wa.me/' . $contactWhatsapp" target="_blank" rel="noopener noreferrer">
                                 <x-ui.icon name="chat" class="h-4 w-4" /> Chat WhatsApp
                             </x-ui.button>
                         @endif
 
-                        <x-ui.button :href="route('products')" variant="outline">
+                        <x-ui.button :href="$contactProductsUrl" variant="outline">
                             <x-ui.icon name="shopping-bag" class="h-4 w-4" /> Lihat Produk
                         </x-ui.button>
                     </div>
@@ -82,8 +96,7 @@
                             <div>
                                 <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">WhatsApp</dt>
                                 <dd class="mt-1">
-                                    <a href="https://wa.me/{{ $contactWhatsapp }}" target="_blank"
-                                        rel="noopener noreferrer"
+                                    <a href="https://wa.me/{{ $contactWhatsapp }}" target="_blank" rel="noopener noreferrer"
                                         class="inline-flex min-h-11 items-center gap-2 font-semibold text-info underline underline-offset-2">
                                         <x-ui.icon name="chat" class="h-4 w-4" />
                                         {{ $contactStore->whatsapp }}
@@ -107,13 +120,14 @@
 
                 {{-- Sosial media --}}
                 <section class="rounded-panel border border-line bg-surface p-6 shadow-sm" aria-labelledby="sosial-media">
-                    <h2 id="sosial-media" class="text-sm font-semibold uppercase tracking-wide text-fg-muted">Sosial Media</h2>
+                    <h2 id="sosial-media" class="text-sm font-semibold uppercase tracking-wide text-fg-muted">Sosial Media
+                    </h2>
 
                     <ul class="mt-4 space-y-2 text-sm">
                         @if ($contactStore->instagram)
                             <li>
-                                <a href="https://instagram.com/{{ ltrim($contactStore->instagram, '@') }}"
-                                    target="_blank" rel="noopener noreferrer"
+                                <a href="https://instagram.com/{{ ltrim($contactStore->instagram, '@') }}" target="_blank"
+                                    rel="noopener noreferrer"
                                     class="flex min-h-11 items-center justify-between gap-3 rounded-field border border-line px-3 text-fg transition hover:bg-surface-soft">
                                     <span class="truncate">Instagram — {{ $contactStore->instagram }}</span>
                                     <x-ui.icon name="external" class="h-4 w-4 text-fg-muted" />
@@ -123,7 +137,7 @@
 
                         @if ($contactStore->tiktok)
                             <li>
-                                <a href="https://www.tiktok.com/@{{ ltrim($contactStore->tiktok, '@') }}" target="_blank"
+                                <a href="https://www.tiktok.com/@{{ ltrim($contactStore - > tiktok, '@') }}" target="_blank"
                                     rel="noopener noreferrer"
                                     class="flex min-h-11 items-center justify-between gap-3 rounded-field border border-line px-3 text-fg transition hover:bg-surface-soft">
                                     <span class="truncate">TikTok — {{ $contactStore->tiktok }}</span>
@@ -150,7 +164,8 @@
 
                 {{-- Marketplace --}}
                 <section class="rounded-panel border border-line bg-surface p-6 shadow-sm" aria-labelledby="marketplace">
-                    <h2 id="marketplace" class="text-sm font-semibold uppercase tracking-wide text-fg-muted">Marketplace</h2>
+                    <h2 id="marketplace" class="text-sm font-semibold uppercase tracking-wide text-fg-muted">Marketplace
+                    </h2>
 
                     <ul class="mt-4 space-y-2 text-sm">
                         @if ($contactStore->shopee)
@@ -198,7 +213,7 @@
         @else
             <x-ui.empty-state class="mt-8" title="Informasi toko belum tersedia" icon="chat"
                 description="Pemilik toko belum mengisi informasi kontak. Silakan kembali lagi nanti.">
-                <x-ui.button :href="route('home')" variant="outline">Kembali ke Beranda</x-ui.button>
+                <x-ui.button :href="$contactHomeUrl" variant="outline">Kembali ke Beranda</x-ui.button>
             </x-ui.empty-state>
         @endif
     </div>

@@ -2,19 +2,37 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Models\Store;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $store = auth()->user()?->store;
+
+        $storeField = $store
+            ? Hidden::make('store_id')->default($store->id)
+            : Select::make('store_id')
+                ->label('Toko')
+                ->options(Store::query()->orderBy('store_name')->pluck('store_name', 'id'))
+                ->searchable()
+                ->preload()
+                ->live()
+                ->required();
+
         return $schema
             ->components([
+                $storeField,
+
                 Section::make('Informasi Produk')
                     ->description('Data utama yang tampil pada katalog dan halaman produk.')
                     ->icon('heroicon-o-cube')
@@ -35,7 +53,14 @@ class ProductForm
 
                         Select::make('category_id')
                             ->label('Kategori')
-                            ->relationship('category', 'category_name')
+                            ->relationship(
+                                'category',
+                                'category_name',
+                                modifyQueryUsing: fn (Builder $query, Get $get) => $query->when(
+                                    auth()->user()?->store?->id ?? $get('store_id'),
+                                    fn (Builder $query, int $storeId) => $query->where('store_id', $storeId),
+                                ),
+                            )
                             ->searchable()
                             ->preload()
                             ->required(),

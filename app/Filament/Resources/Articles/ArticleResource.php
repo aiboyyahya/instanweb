@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class ArticleResource extends Resource
@@ -27,6 +28,20 @@ class ArticleResource extends Resource
     protected static ?string $modelLabel = 'Artikel';
 
     protected static ?string $pluralModelLabel = 'Artikel';
+
+    /**
+     * Setiap pemilik toko hanya melihat artikel miliknya sendiri.
+     * Admin platform tanpa toko tetap melihat seluruh data.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $store = auth()->user()?->store;
+
+        return $store
+            ? $query->where('store_id', $store->id)
+            : $query;
+    }
 
     public static function form(Schema $schema): Schema
     {

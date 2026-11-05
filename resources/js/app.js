@@ -198,6 +198,315 @@ function initDismissibleAlerts() {
     });
 }
 
+/**
+ * Combobox dengan pencarian untuk pilihan wilayah bertingkat.
+ * Data diambil dari endpoint server; perubahan induk mereset turunannya.
+ */
+function initSearchableSelects() {
+    const roots = Array.from(document.querySelectorAll('[data-searchable-select]'));
+
+    if (!roots.length) {
+        return;
+    }
+
+    const emitChange = (root, name, value) => {
+        root.dispatchEvent(
+            new CustomEvent('iw:searchable-change', {
+                bubbles: true,
+                detail: { name, value },
+            }),
+        );
+    };
+
+    roots.forEach((root) => {
+        const hidden = root.querySelector('input[type="hidden"]');
+        const input = root.querySelector('[data-combobox-input]');
+        const panel = root.querySelector('[data-combobox-panel]');
+        const list = root.querySelector('[data-combobox-list]');
+        const empty = root.querySelector('[data-combobox-empty]');
+        const state = root.querySelector('[data-combobox-state]');
+        const clearButton = root.querySelector('[data-combobox-clear]');
+
+        if (!hidden || !input || !panel || !list) {
+            return;
+        }
+
+        const endpoint = root.dataset.endpoint;
+        const parentName = root.dataset.parentField || null;
+        const parentParam = root.dataset.parentParam || 'parent_id';
+        const parentInput = parentName ? document.getElementById(parentName) : null;
+        const parentPlaceholder =
+            root.dataset.parentPlaceholder || 'Pilih wilayah induk terlebih dahulu.';
+
+        let options = [];
+        let activeIndex = -1;
+        let requestController = null;
+        let searchTimer = null;
+        let loadedKey = null;
+        let lastSelected = { value: hidden.value, label: input.value };
+
+        const parentValue = () => (parentInput ? parentInput.value.trim() : '');
+
+        const setExpanded = (expanded) => {
+            input.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            panel.classList.toggle('hidden', !expanded);
+        };
+
+        const isOpen = () => !panel.classList.contains('hidden');
+
+        const hideMessages = () => {
+            empty?.classList.add('hidden');
+            state?.classList.add('hidden');
+        };
+
+        const showState = (message) => {
+            if (!state) {
+                return;
+            }
+
+            state.textContent = message;
+            state.classList.remove('hidden');
+            empty?.classList.add('hidden');
+        };
+
+        const highlight = () => {
+            Array.from(list.children).forEach((item, index) => {
+                item.classList.toggle('bg-surface-soft', index === activeIndex);
+            });
+
+            if (activeIndex >= 0) {
+                input.setAttribute('aria-activedescendant', `${input.id}-option-${activeIndex}`);
+                list.children[activeIndex]?.scrollIntoView({ block: 'nearest' });
+            } else {
+                input.removeAttribute('aria-activedescendant');
+            }
+        };
+
+        const render = () => {
+            list.innerHTML = '';
+            hideMessages();
+
+            if (!options.length) {
+                empty?.classList.remove('hidden');
+                return;
+            }
+
+            options.forEach((option, index) => {
+                const item = document.createElement('li');
+                item.id = `${input.id}-option-${index}`;
+                item.setAttribute('role', 'option');
+                item.dataset.value = option.id;
+                item.dataset.label = option.name;
+                item.className =
+                    'flex min-h-10 cursor-pointer items-center rounded-md px-3 text-sm text-fg transition hover:bg-surface-soft';
+                item.textContent = option.name;
+
+                item.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                    select(option);
+                });
+
+                list.appendChild(item);
+            });
+
+            highlight();
+        };
+
+        const close = () => {
+            setExpanded(false);
+            activeIndex = -1;
+            highlight();
+        };
+
+        const open = (search = '') => {
+            if (input.disabled) {
+                return;
+            }
+
+            setExpanded(true);
+            load(search);
+        };
+
+        const load = (search = '') => {
+            if (!endpoint) {
+                return;
+            }
+
+            if (parentName && !parentValue()) {
+                options = [];
+                loadedKey = null;
+                render();
+                showState(parentPlaceholder);
+                return;
+            }
+
+            const key = `${parentValue()}|${search}`;
+
+            if (loadedKey === key) {
+                render();
+                return;
+            }
+
+            const url = new URL(endpoint, window.location.origin);
+
+            if (parentName) {
+                url.searchParams.set(parentParam, parentValue());
+            }
+
+            if (search !== '') {
+                url.searchParams.set('search', search);
+            }
+
+            requestController?.abort();
+            requestController = new AbortController();
+            showState('Memuat...');
+
+            fetch(url, {
+                headers: { Accept: 'application/json' },
+                signal: requestController.signal,
+            })
+                .then((response) => (response.ok ? response.json() : []))
+                .then((payload) => {
+                    options = Array.isArray(payload) ? payload : payload.data || [];
+                    loadedKey = key;
+                    activeIndex = -1;
+                    render();
+                })
+                .catch((error) => {
+                    if (error.name === 'AbortError') {
+                        return;
+                    }
+
+                    options = [];
+                    loadedKey = null;
+                    render();
+                    showState('Gagal memuat data. Coba lagi.');
+                });
+        };
+
+        const select = (option) => {
+            hidden.value = option.id;
+            input.value = option.name;
+            lastSelected = { value: option.id, label: option.name };
+            clearButton?.classList.remove('hidden');
+            emitChange(root, hidden.name, option.id);
+            close();
+        };
+
+        const reset = (clearLabel = true) => {
+            hidden.value = '';
+            options = [];
+            loadedKey = null;
+            activeIndex = -1;
+            lastSelected = { value: '', label: '' };
+            list.innerHTML = '';
+
+            if (clearLabel) {
+                input.value = '';
+            }
+
+            clearButton?.classList.add('hidden');
+            render();
+        };
+
+        const move = (direction) => {
+            if (!options.length) {
+                return;
+            }
+
+            activeIndex = (activeIndex + direction + options.length) % options.length;
+            highlight();
+        };
+
+        input.addEventListener('focus', () => open(''));
+        input.addEventListener('click', () => {
+            if (!isOpen()) {
+                open('');
+            }
+        });
+
+        input.addEventListener('input', () => {
+            if (hidden.value !== '') {
+                hidden.value = '';
+                lastSelected = { value: '', label: '' };
+                clearButton?.classList.add('hidden');
+                emitChange(root, hidden.name, '');
+            }
+
+            if (!isOpen()) {
+                open(input.value.trim());
+                return;
+            }
+
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(() => load(input.value.trim()), 180);
+        });
+
+        input.addEventListener('blur', () => {
+            window.setTimeout(() => {
+                if (!isOpen()) {
+                    return;
+                }
+
+                close();
+
+                if (hidden.value === '' && lastSelected.value !== '') {
+                    hidden.value = lastSelected.value;
+                    input.value = lastSelected.label;
+                    clearButton?.classList.remove('hidden');
+                } else if (hidden.value === '' && input.value.trim() === '') {
+                    input.value = '';
+                }
+            }, 120);
+        });
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+
+                if (!isOpen()) {
+                    open(input.value.trim());
+                } else {
+                    move(1);
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                move(-1);
+            } else if (event.key === 'Enter') {
+                if (isOpen() && activeIndex >= 0 && options[activeIndex]) {
+                    event.preventDefault();
+                    select(options[activeIndex]);
+                }
+            } else if (event.key === 'Escape' || event.key === 'Tab') {
+                close();
+            }
+        });
+
+        clearButton?.addEventListener('mousedown', (event) => event.preventDefault());
+        clearButton?.addEventListener('click', () => {
+            reset();
+            emitChange(root, hidden.name, '');
+            input.focus();
+            open('');
+        });
+
+        document.addEventListener('iw:searchable-change', (event) => {
+            if (!parentName || event.detail.name !== parentName) {
+                return;
+            }
+
+            reset();
+            emitChange(root, hidden.name, '');
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!root.contains(event.target)) {
+                close();
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMobileMenu();
@@ -205,4 +514,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initConfirmDialog();
     initCopyButtons();
     initDismissibleAlerts();
+    initSearchableSelects();
 });

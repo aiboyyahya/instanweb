@@ -76,6 +76,39 @@ class Pengaturan extends Page
                             ->columnSpanFull(),
                     ]),
 
+                Section::make('Banner Toko')
+                    ->description('Unggah maksimal tiga gambar banner untuk hero carousel storefront. Kosongkan untuk memakai banner bawaan.')
+                    ->icon('heroicon-o-photo')
+                    ->columns(3)
+                    ->schema([
+                        FileUpload::make('banner_1')
+                            ->label('Banner 1')
+                            ->disk('public')
+                            ->image()
+                            ->imageEditor()
+                            ->directory('store-banners')
+                            ->visibility('public')
+                            ->maxSize(10240),
+
+                        FileUpload::make('banner_2')
+                            ->label('Banner 2')
+                            ->disk('public')
+                            ->image()
+                            ->imageEditor()
+                            ->directory('store-banners')
+                            ->visibility('public')
+                            ->maxSize(10240),
+
+                        FileUpload::make('banner_3')
+                            ->label('Banner 3')
+                            ->disk('public')
+                            ->image()
+                            ->imageEditor()
+                            ->directory('store-banners')
+                            ->visibility('public')
+                            ->maxSize(10240),
+                    ]),
+
                 Section::make('Kontak & Sosial Media')
                     ->description('Hubungkan pelanggan dengan kanal komunikasi dan marketplace toko.')
                     ->icon('heroicon-o-chat-bubble-left-right')

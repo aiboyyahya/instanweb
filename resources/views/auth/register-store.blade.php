@@ -4,7 +4,7 @@
 
 @section('form_width', 'max-w-3xl')
 
-@section('aside_title', 'Punya produk?<br>Buka toko online Anda.')
+@section('aside_title', 'Punya produk bernilai? Buka toko online Anda.')
 
 @section('aside_description', 'Daftarkan akun pemilik toko, lengkapi identitas usaha, lalu kelola produk dan pesanan dari satu panel.')
 
@@ -41,7 +41,7 @@
                     <p class="mt-2 max-w-xl text-sm leading-relaxed text-fg-muted">
                         {{ $isExistingUser
                             ? 'Akun Anda akan ditingkatkan menjadi pemilik toko. Lengkapi informasi toko di bawah ini.'
-                            : 'Isi data akun dan informasi toko. Setelah selesai, Anda langsung masuk ke panel pengelolaan toko.' }}
+                            : 'Isi data akun dan informasi toko. Setelah selesai, Anda langsung masuk ke panel pengelolaan toko. Kode verifikasi email dan SMS akan dikirim untuk mengamankan akun.' }}
                     </p>
                 </div>
 
@@ -125,6 +125,15 @@
                                 <input type="email" id="email" name="email" value="{{ old('email') }}" required
                                     autocomplete="email" placeholder="nama@email.com"
                                     @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
+                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                            </x-ui.field>
+
+                            <x-ui.field label="Nomor telepon" name="phone_number"
+                                hint="Opsional. Kode verifikasi SMS dikirim ke nomor ini.">
+                                <input type="tel" id="phone_number" name="phone_number"
+                                    value="{{ old('phone_number') }}" autocomplete="tel" inputmode="tel"
+                                    placeholder="08123456789"
+                                    @error('phone_number') aria-invalid="true" aria-describedby="phone_number-error" @enderror
                                     class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                             </x-ui.field>
 

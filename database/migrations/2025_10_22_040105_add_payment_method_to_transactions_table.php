@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->enum('payment_method', ['midtrans'])->default('midtrans')->after('notes');
+            $table->enum('payment_method', ['midtrans','manual'])->default('manual')->after('notes');
         });
     }
 

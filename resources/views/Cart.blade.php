@@ -2,11 +2,17 @@
 
 @section('title', 'Keranjang Belanja | ' . (store()->store_name ?? 'instanweb'))
 
+@php
+    $activeStore = store_context();
+    $productsUrl = $activeStore ? route('store.products', $activeStore) : route('products');
+    $homeUrl = $activeStore ? route('store.show', $activeStore) : route('home');
+@endphp
+
 @section('content')
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <x-ui.page-header eyebrow="Langkah 1 dari 3" title="Keranjang Belanja"
             description="Tinjau produk pilihan Anda sebelum melanjutkan ke checkout.">
-            <x-ui.button :href="route('products')" variant="outline">
+            <x-ui.button :href="$productsUrl" variant="outline">
                 <x-ui.icon name="arrow-left" class="h-4 w-4" /> Lanjut Belanja
             </x-ui.button>
         </x-ui.page-header>
@@ -27,7 +33,7 @@
                     @foreach ($cart as $id => $item)
                         @php
                             $subtotal = $item['price'] * $item['quantity'];
-                            $image = ! empty($item['image'])
+                            $image = !empty($item['image'])
                                 ? asset('storage/' . $item['image'])
                                 : asset('images/gambar3.jpeg');
                         @endphp
@@ -82,8 +88,9 @@
 
                                                 <label for="quantity-{{ $id }}" class="sr-only">Jumlah
                                                     {{ $item['name'] }}</label>
-                                                <input type="number" readonly name="quantity" id="quantity-{{ $id }}"
-                                                    value="{{ $item['quantity'] }}" min="1"
+                                                <input type="number" readonly name="quantity"
+                                                    id="quantity-{{ $id }}" value="{{ $item['quantity'] }}"
+                                                    min="1"
                                                     class="h-10 w-14 rounded-field border border-line-strong bg-surface text-center text-sm font-semibold text-fg">
 
                                                 <button type="button"
@@ -107,12 +114,13 @@
                         </article>
                     @endforeach
 
-                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface p-4 text-sm">
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface p-4 text-sm">
                         <p class="text-fg-muted">
                             Keranjang disimpan selama sesi browser Anda. Total
                             <span class="font-semibold text-fg">{{ $totalQuantity }}</span> item.
                         </p>
-                        <a href="{{ route('products') }}"
+                        <a href="{{ $productsUrl }}"
                             class="font-semibold text-info underline underline-offset-2">Tambah produk lain</a>
                     </div>
                 </div>
@@ -146,7 +154,7 @@
                             <x-ui.icon name="arrow-right" class="h-4 w-4" />
                         </x-ui.button>
 
-                        <x-ui.button :href="route('home')" variant="outline" block class="mt-3">
+                        <x-ui.button :href="$homeUrl" variant="outline" block class="mt-3">
                             Lanjut Belanja
                         </x-ui.button>
                     </div>
@@ -155,9 +163,10 @@
         @else
             <div class="mt-8">
                 <x-ui.empty-state title="Keranjang masih kosong"
-                    description="Belum ada produk di keranjang belanja Anda. Yuk pilih produk favoritmu." icon="shopping-bag">
-                    <x-ui.button :href="route('products')" size="lg">Mulai Belanja</x-ui.button>
-                    <x-ui.button :href="route('home')" variant="outline">Kembali ke Beranda</x-ui.button>
+                    description="Belum ada produk di keranjang belanja Anda. Yuk pilih produk favoritmu."
+                    icon="shopping-bag">
+                    <x-ui.button :href="$productsUrl" size="lg">Mulai Belanja</x-ui.button>
+                    <x-ui.button :href="$homeUrl" variant="outline">Kembali ke Beranda</x-ui.button>
                 </x-ui.empty-state>
             </div>
         @endif

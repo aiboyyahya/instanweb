@@ -12,6 +12,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class TransactionResource extends Resource
@@ -28,6 +29,20 @@ class TransactionResource extends Resource
     protected static ?string $pluralModelLabel = 'Transaksi';
 
     protected static ?string $recordTitleAttribute = 'order_code';
+
+    /**
+     * Pemilik toko hanya melihat pesanan yang memuat produk tokonya.
+     * Admin platform tanpa toko tetap melihat seluruh transaksi.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $store = auth()->user()?->store;
+
+        return $store
+            ? $query->whereHas('items.product', fn (Builder $query) => $query->where('store_id', $store->id))
+            : $query;
+    }
 
     public static function form(Schema $schema): Schema
     {
