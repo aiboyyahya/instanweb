@@ -140,7 +140,11 @@ class GoogleLoginController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'nullable|string|max:20',
             'password' => 'required|min:8|confirmed'
-        ]);
+        ],
+        [
+            'password.min'=> 'Password minimal 8 karakter',
+        ]
+    );
 
         $user = User::create([
             'name' => $request->name,

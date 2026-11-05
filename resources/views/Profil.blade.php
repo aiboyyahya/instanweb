@@ -246,7 +246,15 @@
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h2 id="ubah-password" class="text-lg font-bold text-fg">Ubah Password</h2>
-                                <p class="mt-1 text-sm text-fg-muted">Biarkan kosong jika tidak ingin mengganti password.
+                                <p class="mt-1 text-sm text-fg-muted">
+                                    <span id="password-status-locked" class="inline-flex items-center gap-1.5 text-warning">
+                                        <x-ui.icon name="shield" class="h-3.5 w-3.5" />
+                                        Konfirmasi password lama untuk mengaktifkan
+                                    </span>
+                                    <span id="password-status-unlocked" class="hidden inline-flex items-center gap-1.5 text-success">
+                                        <x-ui.icon name="check-circle" class="h-3.5 w-3.5" />
+                                        Password lama valid — kosongkan untuk tidak mengubah
+                                    </span>
                                 </p>
                             </div>
                             <span
@@ -256,36 +264,70 @@
                         </div>
 
                         <div class="mt-6 grid gap-5 sm:grid-cols-2">
-                            <x-ui.field label="Password baru" name="password" hint="Minimal 8 karakter.">
-                                <input type="password" id="password" name="password" autocomplete="new-password"
-                                    @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
-                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
-                                <button type="button" id="toggle-register-password-btn"
-                                    class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
-                                    aria-label="Tampilkan password" aria-pressed="false">
-                                    <span data-icon-show>
-                                        <x-ui.icon name="eye" class="h-5 w-5" />
-                                    </span>
-                                    <span data-icon-hide class="hidden">
-                                        <x-ui.icon name="eye-off" class="h-5 w-5" />
-                                    </span>
+                            <x-ui.field label="Password lama" name="current_password">
+                                <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden">
+                                    <input type="password" id="current_password" name="current_password"
+                                        autocomplete="current-password"
+                                        placeholder="Masukkan password saat ini"
+                                        @error('current_password') aria-invalid="true" aria-describedby="current_password-error" @enderror
+                                        class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                                    <button type="button" id="toggle-current-password-btn"
+                                        class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                                        aria-label="Tampilkan password" aria-pressed="false">
+                                        <span data-icon-show>
+                                            <x-ui.icon name="eye" class="h-5 w-5" />
+                                        </span>
+                                        <span data-icon-hide class="hidden">
+                                            <x-ui.icon name="eye-off" class="h-5 w-5" />
+                                        </span>
+                                    </button>
+                                </div>
+                                <button type="button" id="btn-verify-password"
+                                    class="mt-2 inline-flex min-h-9 items-center gap-2 rounded-field border border-line-strong bg-surface px-3 text-xs font-semibold text-fg-secondary transition hover:border-cta hover:text-cta disabled:pointer-events-none disabled:opacity-50">
+                                    <x-ui.icon name="shield" class="h-3.5 w-3.5" />
+                                    Konfirmasi
                                 </button>
+                                <p id="verify-message" class="mt-1.5 text-xs" role="status" aria-live="polite"></p>
+                            </x-ui.field>
+
+                            <x-ui.field label="Password baru" name="password" hint="Minimal 8 karakter.">
+                                <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden opacity-50 pointer-events-none"
+                                    id="new-password-wrapper">
+                                    <div class="absolute inset-0 z-20" aria-hidden="true"></div>
+                                    <input type="password" id="password" name="password" autocomplete="new-password"
+                                        disabled
+                                        @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                                        class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                                    <button type="button" id="toggle-profile-password-btn" disabled
+                                        class="absolute inset-y-0 right-0 z-10 flex cursor-not-allowed items-center justify-center px-3.5 text-fg-muted">
+                                        <span data-icon-show>
+                                            <x-ui.icon name="eye" class="h-5 w-5" />
+                                        </span>
+                                        <span data-icon-hide class="hidden">
+                                            <x-ui.icon name="eye-off" class="h-5 w-5" />
+                                        </span>
+                                    </button>
+                                </div>
                             </x-ui.field>
 
                             <x-ui.field label="Konfirmasi password" name="password_confirmation">
-                                <input type="password" id="password_confirmation" name="password_confirmation"
-                                    autocomplete="new-password"
-                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
-                                <button type="button" id="toggle-confirm-password-btn"
-                                    class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
-                                    aria-label="Tampilkan password" aria-pressed="false">
-                                    <span data-icon-show>
-                                        <x-ui.icon name="eye" class="h-5 w-5" />
-                                    </span>
-                                    <span data-icon-hide class="hidden">
-                                        <x-ui.icon name="eye-off" class="h-5 w-5" />
-                                    </span>
-                                </button>
+                                <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden opacity-50 pointer-events-none"
+                                    id="confirm-password-wrapper">
+                                    <div class="absolute inset-0 z-20" aria-hidden="true"></div>
+                                    <input type="password" id="password_confirmation" name="password_confirmation"
+                                        autocomplete="new-password" disabled
+                                        @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation-error" @enderror
+                                        class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                                    <button type="button" id="toggle-profile-confirm-password-btn" disabled
+                                        class="absolute inset-y-0 right-0 z-10 flex cursor-not-allowed items-center justify-center px-3.5 text-fg-muted">
+                                        <span data-icon-show>
+                                            <x-ui.icon name="eye" class="h-5 w-5" />
+                                        </span>
+                                        <span data-icon-hide class="hidden">
+                                            <x-ui.icon name="eye-off" class="h-5 w-5" />
+                                        </span>
+                                    </button>
+                                </div>
                             </x-ui.field>
                         </div>
                     </section>
@@ -725,6 +767,138 @@
                     this.value = this.value.replace(/[^0-9]/g, '');
                 });
             }
+
+            // Tombol mata password profil
+            function setupToggle(buttonId, inputId) {
+                const password = document.getElementById(inputId);
+                const button = document.getElementById(buttonId);
+
+                if (!password || !button) return;
+
+                const iconShow = button.querySelector('[data-icon-show]');
+                const iconHide = button.querySelector('[data-icon-hide]');
+
+                button.addEventListener('click', function () {
+                    const visible = password.type === 'password';
+
+                    password.type = visible ? 'text' : 'password';
+
+                    iconShow.classList.toggle('hidden', visible);
+                    iconHide.classList.toggle('hidden', !visible);
+
+                    button.setAttribute('aria-pressed', String(visible));
+                    button.setAttribute(
+                        'aria-label',
+                        visible ? 'Sembunyikan password' : 'Tampilkan password'
+                    );
+                });
+            }
+
+            setupToggle('toggle-current-password-btn', 'current_password');
+
+            // Verifikasi password lama → buka kunci field password baru
+            const btnVerify = document.getElementById('btn-verify-password');
+            const currentInput = document.getElementById('current_password');
+            const newPasswordInput = document.getElementById('password');
+            const confirmInput = document.getElementById('password_confirmation');
+            const newWrapper = document.getElementById('new-password-wrapper');
+            const confirmWrapper = document.getElementById('confirm-password-wrapper');
+            const statusLocked = document.getElementById('password-status-locked');
+            const statusUnlocked = document.getElementById('password-status-unlocked');
+            const verifyMsg = document.getElementById('verify-message');
+
+            const toggleBtnNew = document.getElementById('toggle-profile-password-btn');
+            const toggleBtnConfirm = document.getElementById('toggle-profile-confirm-password-btn');
+
+            let isPasswordVerified = false;
+
+            btnVerify?.addEventListener('click', async function () {
+                const value = currentInput.value.trim();
+
+                if (!value) {
+                    verifyMsg.textContent = 'Masukkan password lama terlebih dahulu.';
+                    verifyMsg.className = 'mt-1.5 text-xs text-danger';
+                    return;
+                }
+
+                btnVerify.disabled = true;
+                btnVerify.textContent = 'Memverifikasi...';
+                verifyMsg.textContent = '';
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                    const response = await fetch('{{ route('profil.verify.password') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ current_password: value }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        isPasswordVerified = true;
+
+                        // Buka kunci
+                        newPasswordInput.disabled = false;
+                        confirmInput.disabled = false;
+                        toggleBtnNew.disabled = false;
+                        toggleBtnConfirm.disabled = false;
+                        newWrapper.classList.remove('opacity-50', 'pointer-events-none');
+                        confirmWrapper.classList.remove('opacity-50', 'pointer-events-none');
+                        newWrapper.querySelector('[aria-hidden="true"]')?.remove();
+                        confirmWrapper.querySelector('[aria-hidden="true"]')?.remove();
+
+                        // Status
+                        statusLocked.classList.add('hidden');
+                        statusUnlocked.classList.remove('hidden');
+                        verifyMsg.textContent = 'Password lama valid.';
+                        verifyMsg.className = 'mt-1.5 text-xs text-success';
+                    } else {
+                        isPasswordVerified = false;
+                        verifyMsg.textContent = data.message || 'Password lama salah.';
+                        verifyMsg.className = 'mt-1.5 text-xs text-danger';
+                        currentInput.setCustomValidity('Password lama tidak sesuai.');
+                        setTimeout(() => currentInput.setCustomValidity(''), 3000);
+                    }
+                } catch (e) {
+                    verifyMsg.textContent = 'Terjadi kesalahan. Coba lagi.';
+                    verifyMsg.className = 'mt-1.5 text-xs text-danger';
+                } finally {
+                    btnVerify.disabled = false;
+                    btnVerify.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg> Konfirmasi';
+                }
+            });
+
+            // Reset kunci jika user menghapus isi password lama
+            currentInput?.addEventListener('input', function () {
+                if (isPasswordVerified && !this.value.trim()) {
+                    isPasswordVerified = false;
+                    newPasswordInput.disabled = true;
+                    confirmInput.disabled = true;
+                    toggleBtnNew.disabled = true;
+                    toggleBtnConfirm.disabled = true;
+                    newWrapper.classList.add('opacity-50', 'pointer-events-none');
+                    confirmWrapper.classList.add('opacity-50', 'pointer-events-none');
+                    // Tambah kembali overlay penghalang
+                    if (!newWrapper.querySelector('[aria-hidden="true"]')) {
+                        newWrapper.insertAdjacentHTML('beforeend', '<div class="absolute inset-0 z-20" aria-hidden="true"></div>');
+                    }
+                    if (!confirmWrapper.querySelector('[aria-hidden="true"]')) {
+                        confirmWrapper.insertAdjacentHTML('beforeend', '<div class="absolute inset-0 z-20" aria-hidden="true"></div>');
+                    }
+                    statusLocked.classList.remove('hidden');
+                    statusUnlocked.classList.add('hidden');
+                    verifyMsg.textContent = '';
+                }
+            });
+
+            setupToggle('toggle-profile-password-btn', 'password');
+            setupToggle('toggle-profile-confirm-password-btn', 'password_confirmation');
         });
         
     </script>

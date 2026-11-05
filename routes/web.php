@@ -86,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfilController::class, 'index'])->name('profil');
     Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
     Route::put('/profil/toko', [ProfilController::class, 'updateStore'])->name('profil.store.update');
+    Route::post('/profil/verify-password', [ProfilController::class, 'verifyPassword'])->name('profil.verify.password');
     // Ratings
     Route::post('/ratings', [\App\Http\Controllers\ReviewController::class, 'store'])->name('ratings.store');
     Route::get('/ratings/create', [\App\Http\Controllers\ReviewController::class, 'create'])->name('ratings.create');

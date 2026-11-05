@@ -21,6 +21,25 @@ class ProfilController extends Controller
     ) {
     }
 
+    public function verifyPassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'string'],
+        ]);
+
+        if (!Hash::check($request->current_password, Auth::user()->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password lama tidak sesuai.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password valid.',
+        ]);
+    }
+
     public function index()
     {
 
@@ -52,12 +71,19 @@ class ProfilController extends Controller
                 'phone_number' => 'nullable|string|max:20',
                 'address' => 'nullable|string|max:255',
                 'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+                'current_password' => 'nullable|string',
                 'password' => 'nullable|min:8|confirmed',
             ],
             [
                 'password.min'=> 'Password minimal 8 karakter',
             ]
         );
+
+        if (!empty($validated['password']) && !Hash::check($request->current_password, $user->password)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'current_password' => 'Password lama tidak sesuai.',
+            ]);
+        }
 
 
         $user->name = $validated['name'];
