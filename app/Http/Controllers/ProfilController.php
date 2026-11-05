@@ -45,14 +45,19 @@ class ProfilController extends Controller
         $user = Auth::user();
 
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'phone_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'password' => 'nullable|min:6|confirmed',
-        ]);
+        $validated = $request->validate(
+            [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $user->id,
+                'phone_number' => 'nullable|string|max:20',
+                'address' => 'nullable|string|max:255',
+                'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+                'password' => 'nullable|min:8|confirmed',
+            ],
+            [
+                'password.min'=> 'Password minimal 8 karakter',
+            ]
+        );
 
 
         $user->name = $validated['name'];
@@ -105,7 +110,7 @@ class ProfilController extends Controller
 
         $verificationMessage = '';
 
-        if ($emailChanged && ! $user->hasVerifiedEmail()) {
+        if ($emailChanged && !$user->hasVerifiedEmail()) {
             try {
                 $this->verification->sendEmailCode($user);
                 $verificationMessage = ' Kode verifikasi email telah dikirim.';
@@ -116,7 +121,7 @@ class ProfilController extends Controller
             }
         }
 
-        if ($phoneChanged && filled($user->phone_number) && ! $user->hasVerifiedPhone()) {
+        if ($phoneChanged && filled($user->phone_number) && !$user->hasVerifiedPhone()) {
             try {
                 $this->verification->sendPhoneCode($user);
                 $verificationMessage .= ' Kode verifikasi SMS telah dikirim.';
@@ -137,7 +142,7 @@ class ProfilController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user || $user->role !== 'admin') {
+        if (!$user || $user->role !== 'admin') {
             return redirect()
                 ->route('profil')
                 ->with('error', 'Pengaturan toko hanya dapat diubah oleh pemilik toko.');
@@ -190,7 +195,7 @@ class ProfilController extends Controller
             $store->logo = $request->file('logo')->store('logos', 'public');
         }
 
-        if (! $store->user_id) {
+        if (!$store->user_id) {
             $store->user_id = $user->id;
         }
 

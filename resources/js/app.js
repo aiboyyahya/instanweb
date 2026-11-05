@@ -199,6 +199,44 @@ function initDismissibleAlerts() {
 }
 
 /**
+ * Animasi scroll khusus landing page. AOS dimuat dinamis agar halaman lain
+ * tidak menanggung biaya JavaScript tambahan.
+ */
+async function initScrollAnimations() {
+    const elements = document.querySelectorAll('[data-aos]');
+
+    if (!elements.length) {
+        return;
+    }
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        elements.forEach((element) => {
+            element.removeAttribute('data-aos');
+            element.removeAttribute('data-aos-delay');
+        });
+
+        return;
+    }
+
+    try {
+        const { default: AOS } = await import('aos');
+
+        AOS.init({
+            duration: 650,
+            easing: 'ease-out-cubic',
+            offset: 72,
+            once: true,
+            disable: false,
+        });
+
+        window.addEventListener('load', () => AOS.refresh(), { once: true });
+    } catch (error) {
+        // AOS gagal dimuat: biarkan konten tampil tanpa animasi.
+        elements.forEach((element) => element.classList.remove('aos-init'));
+    }
+}
+
+/**
  * Combobox dengan pencarian untuk pilihan wilayah bertingkat.
  * Data diambil dari endpoint server; perubahan induk mereset turunannya.
  */
@@ -515,4 +553,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initCopyButtons();
     initDismissibleAlerts();
     initSearchableSelects();
+    initScrollAnimations();
 });

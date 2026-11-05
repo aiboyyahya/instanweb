@@ -5,6 +5,10 @@
 @section('content')
     @php
         $whatsappNumber = !empty($store->whatsapp) ? preg_replace('/[^0-9]/', '', $store->whatsapp) : null;
+        $isStoreOwner =
+            Auth::check() &&
+            Auth::user()->role === 'admin' &&
+            (int) $store->user_id === (int) Auth::id();
         $bannerSlides = collect($store->bannerPaths())->map(fn($path) => asset('storage/' . $path))->values();
 
         $slides = $bannerSlides->isNotEmpty()
@@ -94,19 +98,21 @@
                                         <x-ui.icon name="arrow-right" class="h-4 w-4" />
                                     </x-ui.button>
 
-                                    @if ($whatsappNumber)
+                                    {{-- @if ($whatsappNumber)
                                         <a href="https://wa.me/{{ $whatsappNumber }}" target="_blank"
                                             rel="noopener noreferrer"
                                             class="inline-flex min-h-12 items-center justify-center gap-2 rounded-field border border-white/35 bg-white/10 px-5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/20">
                                             <x-ui.icon name="chat" class="h-4 w-4" /> Hubungi Toko
-                                        </a>
-                                    @elseif (Auth::user()?->role === 'admin')
+                                        </a> --}}
+                                    @if ($isStoreOwner)
                                         <x-ui.button href="{{ url('/admin') }}" variant="outline" size="lg"
+                                            data-store-cta="admin"
                                             class="border-white/35 bg-white/10 text-white hover:bg-white/20">
                                             Panel Admin
                                         </x-ui.button>
                                     @else
                                         <x-ui.button :href="route('store.contact', $store)" variant="outline" size="lg"
+                                            data-store-cta="contact"
                                             class="border-white/35 bg-white/10 text-white hover:bg-white/20">
                                             Hubungi Toko
                                         </x-ui.button>

@@ -7,6 +7,8 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\Transaction;
 use App\Models\User;
+use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsIconAlias;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -68,6 +70,35 @@ class AdminPagesTest extends TestCase
             ->assertOk()
             ->assertSee('Identitas Toko')
             ->assertSee('Simpan Perubahan');
+    }
+
+    public function test_admin_storefront_links_open_in_the_same_tab(): void
+    {
+        Store::create([
+            'store_name' => 'Toko Uji',
+        ]);
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get('/admin')
+            ->assertOk()
+            ->assertDontSee('target="_blank"', false);
+
+        $this->actingAs($admin)
+            ->get('/admin/pengaturan')
+            ->assertOk()
+            ->assertDontSee('target="_blank"', false);
+    }
+
+    public function test_sidebar_toggle_uses_the_hamburger_icon(): void
+    {
+        $icons = filament()->getPanel('admin')->getIcons();
+
+        $this->assertSame(Heroicon::OutlinedBars3, $icons[PanelsIconAlias::SIDEBAR_EXPAND_BUTTON]);
+        $this->assertSame(Heroicon::OutlinedBars3, $icons[PanelsIconAlias::SIDEBAR_EXPAND_BUTTON_RTL]);
+        $this->assertSame(Heroicon::OutlinedBars3, $icons[PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON]);
+        $this->assertSame(Heroicon::OutlinedBars3, $icons[PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON_RTL]);
     }
 
     public function test_admin_edit_pages_render_with_existing_records(): void

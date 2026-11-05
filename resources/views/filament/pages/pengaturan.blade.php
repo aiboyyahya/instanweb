@@ -16,10 +16,9 @@
                 <a
                     class="iw-settings-link"
                     href="{{ $storefrontUrl }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    data-iw-storefront-link
                 >
-                    <x-filament::icon icon="heroicon-o-arrow-top-right-on-square" />
+                    <x-filament::icon icon="heroicon-o-arrow-right" />
                     Lihat Toko
                 </a>
 

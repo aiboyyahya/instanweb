@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'aos/dist/aos.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -298,6 +299,72 @@
         box-shadow: var(--shadow-md);
     }
 
+    /*
+     * Landing page — dekorasi ringan dan umpan balik tombol.
+     * Semua efek dimatikan otomatis oleh preferensi reduced-motion di bawah.
+     */
+    .iw-landing-page {
+        overflow-x: hidden;
+        overflow-x: clip;
+    }
+
+    .iw-landing-hero {
+        background:
+            radial-gradient(
+                circle at 10% 0%,
+                color-mix(in oklab, var(--color-brand) 13%, transparent),
+                transparent 30rem
+            ),
+            radial-gradient(
+                circle at 92% 16%,
+                color-mix(in oklab, var(--color-brand-sky) 16%, transparent),
+                transparent 24rem
+            );
+    }
+
+    .iw-landing-grid {
+        background-image:
+            linear-gradient(to right, color-mix(in oklab, var(--color-fg) 6%, transparent) 1px, transparent 1px),
+            linear-gradient(to bottom, color-mix(in oklab, var(--color-fg) 6%, transparent) 1px, transparent 1px);
+        background-size: 3rem 3rem;
+        mask-image: linear-gradient(to bottom, black, transparent 78%);
+        -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    .iw-btn-feedback {
+        transition:
+            color 160ms ease,
+            background-color 160ms ease,
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            transform 160ms ease !important;
+    }
+
+    .iw-btn-feedback:hover {
+        transform: translateY(-1px);
+    }
+
+    .iw-btn-feedback:active {
+        transform: translateY(0) scale(0.99);
+    }
+
+    .iw-float {
+        animation: iw-float 7s ease-in-out infinite;
+    }
+
+    .iw-float-delayed {
+        animation-delay: -3.5s;
+    }
+
+    /*
+     * Konten tetap terlihat jika JavaScript/AOS gagal dimuat. AOS baru
+     * menyembunyikan elemen setelah kelas aos-init dipasang.
+     */
+    [data-aos]:not(.aos-init) {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
     /* Konten rich text artikel */
     .article-prose {
         color: var(--color-fg-secondary);
@@ -409,6 +476,17 @@
     }
 }
 
+@keyframes iw-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
 /* Hormati preferensi pengguna yang tidak menginginkan animasi. */
 @media (prefers-reduced-motion: reduce) {
     html {
@@ -421,6 +499,11 @@
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+
+    [data-aos] {
+        opacity: 1 !important;
+        transform: none !important;
     }
 }
 

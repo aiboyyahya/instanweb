@@ -6,10 +6,9 @@
 <a
     class="iw-topbar-link"
     href="{{ $storefrontUrl }}"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="Lihat toko di tab baru"
+    data-iw-storefront-link
+    aria-label="Lihat toko"
 >
-    <x-filament::icon icon="heroicon-o-arrow-top-right-on-square" />
+    <x-filament::icon icon="heroicon-o-building-storefront" />
     <span>Lihat Toko</span>
 </a>

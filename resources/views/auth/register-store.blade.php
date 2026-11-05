@@ -138,17 +138,41 @@
                             </x-ui.field>
 
                             <x-ui.field label="Password" name="password" required hint="Minimal 8 karakter.">
-                                <input type="password" id="password" name="password" required autocomplete="new-password"
-                                    placeholder="Buat password"
-                                    @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
-                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden">
+                                    <input type="password" id="password" name="password" required autocomplete="new-password"
+                                        placeholder="Buat password"
+                                        @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                                        class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                                    <button type="button" id="toggle-store-password-btn"
+                                        class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                                        aria-label="Tampilkan password" aria-pressed="false">
+                                        <span data-icon-show>
+                                            <x-ui.icon name="eye" class="h-5 w-5" />
+                                        </span>
+                                        <span data-icon-hide class="hidden">
+                                            <x-ui.icon name="eye-off" class="h-5 w-5" />
+                                        </span>
+                                    </button>
+                                </div>
                             </x-ui.field>
 
                             <x-ui.field label="Konfirmasi password" name="password_confirmation" required class="sm:col-span-2">
-                                <input type="password" id="password_confirmation" name="password_confirmation" required
-                                    autocomplete="new-password" placeholder="Ulangi password"
-                                    @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation-error" @enderror
-                                    class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                                <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden">
+                                    <input type="password" id="password_confirmation" name="password_confirmation" required
+                                        autocomplete="new-password" placeholder="Ulangi password"
+                                        @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation-error" @enderror
+                                        class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                                    <button type="button" id="toggle-store-confirm-password-btn"
+                                        class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                                        aria-label="Tampilkan password" aria-pressed="false">
+                                        <span data-icon-show>
+                                            <x-ui.icon name="eye" class="h-5 w-5" />
+                                        </span>
+                                        <span data-icon-hide class="hidden">
+                                            <x-ui.icon name="eye-off" class="h-5 w-5" />
+                                        </span>
+                                    </button>
+                                </div>
                             </x-ui.field>
                         </div>
                     </section>
@@ -314,27 +338,53 @@
             const preview = document.querySelector('[data-store-logo-preview]');
             const placeholder = document.querySelector('[data-store-logo-placeholder]');
 
-            if (!input || !preview) {
-                return;
+            if (input && preview) {
+                input.addEventListener('change', function (event) {
+                    const file = event.target.files && event.target.files[0];
+
+                    if (!file || !file.type.startsWith('image/')) {
+                        return;
+                    }
+
+                    const reader = new FileReader();
+
+                    reader.onload = function (loadEvent) {
+                        preview.src = loadEvent.target.result;
+                        preview.classList.remove('hidden');
+                        placeholder?.classList.add('hidden');
+                    };
+
+                    reader.readAsDataURL(file);
+                });
             }
 
-            input.addEventListener('change', function (event) {
-                const file = event.target.files && event.target.files[0];
+            function setupToggle(buttonId, inputId) {
+                const password = document.getElementById(inputId);
+                const button = document.getElementById(buttonId);
 
-                if (!file || !file.type.startsWith('image/')) {
-                    return;
-                }
+                if (!password || !button) return;
 
-                const reader = new FileReader();
+                const iconShow = button.querySelector('[data-icon-show]');
+                const iconHide = button.querySelector('[data-icon-hide]');
 
-                reader.onload = function (loadEvent) {
-                    preview.src = loadEvent.target.result;
-                    preview.classList.remove('hidden');
-                    placeholder?.classList.add('hidden');
-                };
+                button.addEventListener('click', function () {
+                    const visible = password.type === 'password';
 
-                reader.readAsDataURL(file);
-            });
+                    password.type = visible ? 'text' : 'password';
+
+                    iconShow.classList.toggle('hidden', visible);
+                    iconHide.classList.toggle('hidden', !visible);
+
+                    button.setAttribute('aria-pressed', String(visible));
+                    button.setAttribute(
+                        'aria-label',
+                        visible ? 'Sembunyikan password' : 'Tampilkan password'
+                    );
+                });
+            }
+
+            setupToggle('toggle-store-password-btn', 'password');
+            setupToggle('toggle-store-confirm-password-btn', 'password_confirmation');
         });
     </script>
 @endpush

@@ -14,17 +14,17 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
-    server: {
-        host: "0.0.0.0",
-        port: "5173",
-        strictPort: true,
+    // server: {
+    //     host: "0.0.0.0",
+    //     port: "5173",
+    //     strictPort: true,
 
-        hmr: {
-            host: "172.14.10.208",
-        },
+    //     hmr: {
+    //         host: "172.14.10.208",
+    //     },
 
-        watch: {
-            usePolling: true,
-        },
-    },
+    //     watch: {
+    //         usePolling: true,
+    //     },
+    // },
 });

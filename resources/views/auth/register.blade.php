@@ -62,8 +62,8 @@
                 </x-ui.field>
 
                 <x-ui.field label="Email" name="email" required>
-                    <input type="email" id="email" name="email" value="{{ old('email') }}" required autocomplete="email"
-                        placeholder="nama@email.com"
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                        autocomplete="email" placeholder="nama@email.com"
                         @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                 </x-ui.field>
@@ -77,10 +77,22 @@
                 </x-ui.field>
 
                 <x-ui.field label="Password" name="password" required hint="Minimal 8 karakter.">
-                    <input type="password" id="password" name="password" required autocomplete="new-password"
-                        placeholder="Buat password" data-password-input
-                        @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
-                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                    <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden">
+                        <input type="password" id="password" name="password" required autocomplete="new-password"
+                            placeholder="Buat password" data-password-input
+                            @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                            class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                        <button type="button" id="toggle-register-password-btn"
+                            class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                            aria-label="Tampilkan password" aria-pressed="false">
+                            <span data-icon-show>
+                                <x-ui.icon name="eye" class="h-5 w-5" />
+                            </span>
+                            <span data-icon-hide class="hidden">
+                                <x-ui.icon name="eye-off" class="h-5 w-5" />
+                            </span>
+                        </button>
+                    </div>
 
                     <div class="mt-2 flex items-center gap-2" aria-live="polite">
                         <div class="flex flex-1 gap-1" aria-hidden="true">
@@ -93,10 +105,22 @@
                 </x-ui.field>
 
                 <x-ui.field label="Konfirmasi password" name="password_confirmation" required>
-                    <input type="password" id="password_confirmation" name="password_confirmation" required
-                        autocomplete="new-password" placeholder="Ulangi password"
-                        @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation-error" @enderror
-                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                    <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden">
+                        <input type="password" id="password_confirmation" name="password_confirmation" required
+                            autocomplete="new-password" placeholder="Ulangi password"
+                            @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation-error" @enderror
+                            class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                        <button type="button" id="toggle-confirm-password-btn"
+                            class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                            aria-label="Tampilkan password" aria-pressed="false">
+                            <span data-icon-show>
+                                <x-ui.icon name="eye" class="h-5 w-5" />
+                            </span>
+                            <span data-icon-hide class="hidden">
+                                <x-ui.icon name="eye-off" class="h-5 w-5" />
+                            </span>
+                        </button>
+                    </div>
                 </x-ui.field>
 
                 <x-ui.button type="submit" size="lg" block>Daftar sebagai pembeli</x-ui.button>
@@ -137,7 +161,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const input = document.querySelector('[data-password-input]');
 
             if (!input) {
@@ -149,7 +173,7 @@
             const colors = ['bg-danger', 'bg-warning', 'bg-success'];
             const labels = ['Lemah', 'Sedang', 'Kuat'];
 
-            input.addEventListener('input', function () {
+            input.addEventListener('input', function() {
                 const value = input.value;
                 let score = 0;
 
@@ -157,7 +181,7 @@
                 if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
                 if (/\d/.test(value) && /[^A-Za-z0-9]/.test(value)) score += 1;
 
-                bars.forEach(function (bar, index) {
+                bars.forEach(function(bar, index) {
                     bar.classList.remove('bg-line', 'bg-danger', 'bg-warning', 'bg-success');
 
                     if (value.length === 0) {
@@ -170,9 +194,38 @@
                 });
 
                 if (label) {
-                    label.textContent = value.length === 0 ? 'Kekuatan password' : labels[Math.max(score, 1) - 1];
+                    label.textContent = value.length === 0 ? 'Kekuatan password' : labels[Math.max(score,
+                        1) - 1];
                 }
             });
+
+            function setupToggle(buttonId, inputId) {
+                const password = document.getElementById(inputId);
+                const button = document.getElementById(buttonId);
+
+                if (!password || !button) return;
+
+                const iconShow = button.querySelector('[data-icon-show]');
+                const iconHide = button.querySelector('[data-icon-hide]');
+
+                button.addEventListener('click', function() {
+                    const visible = password.type === 'password';
+
+                    password.type = visible ? 'text' : 'password';
+
+                    iconShow.classList.toggle('hidden', visible);
+                    iconHide.classList.toggle('hidden', !visible);
+
+                    button.setAttribute('aria-pressed', String(visible));
+                    button.setAttribute(
+                        'aria-label',
+                        visible ? 'Sembunyikan password' : 'Tampilkan password'
+                    );
+                });
+            }
+
+            setupToggle('toggle-register-password-btn', 'password');
+            setupToggle('toggle-confirm-password-btn', 'password_confirmation');
         });
     </script>
 @endpush

@@ -224,6 +224,54 @@ class StoreIsolationTest extends TestCase
             ->assertSee(route('store.products', $store), false);
     }
 
+    public function test_store_hero_shows_admin_button_only_to_the_store_owner(): void
+    {
+        $ownerA = User::factory()->create(['role' => 'admin']);
+        $ownerB = User::factory()->create(['role' => 'admin']);
+
+        $storeA = $this->store($ownerA, 'Toko Pemilik A');
+        $storeB = $this->store($ownerB, 'Toko Pemilik B');
+
+        $this->actingAs($ownerA)
+            ->get(route('store.show', $storeA))
+            ->assertOk()
+            ->assertSee('data-store-cta="admin"', false)
+            ->assertDontSee('data-store-cta="contact"', false);
+
+        // Pemilik toko lain tidak boleh melihat tombol Panel Admin di toko A.
+        $this->actingAs($ownerB)
+            ->get(route('store.show', $storeA))
+            ->assertOk()
+            ->assertSee('data-store-cta="contact"', false)
+            ->assertDontSee('data-store-cta="admin"', false);
+
+        // Pemilik A juga melihat tombol Hubungi Toko saat membuka toko B.
+        $this->actingAs($ownerA)
+            ->get(route('store.show', $storeB))
+            ->assertOk()
+            ->assertSee('data-store-cta="contact"', false)
+            ->assertDontSee('data-store-cta="admin"', false);
+    }
+
+    public function test_store_hero_shows_contact_button_to_guests_and_customers(): void
+    {
+        $owner = User::factory()->create(['role' => 'admin']);
+        $store = $this->store($owner, 'Toko Kontak');
+
+        $this->get(route('store.show', $store))
+            ->assertOk()
+            ->assertSee('data-store-cta="contact"', false)
+            ->assertDontSee('data-store-cta="admin"', false);
+
+        $customer = User::factory()->create(['role' => 'user']);
+
+        $this->actingAs($customer)
+            ->get(route('store.show', $store))
+            ->assertOk()
+            ->assertSee('data-store-cta="contact"', false)
+            ->assertDontSee('data-store-cta="admin"', false);
+    }
+
     public function test_cart_navigation_keeps_the_store_context(): void
     {
         $ownerA = User::factory()->create(['role' => 'admin']);

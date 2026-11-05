@@ -13,6 +13,7 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsIconAlias;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
@@ -48,6 +49,12 @@ class AdminPanelProvider extends PanelProvider
                 'gray' => Color::Slate,
             ])
             ->viteTheme('resources/css/filament/admin.css')
+            ->icons([
+                PanelsIconAlias::SIDEBAR_EXPAND_BUTTON => Heroicon::OutlinedBars3,
+                PanelsIconAlias::SIDEBAR_EXPAND_BUTTON_RTL => Heroicon::OutlinedBars3,
+                PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON => Heroicon::OutlinedBars3,
+                PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON_RTL => Heroicon::OutlinedBars3,
+            ])
             ->maxContentWidth(Width::SevenExtraLarge)
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('17.5rem')

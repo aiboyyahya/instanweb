@@ -23,11 +23,10 @@
                 <a
                     class="iw-dash-link"
                     href="{{ $storeUrl }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    data-iw-storefront-link
                 >
                     Lihat toko
-                    <x-filament::icon icon="heroicon-m-arrow-top-right-on-square" />
+                    <x-filament::icon icon="heroicon-m-arrow-right" />
                 </a>
             </div>
         </div>

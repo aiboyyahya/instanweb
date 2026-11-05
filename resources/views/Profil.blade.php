@@ -11,8 +11,8 @@
         $roleLabel = $isOwner ? 'Pemilik Toko' : 'Pembeli';
         $initial = strtoupper(substr($user->name, 0, 1));
         $storeLogo = $store && $store->logo ? asset('storage/' . $store->logo) : null;
-        $needsEmailVerification = ! $user->hasVerifiedEmail();
-        $needsPhoneVerification = filled($user->phone_number) && ! $user->hasVerifiedPhone();
+        $needsEmailVerification = !$user->hasVerifiedEmail();
+        $needsPhoneVerification = filled($user->phone_number) && !$user->hasVerifiedPhone();
         $banners = [
             1 => $store->banner_1 ?? null,
             2 => $store->banner_2 ?? null,
@@ -21,13 +21,11 @@
     @endphp
 
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <x-ui.breadcrumb :items="[
-            ['label' => 'Beranda', 'url' => $profileHomeUrl],
-            ['label' => 'Profil Saya'],
-        ]" />
+        <x-ui.breadcrumb :items="[['label' => 'Beranda', 'url' => $profileHomeUrl], ['label' => 'Profil Saya']]" />
 
         {{-- Ringkasan akun --}}
-        <section class="iw-fade-in relative mt-4 overflow-hidden rounded-panel border border-line bg-inverse text-fg-inverse shadow-sm"
+        <section
+            class="iw-fade-in relative mt-4 overflow-hidden rounded-panel border border-line bg-inverse text-fg-inverse shadow-sm"
             aria-labelledby="ringkasan-akun">
             <div aria-hidden="true"
                 class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-brand-sky/20 blur-3xl">
@@ -117,7 +115,8 @@
                 {{-- Foto profil --}}
                 <section class="rounded-panel border border-line bg-surface p-6 shadow-sm lg:sticky lg:top-24"
                     aria-labelledby="foto-profil">
-                    <h2 id="foto-profil" class="text-xs font-semibold uppercase tracking-[0.14em] text-fg-muted">Foto Profil</h2>
+                    <h2 id="foto-profil" class="text-xs font-semibold uppercase tracking-[0.14em] text-fg-muted">Foto Profil
+                    </h2>
 
                     <div class="mt-5 flex flex-col items-center text-center">
                         <div class="relative">
@@ -151,8 +150,8 @@
                                 <x-ui.icon name="plus" class="h-4 w-4" />
                                 Pilih foto baru
                             </label>
-                            <input type="file" name="profile_photo" id="profile_photo" accept="image/*"
-                                class="sr-only" data-profile-input>
+                            <input type="file" name="profile_photo" id="profile_photo" accept="image/*" class="sr-only"
+                                data-profile-input>
                             <p class="mt-2 text-xs leading-relaxed text-fg-muted">
                                 Format JPG, PNG, atau GIF. Maksimal 10 MB.
                             </p>
@@ -184,7 +183,8 @@
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h2 id="informasi-pribadi" class="text-lg font-bold text-fg">Informasi Pribadi</h2>
-                                <p class="mt-1 text-sm text-fg-muted">Data ini dipakai untuk kebutuhan akun dan pengiriman.</p>
+                                <p class="mt-1 text-sm text-fg-muted">Data ini dipakai untuk kebutuhan akun dan pengiriman.
+                                </p>
                             </div>
                             <span
                                 class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-card bg-surface-soft text-brand-text sm:flex">
@@ -194,15 +194,15 @@
 
                         <div class="mt-6 grid gap-5 sm:grid-cols-2">
                             <x-ui.field label="Nama lengkap" name="name" required>
-                                <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}"
-                                    required autocomplete="name"
+                                <input type="text" id="name" name="name"
+                                    value="{{ old('name', $user->name) }}" required autocomplete="name"
                                     @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
                                     class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
                             </x-ui.field>
 
                             <x-ui.field label="Email" name="email" required>
-                                <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}"
-                                    required autocomplete="email"
+                                <input type="email" id="email" name="email"
+                                    value="{{ old('email', $user->email) }}" required autocomplete="email"
                                     @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
                                     class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
                             </x-ui.field>
@@ -246,7 +246,8 @@
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h2 id="ubah-password" class="text-lg font-bold text-fg">Ubah Password</h2>
-                                <p class="mt-1 text-sm text-fg-muted">Biarkan kosong jika tidak ingin mengganti password.</p>
+                                <p class="mt-1 text-sm text-fg-muted">Biarkan kosong jika tidak ingin mengganti password.
+                                </p>
                             </div>
                             <span
                                 class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-card bg-surface-soft text-info sm:flex">
@@ -255,16 +256,36 @@
                         </div>
 
                         <div class="mt-6 grid gap-5 sm:grid-cols-2">
-                            <x-ui.field label="Password baru" name="password" hint="Minimal 6 karakter.">
+                            <x-ui.field label="Password baru" name="password" hint="Minimal 8 karakter.">
                                 <input type="password" id="password" name="password" autocomplete="new-password"
                                     @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
                                     class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
+                                <button type="button" id="toggle-register-password-btn"
+                                    class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                                    aria-label="Tampilkan password" aria-pressed="false">
+                                    <span data-icon-show>
+                                        <x-ui.icon name="eye" class="h-5 w-5" />
+                                    </span>
+                                    <span data-icon-hide class="hidden">
+                                        <x-ui.icon name="eye-off" class="h-5 w-5" />
+                                    </span>
+                                </button>
                             </x-ui.field>
 
                             <x-ui.field label="Konfirmasi password" name="password_confirmation">
                                 <input type="password" id="password_confirmation" name="password_confirmation"
                                     autocomplete="new-password"
                                     class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg">
+                                <button type="button" id="toggle-confirm-password-btn"
+                                    class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                                    aria-label="Tampilkan password" aria-pressed="false">
+                                    <span data-icon-show>
+                                        <x-ui.icon name="eye" class="h-5 w-5" />
+                                    </span>
+                                    <span data-icon-hide class="hidden">
+                                        <x-ui.icon name="eye-off" class="h-5 w-5" />
+                                    </span>
+                                </button>
                             </x-ui.field>
                         </div>
                     </section>
@@ -287,7 +308,8 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="flex flex-col gap-4 border-b border-line bg-surface-muted p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+                    <div
+                        class="flex flex-col gap-4 border-b border-line bg-surface-muted p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
                         <div class="flex items-start gap-4">
                             <span
                                 class="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-surface text-brand-text shadow-sm">
@@ -334,14 +356,16 @@
                                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                                 </x-ui.field>
 
-                                <x-ui.field label="Alamat toko" name="address" inputId="store_address" class="sm:col-span-2">
+                                <x-ui.field label="Alamat toko" name="address" inputId="store_address"
+                                    class="sm:col-span-2">
                                     <input type="text" id="store_address" name="address"
                                         value="{{ old('address', $store->address) }}" autocomplete="street-address"
                                         placeholder="Alamat lengkap toko"
                                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                                 </x-ui.field>
 
-                                <x-ui.field label="Deskripsi toko" name="description" inputId="store_description" class="sm:col-span-2">
+                                <x-ui.field label="Deskripsi toko" name="description" inputId="store_description"
+                                    class="sm:col-span-2">
                                     <textarea id="store_description" name="description" rows="3"
                                         placeholder="Ceritakan singkat produk dan nilai toko Anda."
                                         class="w-full rounded-field border border-line-strong bg-surface px-3.5 py-3 text-sm text-fg placeholder:text-fg-muted">{{ old('description', $store->description) }}</textarea>
@@ -349,11 +373,14 @@
 
                                 <div class="sm:col-span-2">
                                     <p class="block text-sm font-medium text-fg-secondary">Logo toko</p>
-                                    <div class="mt-2 flex flex-col gap-4 rounded-card border border-line bg-surface-muted p-4 sm:flex-row sm:items-center">
-                                        <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-line bg-surface">
+                                    <div
+                                        class="mt-2 flex flex-col gap-4 rounded-card border border-line bg-surface-muted p-4 sm:flex-row sm:items-center">
+                                        <div
+                                            class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-line bg-surface">
                                             <img id="store-logo-preview" src="{{ $storeLogo ?? '' }}" alt="Logo toko"
                                                 class="{{ $storeLogo ? '' : 'hidden' }} h-full w-full object-cover">
-                                            <x-ui.icon name="sparkles" class="h-7 w-7 text-fg-muted {{ $storeLogo ? 'hidden' : '' }}"
+                                            <x-ui.icon name="sparkles"
+                                                class="h-7 w-7 text-fg-muted {{ $storeLogo ? 'hidden' : '' }}"
                                                 data-store-logo-placeholder />
                                         </div>
                                         <div class="min-w-0 flex-1">
@@ -361,11 +388,13 @@
                                                 class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">
                                                 <x-ui.icon name="plus" class="h-4 w-4" /> Ganti logo
                                             </label>
-                                            <input type="file" name="logo" id="store_logo" accept="image/*" class="sr-only"
-                                                data-store-logo-input>
-                                            <p class="mt-2 text-xs leading-relaxed text-fg-muted">JPG, PNG, GIF, atau WEBP. Maksimal 10 MB.</p>
+                                            <input type="file" name="logo" id="store_logo" accept="image/*"
+                                                class="sr-only" data-store-logo-input>
+                                            <p class="mt-2 text-xs leading-relaxed text-fg-muted">JPG, PNG, GIF, atau WEBP.
+                                                Maksimal 10 MB.</p>
                                             @error('logo')
-                                                <p class="mt-1 text-xs font-medium text-danger" role="alert">{{ $message }}</p>
+                                                <p class="mt-1 text-xs font-medium text-danger" role="alert">
+                                                    {{ $message }}</p>
                                             @enderror
                                         </div>
                                     </div>
@@ -379,7 +408,8 @@
                                                 digunakan.
                                             </p>
                                         </div>
-                                        <x-ui.badge variant="info">{{ count(array_filter($banners)) }}/3 terpasang</x-ui.badge>
+                                        <x-ui.badge variant="info">{{ count(array_filter($banners)) }}/3
+                                            terpasang</x-ui.badge>
                                     </div>
 
                                     <div class="mt-3 grid gap-4 sm:grid-cols-3">
@@ -390,12 +420,14 @@
                                             @endphp
 
                                             <div class="rounded-card border border-line bg-surface-muted p-3">
-                                                <p class="text-xs font-semibold text-fg-secondary">Banner {{ $index }}</p>
+                                                <p class="text-xs font-semibold text-fg-secondary">Banner
+                                                    {{ $index }}</p>
 
                                                 <div
                                                     class="mt-2 flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-line bg-surface">
                                                     <img id="store-banner-preview-{{ $index }}"
-                                                        src="{{ $bannerUrl ?? '' }}" alt="Pratinjau banner {{ $index }}"
+                                                        src="{{ $bannerUrl ?? '' }}"
+                                                        alt="Pratinjau banner {{ $index }}"
                                                         class="{{ $bannerUrl ? '' : 'hidden' }} h-full w-full object-cover">
                                                     <x-ui.icon name="sparkles"
                                                         class="h-6 w-6 text-fg-muted {{ $bannerUrl ? 'hidden' : '' }}"
@@ -412,8 +444,7 @@
                                                     data-store-banner-input data-banner-index="{{ $index }}">
 
                                                 @if ($bannerPath)
-                                                    <label
-                                                        class="mt-2 flex items-center gap-2 text-xs text-fg-muted">
+                                                    <label class="mt-2 flex items-center gap-2 text-xs text-fg-muted">
                                                         <input type="checkbox" name="remove_banner_{{ $index }}"
                                                             value="1"
                                                             class="h-4 w-4 rounded border-line-strong text-danger focus:ring-danger">
@@ -432,10 +463,12 @@
                             </div>
                         </div>
                         <div class="border-t border-line pt-6">
-                            <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Kontak & Sosial Media</h3>
+                            <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Kontak & Sosial
+                                Media</h3>
 
                             <div class="mt-4 grid gap-5 sm:grid-cols-2">
-                                <x-ui.field label="WhatsApp" name="whatsapp" inputId="store_whatsapp" hint="Contoh: 08123456789.">
+                                <x-ui.field label="WhatsApp" name="whatsapp" inputId="store_whatsapp"
+                                    hint="Contoh: 08123456789.">
                                     <input type="tel" id="store_whatsapp" name="whatsapp"
                                         value="{{ old('whatsapp', $store->whatsapp) }}" placeholder="08123456789"
                                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
@@ -467,7 +500,8 @@
 
                                 <x-ui.field label="Toko Tokopedia" name="tokopedia" inputId="store_tokopedia">
                                     <input type="text" id="store_tokopedia" name="tokopedia"
-                                        value="{{ old('tokopedia', $store->tokopedia) }}" placeholder="Tautan toko Tokopedia"
+                                        value="{{ old('tokopedia', $store->tokopedia) }}"
+                                        placeholder="Tautan toko Tokopedia"
                                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                                 </x-ui.field>
                             </div>
@@ -475,26 +509,30 @@
 
                         {{-- Pengiriman --}}
                         <div class="border-t border-line pt-6">
-                            <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Asal Pengiriman</h3>
+                            <h3 class="text-sm font-semibold uppercase tracking-[0.12em] text-fg-muted">Asal Pengiriman
+                            </h3>
 
                             <div class="mt-4 grid gap-5 sm:grid-cols-2">
-                                <x-ui.field label="Origin City ID" name="origin_city_id" inputId="store_origin_city_id" hint="ID kota dari RajaOngkir.">
+                                <x-ui.field label="Origin City ID" name="origin_city_id" inputId="store_origin_city_id"
+                                    hint="ID kota dari RajaOngkir.">
                                     <input type="text" id="store_origin_city_id" name="origin_city_id"
                                         value="{{ old('origin_city_id', $store->origin_city_id) }}" inputmode="numeric"
                                         placeholder="Contoh: 469"
                                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                                 </x-ui.field>
 
-                                <x-ui.field label="Origin District ID" name="origin_district_id" inputId="store_origin_district_id" hint="Opsional, lebih spesifik.">
+                                <x-ui.field label="Origin District ID" name="origin_district_id"
+                                    inputId="store_origin_district_id" hint="Opsional, lebih spesifik.">
                                     <input type="text" id="store_origin_district_id" name="origin_district_id"
-                                        value="{{ old('origin_district_id', $store->origin_district_id) }}" inputmode="numeric"
-                                        placeholder="Contoh: 4691"
+                                        value="{{ old('origin_district_id', $store->origin_district_id) }}"
+                                        inputmode="numeric" placeholder="Contoh: 4691"
                                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                                 </x-ui.field>
                             </div>
                         </div>
 
-                        <div class="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-end">
+                        <div
+                            class="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-end">
                             <x-ui.button :href="$profileHomeUrl" variant="outline">Batal</x-ui.button>
                             <x-ui.button type="submit">
                                 <x-ui.icon name="check" class="h-4 w-4" /> Simpan Pengaturan Toko
@@ -522,25 +560,29 @@
 
                             <ul class="mt-5 grid gap-3 text-sm text-fg-secondary sm:grid-cols-2">
                                 <li class="flex items-start gap-2.5">
-                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                    <span
+                                        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
                                         <x-ui.icon name="check" class="h-3.5 w-3.5" />
                                     </span>
                                     Identitas toko & logo
                                 </li>
                                 <li class="flex items-start gap-2.5">
-                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                    <span
+                                        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
                                         <x-ui.icon name="check" class="h-3.5 w-3.5" />
                                     </span>
                                     Kontak & marketplace
                                 </li>
                                 <li class="flex items-start gap-2.5">
-                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                    <span
+                                        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
                                         <x-ui.icon name="check" class="h-3.5 w-3.5" />
                                     </span>
                                     Web pribadi
                                 </li>
                                 <li class="flex items-start gap-2.5">
-                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                                    <span
+                                        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
                                         <x-ui.icon name="check" class="h-3.5 w-3.5" />
                                     </span>
                                     Panel pengelolaan toko
@@ -555,7 +597,8 @@
                             </div>
                         </div>
 
-                        <div class="relative flex items-center justify-center overflow-hidden bg-inverse p-8 text-fg-inverse">
+                        <div
+                            class="relative flex items-center justify-center overflow-hidden bg-inverse p-8 text-fg-inverse">
                             <div aria-hidden="true"
                                 class="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/25 blur-2xl">
                             </div>
@@ -567,17 +610,20 @@
                                 <div class="rounded-card border border-white/15 bg-white/10 p-4">
                                     <p class="text-xs uppercase tracking-wide text-white/60">Langkah 1</p>
                                     <p class="mt-1 text-sm font-semibold">Lengkapi data toko</p>
-                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Nama, logo, deskripsi, dan alamat usaha.</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Nama, logo, deskripsi, dan alamat
+                                        usaha.</p>
                                 </div>
                                 <div class="ml-6 rounded-card border border-white/15 bg-white/10 p-4">
                                     <p class="text-xs uppercase tracking-wide text-white/60">Langkah 2</p>
                                     <p class="mt-1 text-sm font-semibold">Atur kontak & pengiriman</p>
-                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Hubungkan WhatsApp, marketplace, dan origin kirim.</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Hubungkan WhatsApp, marketplace,
+                                        dan origin kirim.</p>
                                 </div>
                                 <div class="ml-12 rounded-card border border-white/15 bg-white/10 p-4">
                                     <p class="text-xs uppercase tracking-wide text-white/60">Langkah 3</p>
                                     <p class="mt-1 text-sm font-semibold">Mulai berjualan</p>
-                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Kelola produk dan pesanan dari panel toko.</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-white/60">Kelola produk dan pesanan dari
+                                        panel toko.</p>
                                 </div>
                             </div>
                         </div>
@@ -590,14 +636,14 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Pratinjau foto profil
             const input = document.querySelector('[data-profile-input]');
             const preview = document.getElementById('profile-preview');
             const initial = document.getElementById('profile-initial');
 
             if (input && preview) {
-                input.addEventListener('change', function (event) {
+                input.addEventListener('change', function(event) {
                     const file = event.target.files && event.target.files[0];
 
                     if (!file || !file.type.startsWith('image/')) {
@@ -606,7 +652,7 @@
 
                     const reader = new FileReader();
 
-                    reader.onload = function (loadEvent) {
+                    reader.onload = function(loadEvent) {
                         preview.src = loadEvent.target.result;
                         preview.classList.remove('hidden');
                         initial?.classList.add('hidden');
@@ -622,7 +668,7 @@
             const storeLogoPlaceholder = document.querySelector('[data-store-logo-placeholder]');
 
             if (storeLogoInput && storeLogoPreview) {
-                storeLogoInput.addEventListener('change', function (event) {
+                storeLogoInput.addEventListener('change', function(event) {
                     const file = event.target.files && event.target.files[0];
 
                     if (!file || !file.type.startsWith('image/')) {
@@ -631,7 +677,7 @@
 
                     const reader = new FileReader();
 
-                    reader.onload = function (loadEvent) {
+                    reader.onload = function(loadEvent) {
                         storeLogoPreview.src = loadEvent.target.result;
                         storeLogoPreview.classList.remove('hidden');
                         storeLogoPlaceholder?.classList.add('hidden');
@@ -642,8 +688,8 @@
             }
 
             // Pratinjau banner toko (maksimal 3)
-            document.querySelectorAll('[data-store-banner-input]').forEach(function (input) {
-                input.addEventListener('change', function (event) {
+            document.querySelectorAll('[data-store-banner-input]').forEach(function(input) {
+                input.addEventListener('change', function(event) {
                     const file = event.target.files && event.target.files[0];
 
                     if (!file || !file.type.startsWith('image/')) {
@@ -652,11 +698,12 @@
 
                     const index = input.dataset.bannerIndex;
                     const preview = document.getElementById('store-banner-preview-' + index);
-                    const placeholder = document.querySelector('[data-store-banner-placeholder="' + index + '"]');
+                    const placeholder = document.querySelector('[data-store-banner-placeholder="' +
+                        index + '"]');
 
                     const reader = new FileReader();
 
-                    reader.onload = function (loadEvent) {
+                    reader.onload = function(loadEvent) {
                         if (!preview) {
                             return;
                         }
@@ -674,10 +721,11 @@
             const phoneInput = document.getElementById('phone_number');
 
             if (phoneInput) {
-                phoneInput.addEventListener('input', function () {
+                phoneInput.addEventListener('input', function() {
                     this.value = this.value.replace(/[^0-9]/g, '');
                 });
             }
         });
+        
     </script>
 @endpush

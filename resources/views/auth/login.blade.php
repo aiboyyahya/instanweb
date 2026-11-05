@@ -51,10 +51,22 @@
                 </x-ui.field>
 
                 <x-ui.field label="Password" name="password" required>
-                    <input type="password" id="password" name="password" required autocomplete="current-password"
-                        placeholder="Masukkan password"
-                        @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
-                        class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
+                    <div class="relative rounded-field border border-line-strong bg-surface overflow-hidden">
+                        <input type="password" id="password" name="password" required autocomplete="current-password"
+                            placeholder="Masukkan password"
+                            @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                            class="h-12 w-full bg-transparent px-3.5 text-sm text-fg placeholder:text-fg-muted pr-11">
+                        <button type="button" id="toggle-password-btn"
+                            class="absolute inset-y-0 right-0 z-10 flex cursor-pointer items-center justify-center px-3.5 text-fg-muted transition hover:text-brand-text focus:outline-none"
+                            aria-label="Tampilkan password" aria-pressed="false">
+                            <span data-icon-show>
+                                <x-ui.icon name="eye" class="h-5 w-5" />
+                            </span>
+                            <span data-icon-hide class="hidden">
+                                <x-ui.icon name="eye-off" class="h-5 w-5" />
+                            </span>
+                        </button>
+                    </div>
                 </x-ui.field>
 
                 <label class="flex items-center gap-2.5 text-sm text-fg-secondary">
@@ -89,7 +101,6 @@
     </div>
 
     <div class="mt-4 rounded-panel border border-line bg-surface p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-fg-muted">Belum punya akun?</p>
         <div class="mt-3 grid gap-2 sm:grid-cols-2">
             <a href="{{ route('register.form') }}"
                 class="iw-lift group flex items-center gap-3 rounded-card border border-line bg-surface-muted p-3 hover:border-cta/40 hover:bg-surface-soft">
@@ -119,3 +130,32 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const password = document.getElementById('password');
+            const button = document.getElementById('toggle-password-btn');
+
+            if (!password || !button) return;
+
+            const iconShow = button.querySelector('[data-icon-show]');
+            const iconHide = button.querySelector('[data-icon-hide]');
+
+            button.addEventListener('click', () => {
+                const visible = password.type === 'password';
+
+                password.type = visible ? 'text' : 'password';
+
+                iconShow.classList.toggle('hidden', visible);
+                iconHide.classList.toggle('hidden', !visible);
+
+                button.setAttribute('aria-pressed', String(visible));
+                button.setAttribute(
+                    'aria-label',
+                    visible ? 'Sembunyikan password' : 'Tampilkan password'
+                );
+            });
+        });
+    </script>
+@endpush

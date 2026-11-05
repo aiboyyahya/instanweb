@@ -108,7 +108,7 @@
                     <x-brand-wordmark size="xl" />
                 @endif
             </a>
-            @if (!request()->routeIs(['selamatdatang', 'home']))
+            @if (!request()->routeIs(['selamatdatang', 'welcome', 'home']))
 
                 {{-- Navigasi desktop --}}
                 <nav class="ml-2 hidden items-center gap-1 lg:flex" aria-label="Navigasi utama">
@@ -126,7 +126,7 @@
             @endif
 
             <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
-                @if (!request()->routeIs('selamatdatang'))
+                @if (!request()->routeIs(['selamatdatang', 'welcome']))
                     {{-- Pencarian (tablet & desktop) --}}
                     <form action="{{ $searchUrl }}" method="GET" role="search"
                         class="hidden items-center md:flex">
@@ -152,7 +152,7 @@
                 </button>
 
                 {{-- Keranjang --}}
-                @if (!request()->routeIs('selamatdatang'))
+                @if (!request()->routeIs(['selamatdatang', 'welcome']))
                     <a href="{{ route('cart') }}"
                         class="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-fg-secondary transition hover:bg-surface-soft hover:text-fg"
                         aria-label="Keranjang belanja, {{ $cartCount }} produk">
@@ -240,7 +240,7 @@
         </div>
 
         {{-- Navigasi toko ringkas untuk layar kecil --}}
-        @if (!request()->routeIs(['selamatdatang', 'home']))
+        @if (!request()->routeIs(['selamatdatang', 'welcome', 'home']))
             <nav class="border-t border-line bg-surface lg:hidden" aria-label="Navigasi toko">
                 <div class="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-1.5 sm:px-6">
                     @foreach ($navLinks as $link)
@@ -423,7 +423,7 @@
                         </a>
                     @endif
                 </div>
-
+                @auth
                 <nav aria-label="Navigasi footer">
                     <h2 class="text-sm font-semibold uppercase tracking-wider text-white/80">Jelajahi</h2>
                     <ul class="mt-4 space-y-2 text-sm text-white/70">
@@ -460,11 +460,12 @@
                         @endif
                     </ul>
                 </div>
+                @endauth
             </div>
 
             <div
                 class="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
-                <p>&copy; {{ date('Y') }}. Seluruh hak cipta dilindungi.</p>
+                <p>&copy; {{ date('Y') }}  Doa'Ibu Team.</p>
                 <div class="flex flex-wrap items-center gap-4">
                     @if ($showStoreIdentity && $store && $store->instagram)
                         <a href="https://instagram.com/{{ ltrim($store->instagram, '@') }}" target="_blank"
@@ -478,7 +479,7 @@
                         <a href="{{ $store->facebook }}" target="_blank" rel="noopener noreferrer"
                             class="transition hover:text-white">Facebook</a>
                     @endif
-                    <a href="{{ url('/admin') }}" class="transition hover:text-white">Panel Admin</a>
+                    <a class="transition hover:text-white">GTNIC Web Development 2026</a>
                 </div>
             </div>
         </div>
