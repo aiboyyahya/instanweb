@@ -17,6 +17,7 @@ class Transaction extends Model
         'status',
         'total',
         'shipping_cost',
+        'distance_km',
         'notes',
         'payment_method',
         'snap_token',
@@ -24,11 +25,24 @@ class Transaction extends Model
         'province',
         'city',
         'district',
+        'latitude',
+        'longitude',
         'postal_code',
         'courier',
         'courier_service',
         'tracking_number',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'float',
+            'longitude' => 'float',
+            'distance_km' => 'float',
+            'shipping_cost' => 'float',
+            'total' => 'float',
+        ];
+    }
 
     public function customer()
     {
@@ -38,6 +52,21 @@ class Transaction extends Model
     public function items()
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    /**
+     * Label metode pembayaran yang dipilih pelanggan.
+     */
+    public function paymentMethodLabel(): string
+    {
+        return match ($this->payment_method) {
+            'transfer_bank' => 'Transfer Bank',
+            'cod' => 'Bayar di Tempat (COD)',
+            'qris' => 'QRIS / E-Wallet',
+            'midtrans' => 'Midtrans',
+            'manual' => 'Konfirmasi Manual',
+            default => ucfirst((string) $this->payment_method),
+        };
     }
 
     protected static function booted()
@@ -62,14 +91,20 @@ class Transaction extends Model
 
     private static function generateTrackingNumber(string $courier): string
     {
+        $normalized = strtolower(trim($courier));
+
         $prefixes = [
             'jne' => 'JN',
-            'tiki' => 'TK',
+            'j&t' => 'JT',
+            'sicepat' => 'SC',
+            'anteraja' => 'AJ',
             'pos' => 'PS',
-            'jnt' => 'JT',
+            'tiki' => 'TK',
+            'cod / kurir toko' => 'CD',
+            'cod' => 'CD',
         ];
 
-        $prefix = $prefixes[$courier] ?? 'TR';
+        $prefix = $prefixes[$normalized] ?? 'TR';
         $timestamp = now()->format('ymdHis');
         $random = strtoupper(substr(md5(uniqid()), 0, 6));
 

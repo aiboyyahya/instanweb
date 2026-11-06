@@ -33,44 +33,95 @@ class Dashboard extends BaseDashboard
 
     protected function getViewData(): array
     {
-        $store = auth()->user()?->store ?: Store::first();
+        $store   = auth()->user()?->store ?: Store::first();
         $userName = auth()->user()?->name ?? 'Admin';
         $firstName = str($userName)->trim()->before(' ')->toString();
 
+        // Cek kondisi toko untuk menandai tutorial
+        $hasStoreName   = !empty($store?->store_name);
+        $hasProducts    = \App\Models\Product::query()
+            ->when($store?->id, fn ($q, int $id) => $q->where('store_id', $id))
+            ->count() > 0;
+        $hasCategories  = \App\Models\Category::query()
+            ->when($store?->id, fn ($q, int $id) => $q->where('store_id', $id))
+            ->count() > 0;
+        $hasOrders      = \App\Models\Transaction::query()
+            ->when($store?->id, fn ($q, int $id) => $q->whereHas('items.product', fn ($q2) => $q2->where('store_id', $id)))
+            ->count() > 0;
+        $hasArticles    = \App\Models\Article::query()
+            ->when($store?->id, fn ($q, int $id) => $q->where('store_id', $id))
+            ->count() > 0;
+
+        $allDone = $hasStoreName && $hasProducts && $hasCategories && $hasOrders;
+
+        $tutorialSteps = [
+            [
+                'label' => 'Lengkapi pengaturan toko',
+                'hint'  => 'Nama, alamat, WhatsApp, dan logo toko.',
+                'url'   => Pengaturan::getUrl(),
+                'done'  => $hasStoreName,
+            ],
+            [
+                'label' => 'Buat kategori pertama',
+                'hint'  => 'Kelompokkan produk agar pelanggan mudah mencari.',
+                'url'   => CategoryResource::getUrl('create'),
+                'done'  => $hasCategories,
+            ],
+            [
+                'label' => 'Tambah produk',
+                'hint'  => 'Unggah foto, isi harga dan stok.',
+                'url'   => ProductResource::getUrl('create'),
+                'done'  => $hasProducts,
+            ],
+            [
+                'label' => 'Proses pesanan masuk',
+                'hint'  => 'Pantau dan update status pesanan pelanggan.',
+                'url'   => TransactionResource::getUrl('index'),
+                'done'  => $hasOrders,
+            ],
+            [
+                'label' => 'Tulis artikel (opsional)',
+                'hint'  => 'Ceritakan cerita atau tips tentang produk Anda.',
+                'url'   => ArticleResource::getUrl('create'),
+                'done'  => $hasArticles,
+            ],
+        ];
+
         return [
-            'firstName' => $firstName !== '' ? $firstName : 'Admin',
-            'storeName' => $store?->store_name,
-            'storeUrl' => $store ? route('store.show', $store) : route('home'),
-            'quickActions' => [
+            'firstName'     => $firstName !== '' ? $firstName : 'Admin',
+            'storeName'     => $store?->store_name,
+            'storeUrl'      => $store ? route('store.show', $store) : route('home'),
+            'tutorialSteps' => $allDone ? [] : $tutorialSteps,
+            'quickActions'  => [
                 [
-                    'label' => 'Tambah Kategori',
-                    'description' => 'Tambahkan kategori produk',
-                    'url' => CategoryResource::getUrl('create'),
-                    'icon' => 'heroicon-o-plus-circle',
+                    'label'       => 'Produk',
+                    'description' => 'Tambah atau kelola produk',
+                    'url'         => ProductResource::getUrl('create'),
+                    'icon'        => 'heroicon-o-plus-circle',
                 ],
                 [
-                    'label' => 'Tambah Produk',
-                    'description' => 'Publikasikan produk baru',
-                    'url' => ProductResource::getUrl('create'),
-                    'icon' => 'heroicon-o-plus-circle',
-                ],
-                [
-                    'label' => 'Lihat Pesanan',
+                    'label'       => 'Pesanan',
                     'description' => 'Pantau status transaksi',
-                    'url' => TransactionResource::getUrl('index'),
-                    'icon' => 'heroicon-o-shopping-bag',
+                    'url'         => TransactionResource::getUrl('index'),
+                    'icon'        => 'heroicon-o-shopping-bag',
                 ],
                 [
-                    'label' => 'Tulis Artikel',
-                    'description' => 'Bagikan informasi toko',
-                    'url' => ArticleResource::getUrl('create'),
-                    'icon' => 'heroicon-o-document-plus',
+                    'label'       => 'Kategori',
+                    'description' => 'Kelompokkan produk',
+                    'url'         => CategoryResource::getUrl('create'),
+                    'icon'        => 'heroicon-o-tag',
                 ],
                 [
-                    'label' => 'Pengaturan Toko',
-                    'description' => 'Identitas & pembayaran',
-                    'url' => Pengaturan::getUrl(),
-                    'icon' => 'heroicon-o-cog-6-tooth',
+                    'label'       => 'Pengaturan',
+                    'description' => 'Identitas toko & kontak',
+                    'url'         => Pengaturan::getUrl(),
+                    'icon'        => 'heroicon-o-cog-6-tooth',
+                ],
+                [
+                    'label'       => 'Artikel',
+                    'description' => 'Ceritakan produk Anda',
+                    'url'         => ArticleResource::getUrl('create'),
+                    'icon'        => 'heroicon-o-document-plus',
                 ],
             ],
         ];

@@ -37,4 +37,34 @@ class RegionController extends Controller
             ),
         );
     }
+
+    /**
+     * Reverse geocode koordinat menjadi ID & label provinsi/kota/kecamatan lokal.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function geocode(Request $request)
+    {
+        $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $result = $this->regions->reverseGeocode(
+            (float) $request->latitude,
+            (float) $request->longitude,
+        );
+
+        $payload = [
+            'province_id' => $result['province']['id'] ?? null,
+            'province_name' => $result['province']['name'] ?? null,
+            'city_id' => $result['regency']['id'] ?? null,
+            'city_name' => $result['regency']['name'] ?? null,
+            'district_id' => $result['district']['id'] ?? null,
+            'district_name' => $result['district']['name'] ?? null,
+            'matched' => $result !== null,
+        ];
+
+        return response()->json($payload);
+    }
 }

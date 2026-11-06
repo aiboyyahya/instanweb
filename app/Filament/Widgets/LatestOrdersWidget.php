@@ -13,6 +13,8 @@ class LatestOrdersWidget extends BaseWidget
 {
     protected static ?string $heading = 'Pesanan Terbaru';
 
+    protected static ?string $description = '10 pesanan terakhir masuk.';
+
     protected static ?int $sort = 4;
 
     protected int|string|array $columnSpan = 'full';

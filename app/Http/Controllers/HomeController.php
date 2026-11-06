@@ -10,11 +10,13 @@ use App\Models\Store;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Services\RegionService;
+use App\Services\ShippingCostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class HomeController extends Controller
@@ -299,6 +301,11 @@ class HomeController extends Controller
         $originDistrictId = config('services.rajaongkir.origin_district_id');
         $defaultItemWeight = 1000;
 
+        $originStore = store_context() ?? store();
+        $originLatitude = $originStore?->latitude;
+        $originLongitude = $originStore?->longitude;
+        $originStoreName = $originStore?->store_name;
+
         $selectedProvince = old('province_id') ? $regions->findProvince((string) old('province_id')) : null;
         $selectedCity = old('city_id') ? $regions->findRegency((string) old('city_id')) : null;
         $selectedDistrict = old('district_id') ? $regions->findDistrict((string) old('district_id')) : null;
@@ -309,21 +316,87 @@ class HomeController extends Controller
             'district' => $selectedDistrict['name'] ?? null,
         ];
 
-        return view('Checkout', compact('cart', 'directCheckout', 'totalWeight', 'originCityId', 'originDistrictId', 'defaultItemWeight', 'selectedRegions'));
+        return view('Checkout', compact(
+            'cart',
+            'directCheckout',
+            'totalWeight',
+            'originCityId',
+            'originDistrictId',
+            'defaultItemWeight',
+            'selectedRegions',
+            'originLatitude',
+            'originLongitude',
+            'originStoreName',
+        ));
     }
 
-    public function checkout(Request $request, RegionService $regions)
+    /**
+     * Estimasi ongkir berdasarkan titik lokasi toko dan titik pengiriman.
+     */
+    public function shippingEstimate(Request $request, ShippingCostService $shipping)
+    {
+        $validated = $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'courier' => ['required', 'string', 'max:50', Rule::in($shipping->supportedCouriers())],
+        ]);
+
+        $originStore = $this->resolveCheckoutOriginStore();
+        $courier = $shipping->canonicalCourier((string) $validated['courier']);
+
+        $estimate = $shipping->estimate(
+            $originStore?->latitude !== null ? (float) $originStore->latitude : null,
+            $originStore?->longitude !== null ? (float) $originStore->longitude : null,
+            (float) $validated['latitude'],
+            (float) $validated['longitude'],
+            $courier,
+        );
+
+        return response()->json([
+            'distance_km' => $estimate['distance_km'],
+            'shipping_cost' => $estimate['shipping_cost'],
+            'courier' => $courier,
+            'courier_label' => $shipping->courierLabel($courier),
+            'origin_configured' => $originStore?->latitude !== null && $originStore?->longitude !== null,
+        ]);
+    }
+
+    /**
+     * Toko asal pengiriman mengikuti produk yang sedang di-checkout.
+     */
+    private function resolveCheckoutOriginStore(): ?Store
+    {
+        $directCheckout = session('direct_checkout', []);
+        $items = ! empty($directCheckout) ? $directCheckout : cart_items();
+        $firstProductId = array_key_first($items);
+
+        if ($firstProductId !== null) {
+            $productStore = Product::query()
+                ->with('store')
+                ->find((int) $firstProductId)?->store;
+
+            if ($productStore) {
+                return $productStore;
+            }
+        }
+
+        return store_context() ?? store();
+    }
+
+    public function checkout(Request $request, RegionService $regions, ShippingCostService $shipping)
     {
         $request->validate([
             'province_id' => 'required|string|max:20',
             'city_id' => 'required|string|max:20',
             'district_id' => 'required|string|max:20',
             'phone_number' => 'required|string|max:20',
-            'address' => 'required|string',
+            'address' => 'nullable|string',
             'notes' => 'nullable|string',
-            'postal_code' => 'required|string',
-            'courier' => 'required|string',
-            // 'shipping_cost' => 'required|numeric|min:0',
+            'postal_code' => 'nullable|string|max:5',
+            'courier' => ['required', 'string', 'max:50', Rule::in($shipping->supportedCouriers())],
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'payment_method' => 'required|in:transfer_bank,cod,qris,manual',
         ]);
 
         $province = $regions->findProvince((string) $request->province_id);
@@ -364,7 +437,7 @@ class HomeController extends Controller
         }
 
         try {
-            $transaction = DB::transaction(function () use ($itemsToProcess, $request, $province, $regency, $district) {
+            $transaction = DB::transaction(function () use ($itemsToProcess, $request, $province, $regency, $district, $shipping) {
                 $productIds = array_map('intval', array_keys($itemsToProcess));
 
                 // Kunci baris produk agar stok tidak berubah di tengah proses checkout.
@@ -404,12 +477,23 @@ class HomeController extends Controller
                     ];
                 }
 
-                $shippingCost = (float) $request->shipping_cost;
+                $originStore = ! empty($preparedItems) ? ($preparedItems[0]['product']->store ?? null) : null;
+                $courier = $shipping->canonicalCourier((string) $request->courier);
+
+                $estimate = $shipping->estimate(
+                    $originStore?->latitude !== null ? (float) $originStore->latitude : null,
+                    $originStore?->longitude !== null ? (float) $originStore->longitude : null,
+                    (float) $request->latitude,
+                    (float) $request->longitude,
+                    $courier,
+                );
+
+                $shippingCost = (int) $estimate['shipping_cost'];
+                $distanceKm = $estimate['distance_km'];
                 $total += $shippingCost;
 
                 $orderCode = 'ORD-' . now()->format('YmdHis') . '-' . Auth::id() . '-' . Str::upper(Str::random(4));
 
-                // Simpan transaksi tanpa Midtrans (Metode Pembayaran Manual / Transfer / COD)
                 $transaction = Transaction::create([
                     'order_code' => $orderCode,
                     'customer_id' => Auth::id(),
@@ -417,16 +501,19 @@ class HomeController extends Controller
                     'address' => $request->address,
                     'status' => 'pending',
                     'total' => $total,
-                    // 'shipping_cost' => $shippingCost,
+                    'shipping_cost' => $shippingCost,
+                    'distance_km' => $distanceKm,
                     'notes' => $request->notes,
-                    'payment_method' => 'manual',
+                    'payment_method' => $request->payment_method,
                     'payment_status' => 'pending',
                     'province' => $province['name'],
                     'city' => $regency['name'],
                     'district' => $district['name'],
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
                     'postal_code' => $request->postal_code,
-                    'courier' => $request->courier,
-                    'courier_service' => 'Reguler / Manual',
+                    'courier' => $courier,
+                    'courier_service' => $shipping->courierService($courier),
                 ]);
 
                 foreach ($preparedItems as $prepared) {
@@ -662,10 +749,13 @@ class HomeController extends Controller
             "Order Code: {$transaction->order_code}\n" .
             "Produk:\n{$produkString}\n\n" .
             "*Alamat Pengiriman:*\n" .
-            "{$transaction->address}\n" .
+            ($transaction->address ? "{$transaction->address}\n" : '') .
             "{$transaction->district}, {$transaction->city}\n" .
-            "{$transaction->province} {$transaction->postal_code}\n\n" .
+            "{$transaction->province}" . ($transaction->postal_code ? " {$transaction->postal_code}" : '') . "\n\n" .
             "*Kurir:* {$transaction->courier} - {$transaction->courier_service}\n" .
+            "*Pembayaran:* {$transaction->paymentMethodLabel()}\n" .
+            "*Ongkir:* Rp" . number_format((float) ($transaction->shipping_cost ?? 0), 0, ',', '.') .
+            ($transaction->distance_km ? " (jarak ± " . number_format((float) $transaction->distance_km, 2, ',', '.') . " km)" : '') . "\n" .
             "*Total:* Rp" . number_format($transaction->total, 0, ',', '.') . "\n\n" .
             "Terima kasih sudah berbelanja di Toko Kami {$storeName}!";
 

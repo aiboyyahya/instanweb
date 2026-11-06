@@ -53,6 +53,7 @@ Route::get('/api/products/search', [HomeController::class, 'searchProducts'])->n
 Route::get('/api/wilayah/provinsi', [RegionController::class, 'provinces'])->name('regions.provinces');
 Route::get('/api/wilayah/kota', [RegionController::class, 'regencies'])->name('regions.regencies');
 Route::get('/api/wilayah/kecamatan', [RegionController::class, 'districts'])->name('regions.districts');
+Route::post('/api/wilayah/geocode', [RegionController::class, 'geocode'])->name('regions.geocode');
 
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/artikel/{article}', [ArticleController::class, 'show'])->name('articles.show');
@@ -76,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['contact.verified'])->group(function () {
         Route::get('/checkout', [HomeController::class, 'checkoutPage'])->name('checkout.page');
         Route::post('/checkout', [HomeController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/ongkir', [HomeController::class, 'shippingEstimate'])->name('checkout.shipping-estimate');
         Route::get('/checkout/payment/{id}', [HomeController::class, 'checkoutPayment'])->name('checkout.payment');
         Route::get('/checkout/success/{id}', [HomeController::class, 'checkoutSuccess'])->name('checkout.success');
         Route::get('/transaction/{id}/snap-token', [HomeController::class, 'getSnapToken'])->name('transaction.getSnapToken');

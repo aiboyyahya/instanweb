@@ -10,7 +10,7 @@ class ListCategories extends ListRecords
 {
     protected static string $resource = CategoryResource::class;
 
-    protected ?string $subheading = 'Atur pengelompokan produk agar mudah ditemukan pelanggan.';
+    protected ?string $subheading = 'Kelompokkan produk agar mudah dicari.';
 
     protected function getHeaderActions(): array
     {

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Schemas;
 
 use App\Models\User;
+use App\Services\ShippingCostService;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -17,7 +18,7 @@ class TransactionForm
         return $schema
             ->components([
                 Section::make('Ringkasan Pesanan')
-                    ->description('Data pesanan dari pelanggan. Sebagian data dikunci agar riwayat transaksi tetap utuh.')
+                    ->description('Data pesanan dari pelanggan.')
                     ->icon('heroicon-o-receipt-percent')
                     ->columns(2)
                     ->schema([
@@ -69,16 +70,20 @@ class TransactionForm
 
                         Select::make('payment_method')
                             ->label('Metode Pembayaran')
-                            ->disabled()
                             ->options([
-                                'midtrans' => 'Midtrans',
+                                'transfer_bank' => 'Transfer Bank',
+                                'cod' => 'Bayar di Tempat (COD)',
+                                'qris' => 'QRIS / E-Wallet',
+                                'manual' => 'Konfirmasi Manual',
+                                'midtrans' => 'Midtrans (Online)',
                             ])
-                            ->default('midtrans')
+                            ->default('manual')
+                            ->disabled()
                             ->required(),
                     ]),
 
-                Section::make('Alamat & Pengiriman')
-                    ->description('Lengkapi informasi kurir dan nomor resi saat pesanan dikirim.')
+                Section::make('Alamat & Kurir')
+                    ->description('Isi nomor resi saat pesanan dikirim.')
                     ->icon('heroicon-o-truck')
                     ->columns(2)
                     ->schema([
@@ -103,19 +108,35 @@ class TransactionForm
 
                         TextInput::make('postal_code')
                             ->label('Kode Pos')
-                            ->numeric(),
+                            ->maxLength(5)
+                            ->disabled()
+                            ->helperText('Ditetapkan saat pelanggan menyelesaikan checkout.'),
 
                         Select::make('courier')
                             ->label('Kurir')
-                            ->options([
-                                'jne' => 'JNE',
-                                'tiki' => 'TIKI',
-                                'pos' => 'POS Indonesia',
-                                'jnt' => 'J&T Express',
-                            ]),
+                            ->options(app(ShippingCostService::class)->courierOptions())
+                            ->disabled()
+                            ->helperText('Kurir dipilih pelanggan saat checkout dan tidak dapat diubah.'),
 
                         TextInput::make('courier_service')
-                            ->label('Layanan Kurir'),
+                            ->label('Layanan Kurir')
+                            ->disabled()
+                            ->helperText('Otomatis disesuaikan dari kurir yang dipilih pelanggan.'),
+
+                        TextInput::make('shipping_cost')
+                            ->label('Ongkos Kirim')
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->default(0)
+                            ->disabled()
+                            ->helperText('Dihitung otomatis dari jarak dan tarif kurir saat checkout.'),
+
+                        TextInput::make('distance_km')
+                            ->label('Jarak Pengiriman')
+                            ->numeric()
+                            ->suffix('km')
+                            ->disabled()
+                            ->placeholder('Belum dihitung'),
 
                         TextInput::make('tracking_number')
                             ->label('Nomor Resi')
@@ -124,7 +145,7 @@ class TransactionForm
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Catatan Pelanggan')
+                Section::make('Catatan')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->schema([
                         Textarea::make('notes')

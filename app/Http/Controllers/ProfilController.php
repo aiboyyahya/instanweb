@@ -195,6 +195,8 @@ class ProfilController extends Controller
             'tokopedia' => ['nullable', 'string', 'max:255'],
             'origin_city_id' => ['nullable', 'string', 'max:50'],
             'origin_district_id' => ['nullable', 'string', 'max:50'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
         $storeData = $request->only([
@@ -212,6 +214,11 @@ class ProfilController extends Controller
         ]);
 
         $store->fill($storeData);
+
+        if ($request->has('latitude') || $request->has('longitude')) {
+            $store->latitude = $request->filled('latitude') ? (float) $request->latitude : null;
+            $store->longitude = $request->filled('longitude') ? (float) $request->longitude : null;
+        }
 
         if ($request->hasFile('logo')) {
             if ($store->logo && Storage::disk('public')->exists($store->logo)) {

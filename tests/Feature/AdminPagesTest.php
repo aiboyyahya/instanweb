@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Pengaturan;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsIconAlias;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class AdminPagesTest extends TestCase
@@ -69,7 +71,37 @@ class AdminPagesTest extends TestCase
             ->get('/admin/pengaturan')
             ->assertOk()
             ->assertSee('Identitas Toko')
+            ->assertSee('Latitude')
+            ->assertSee('Longitude')
             ->assertSee('Simpan Perubahan');
+    }
+
+    public function test_admin_can_save_store_map_coordinates(): void
+    {
+        $admin = $this->admin();
+        $store = Store::create([
+            'user_id' => $admin->id,
+            'store_name' => 'Toko Uji',
+        ]);
+
+        $this->actingAs($admin);
+
+        $component = Livewire::test(Pengaturan::class)
+            ->set('data.latitude', -6.2)
+            ->set('data.longitude', 106.816667);
+
+        $component
+            ->assertFormSet([
+                'latitude' => -6.2,
+                'longitude' => 106.816667,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $store->refresh();
+
+        $this->assertEqualsWithDelta(-6.2, (float) $store->latitude, 0.0000001);
+        $this->assertEqualsWithDelta(106.816667, (float) $store->longitude, 0.0000001);
     }
 
     public function test_admin_storefront_links_open_in_the_same_tab(): void

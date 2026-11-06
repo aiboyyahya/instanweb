@@ -3,1167 +3,464 @@
 @source '../../../app/Filament/**/*.php';
 @source '../../../resources/views/filament/**/*.blade.php';
 
-/*
- |--------------------------------------------------------------------------
- | instanweb — Panel Toko
- |--------------------------------------------------------------------------
- | Tema admin mengikuti bahasa visual storefront: permukaan bersih, aksen
- | biru #1e56fc, tipografi Inter, radius lembut, dan mode gelap yang konsisten.
- */
-
+/* --------------------------------------------------------------------------
+   Token — satu sumber kebenaran
+   -------------------------------------------------------------------------- */
 :root {
-    --iw-admin-surface: #ffffff;
-    --iw-admin-surface-muted: #f8fafc;
-    --iw-admin-surface-soft: #f1f5f9;
-    --iw-admin-line: #e2e8f0;
-    --iw-admin-line-strong: #cbd5e1;
-    --iw-admin-text: #0f172a;
-    --iw-admin-text-secondary: #475569;
-    --iw-admin-text-muted: #64748b;
-    --iw-admin-focus: #1e56fc;
-    --iw-admin-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-    --iw-admin-shadow-raised: 0 18px 40px -26px rgba(15, 23, 42, 0.32);
-    --iw-admin-radius: 1rem;
-    --iw-admin-radius-lg: 1.25rem;
+    --iw-surface:       #ffffff;
+    --iw-surface-alt:   #f8fafc;
+    --iw-surface-soft:  #f1f5f9;
+    --iw-line:          #e2e8f0;
+    --iw-line-strong:   #cbd5e1;
+    --iw-text:          #0f172a;
+    --iw-text-secondary:#475569;
+    --iw-text-muted:    #64748b;
+    --iw-brand:         #1e56fc;
+    --iw-brand-soft:    #eef2ff;
+    --iw-radius:        0.875rem;
+    --iw-radius-lg:     1.125rem;
+    --iw-shadow:        0 1px 3px rgba(15,23,42,0.06);
+    --iw-shadow-raised: 0 12px 32px -20px rgba(15,23,42,0.18);
 }
 
 .dark {
-    --iw-admin-surface: #111c2f;
-    --iw-admin-surface-muted: #0b1120;
-    --iw-admin-surface-soft: #16243a;
-    --iw-admin-line: #26364d;
-    --iw-admin-line-strong: #556e93;
-    --iw-admin-text: #e8eef7;
-    --iw-admin-text-secondary: #a9b8cc;
-    --iw-admin-text-muted: #8193ad;
-    --iw-admin-focus: #7c9bff;
-    --iw-admin-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    --iw-admin-shadow-raised: 0 22px 48px -28px rgba(0, 0, 0, 0.8);
+    --iw-surface:       #111c2f;
+    --iw-surface-alt:   #0b1120;
+    --iw-surface-soft:  #16243a;
+    --iw-line:          #26364d;
+    --iw-line-strong:   #556e93;
+    --iw-text:          #e8eef7;
+    --iw-text-secondary:#a9b8cc;
+    --iw-text-muted:    #8193ad;
+    --iw-brand:         #7c9bff;
+    --iw-brand-soft:    rgba(30,86,252,0.18);
 }
 
-html {
-    scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 /* --------------------------------------------------------------------------
-   Kerangka panel
+   Body & topbar
    -------------------------------------------------------------------------- */
-
 .fi-body {
-    background-color: var(--iw-admin-surface-muted);
+    background-color: var(--iw-surface-alt);
     background-image:
-        radial-gradient(
-            circle at 0% 0%,
-            rgba(30, 86, 252, 0.055),
-            transparent 28rem
-        ),
-        radial-gradient(
-            circle at 100% 0%,
-            rgba(96, 165, 250, 0.045),
-            transparent 24rem
-        );
-    color: var(--iw-admin-text);
+        radial-gradient(circle at 0% 0%, rgba(30,86,252,0.05), transparent 28rem),
+        radial-gradient(circle at 100% 0%, rgba(96,165,250,0.04), transparent 24rem);
+    color: var(--iw-text);
 }
-
 .dark .fi-body {
     background-image:
-        radial-gradient(
-            circle at 0% 0%,
-            rgba(30, 86, 252, 0.07),
-            transparent 30rem
-        ),
-        radial-gradient(
-            circle at 100% 0%,
-            rgba(96, 165, 250, 0.06),
-            transparent 26rem
-        );
+        radial-gradient(circle at 0% 0%, rgba(30,86,252,0.07), transparent 30rem),
+        radial-gradient(circle at 100% 0%, rgba(96,165,250,0.05), transparent 26rem);
 }
 
 .fi-topbar {
     min-height: 4rem;
     padding-block: 0.5rem;
-    padding-inline: 1rem;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-bottom: 1px solid var(--iw-admin-line);
-    box-shadow: none;
+    background: rgba(255,255,255,0.92);
+    border-bottom: 1px solid var(--iw-line);
     backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
 }
-
-@media (min-width: 640px) {
-    .fi-topbar {
-        padding-inline: 1.5rem;
-    }
-}
+.dark .fi-topbar { background: rgba(11,17,32,0.92); }
 
 @media (min-width: 1024px) {
-    /*
-     * Padding kiri disamakan dengan padding navigasi samping agar tombol
-     * hamburger lurus dengan ikon menu. Sisi kanan tetap mengikuti konten.
-     */
-    .fi-topbar {
-        padding-inline-start: 1rem;
-        padding-inline-end: 2rem;
-    }
-
-    .fi-topbar-start {
-        gap: 0.5rem;
-        margin-inline-end: 1rem;
-    }
-
-    .fi-topbar-start .fi-logo {
-        margin-inline-start: 0;
-    }
-
-    /* Tombol sidebar versi ponsel tidak boleh ikut tampil di desktop. */
+    .fi-topbar { padding-inline: 1.25rem 2rem; }
     .fi-topbar-open-sidebar-btn,
-    .fi-topbar-close-sidebar-btn {
-        display: none !important;
-    }
+    .fi-topbar-close-sidebar-btn { display: none !important; }
 }
-
 @media (max-width: 1023px) {
-    /* Tombol lipat sidebar hanya berlaku pada tampilan desktop. */
     .fi-topbar-open-collapse-sidebar-btn,
-    .fi-topbar-close-collapse-sidebar-btn {
-        display: none !important;
-    }
+    .fi-topbar-close-collapse-sidebar-btn { display: none !important; }
 }
 
-.dark .fi-topbar {
-    background-color: rgba(11, 17, 32, 0.9);
+/* Tombol hamburger & avatar — pil seragam */
+:is(.fi-topbar-open-sidebar-btn,.fi-topbar-close-sidebar-btn,
+    .fi-topbar-open-collapse-sidebar-btn,.fi-topbar-close-collapse-sidebar-btn) {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.625rem; height: 2.625rem;
+    border: 1px solid var(--iw-line); border-radius: 999px;
+    background: var(--iw-surface); color: var(--iw-text-secondary);
+    transition: background-color 150ms ease, color 150ms ease;
 }
-
-.fi-topbar-end {
-    gap: 0.5rem;
-}
-
-/* Tombol ikon topbar mengikuti tombol bulat pada header storefront. */
-:is(
-        .fi-topbar-open-sidebar-btn,
-        .fi-topbar-close-sidebar-btn,
-        .fi-topbar-open-collapse-sidebar-btn,
-        .fi-topbar-close-collapse-sidebar-btn
-    ) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border: 1px solid var(--iw-admin-line);
-    border-radius: 999px;
-    background-color: var(--iw-admin-surface);
-    color: var(--iw-admin-text-secondary);
-    transition:
-        background-color 160ms ease,
-        border-color 160ms ease,
-        color 160ms ease;
-}
-
-:is(
-        .fi-topbar-open-sidebar-btn,
-        .fi-topbar-close-sidebar-btn,
-        .fi-topbar-open-collapse-sidebar-btn,
-        .fi-topbar-close-collapse-sidebar-btn
-    )
-    .fi-icon {
-    width: 1.15rem;
-    height: 1.15rem;
-}
-
+:is(.fi-topbar-open-sidebar-btn,.fi-topbar-close-sidebar-btn,
+    .fi-topbar-open-collapse-sidebar-btn,.fi-topbar-close-collapse-sidebar-btn)
+    .fi-icon { width: 1.1rem; height: 1.1rem; }
 @media (hover: hover) {
-    :is(
-            .fi-topbar-open-sidebar-btn,
-            .fi-topbar-close-sidebar-btn,
-            .fi-topbar-open-collapse-sidebar-btn,
-            .fi-topbar-close-collapse-sidebar-btn
-        ):hover {
-        background-color: var(--iw-admin-surface-soft);
-        color: var(--iw-admin-text);
+    :is(.fi-topbar-open-sidebar-btn,.fi-topbar-close-sidebar-btn,
+        .fi-topbar-open-collapse-sidebar-btn,.fi-topbar-close-collapse-sidebar-btn):hover {
+        background: var(--iw-surface-soft); color: var(--iw-text);
     }
 }
 
-/* Pencarian global: bulat dan setinggi tombol header storefront. */
-.fi-global-search-ctn {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 13rem;
-}
-
-.fi-global-search {
-    width: 100%;
-}
-
-.fi-global-search .fi-input-wrp {
-    min-height: 2.75rem;
-    border-radius: 999px;
-    background-color: var(--iw-admin-surface);
-}
-
-.fi-global-search .fi-input {
-    font-size: 0.82rem;
-}
-
-@media (max-width: 639px) {
-    .fi-global-search-ctn {
-        max-width: 8.5rem;
-    }
-}
-
-/* Avatar pengguna: pil dengan border seperti tombol akun storefront. */
 .fi-user-menu-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border: 1px solid var(--iw-admin-line);
-    border-radius: 999px;
-    background-color: var(--iw-admin-surface);
-    transition:
-        background-color 160ms ease,
-        border-color 160ms ease;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.625rem; height: 2.625rem;
+    border: 1px solid var(--iw-line); border-radius: 999px;
+    background: var(--iw-surface); transition: background-color 150ms ease;
 }
+.fi-user-menu-trigger .fi-avatar { width: 2rem; height: 2rem; }
+@media (hover: hover) { .fi-user-menu-trigger:hover { background: var(--iw-surface-soft); } }
 
-.fi-user-menu-trigger .fi-avatar {
-    width: 2.15rem;
-    height: 2.15rem;
-}
-
-@media (hover: hover) {
-    .fi-user-menu-trigger:hover {
-        background-color: var(--iw-admin-surface-soft);
-    }
-}
-
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
 @media (min-width: 1024px) {
     .fi-sidebar {
-        background-color: var(--iw-admin-surface);
-        border-inline-end: 1px solid var(--iw-admin-line);
+        background: var(--iw-surface);
+        border-inline-end: 1px solid var(--iw-line);
     }
-
-    .fi-sidebar-nav {
-        padding: 1.25rem 1rem 1.5rem;
-    }
+    .fi-sidebar-nav { padding: 1rem 0.75rem 1.25rem; }
 }
+.fi-sidebar-close-overlay { backdrop-filter: blur(2px); }
 
-.fi-sidebar-close-overlay {
-    backdrop-filter: blur(2px);
-}
-
-/* Merek panel */
-.iw-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.65rem;
-    min-width: 0;
-}
-
-.iw-brand__mark {
-    display: block;
-    width: 2.25rem;
-    height: 2.25rem;
-    flex: 0 0 auto;
-    object-fit: contain;
-    filter: drop-shadow(0 7px 14px rgba(30, 86, 252, 0.3));
-}
-
-.iw-brand__text {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    line-height: 1.05;
-}
-
+/* Merek */
+.iw-brand { display: inline-flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.iw-brand__mark { display: block; width: 2rem; height: 2rem; flex: 0 0 auto; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(30,86,252,0.28)); }
+.iw-brand__text { display: flex; min-width: 0; flex-direction: column; line-height: 1.05; }
 .iw-brand__name {
-    display: inline-flex;
-    align-items: baseline;
-    color: var(--iw-admin-text);
-    font-family: var(--font-brand, "Inter", ui-sans-serif, system-ui, sans-serif);
-    font-size: 1.02rem;
-    font-weight: 800;
-    letter-spacing: -0.045em;
+    display: inline-flex; align-items: baseline;
+    color: var(--iw-text);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-size: 1rem; font-weight: 800; letter-spacing: -0.04em;
 }
-
-.iw-brand__ink {
-    color: #000000;
-}
-
-.dark .iw-brand__ink {
-    color: #ffffff;
-}
-
-.iw-brand__web {
-    color: #1e56fc;
-}
-
+.iw-brand__ink { color: #000; }
+.dark .iw-brand__ink { color: #fff; }
+.iw-brand__web { color: #1e56fc; }
 .iw-brand__sub {
-    margin-top: 0.24rem;
-    color: var(--iw-admin-text-muted);
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    margin-top: 0.2rem; color: var(--iw-text-muted);
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
 }
 
-/* Navigasi */
-.fi-sidebar-nav-groups {
-    gap-y: 1.45rem;
-}
-
+/* Item navigasi */
 .fi-sidebar-group-label {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    color: var(--iw-text-muted);
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
 }
-
-.fi-sidebar-group-btn {
-    padding-inline: 0.55rem;
-}
-
 .fi-sidebar-item-btn {
-    min-height: 2.55rem;
-    border-radius: 0.8rem;
-    padding: 0.6rem 0.7rem;
-    transition:
-        background-color 160ms ease,
-        color 160ms ease,
-        transform 160ms ease;
+    min-height: 2.45rem; border-radius: 0.7rem;
+    padding: 0.55rem 0.65rem;
+    transition: background-color 150ms ease, color 150ms ease;
 }
-
 @media (hover: hover) {
-    .fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover {
-        background-color: var(--iw-admin-surface-soft);
-    }
-
-    .fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-icon {
-        color: #1e56fc;
-    }
+    .fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover { background: var(--iw-surface-soft); }
+    .fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-icon { color: #1e56fc; }
 }
-
+.dark .fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-icon { color: #7c9bff; }
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
     background: linear-gradient(135deg, #eef2ff 0%, #dbe4ff 100%);
-    box-shadow: inset 0 0 0 1px rgba(30, 86, 252, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(30,86,252,0.12);
 }
-
 .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    background: linear-gradient(
-        135deg,
-        rgba(30, 86, 252, 0.2) 0%,
-        rgba(30, 86, 252, 0.08) 100%
-    );
-    box-shadow: inset 0 0 0 1px rgba(124, 155, 255, 0.18);
+    background: linear-gradient(135deg, rgba(30,86,252,0.2) 0%, rgba(30,86,252,0.08) 100%);
+    box-shadow: inset 0 0 0 1px rgba(124,155,255,0.16);
 }
-
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
-    color: #1746d6;
-}
-
-.dark
-    .fi-sidebar-item.fi-active
-    > .fi-sidebar-item-btn
-    > .fi-sidebar-item-label {
-    color: #93b0ff;
-}
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label { color: #1746d6; }
+.dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label { color: #93b0ff; }
 
 /* --------------------------------------------------------------------------
-   Header & halaman
+   Header halaman
    -------------------------------------------------------------------------- */
-
 .fi-header-heading {
-    color: var(--iw-admin-text);
-    font-size: clamp(1.45rem, 1.2rem + 0.65vw, 1.85rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
+    color: var(--iw-text);
+    font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.75rem);
+    font-weight: 800; letter-spacing: -0.035em;
 }
-
-.fi-header-subheading {
-    max-width: 46rem;
-    color: var(--iw-admin-text-muted);
-    font-size: 0.95rem;
-    line-height: 1.55;
-}
-
-.fi-breadcrumbs {
-    color: var(--iw-admin-text-muted);
-}
-
-.fi-page-header-main-ctn {
-    padding-top: 1.75rem;
-}
-
-.fi-page-content {
-    gap: 1.5rem;
-}
+.fi-header-subheading { color: var(--iw-text-muted); font-size: 0.88rem; line-height: 1.5; }
+.fi-breadcrumbs { color: var(--iw-text-muted); font-size: 0.76rem; }
+.fi-breadcrumbs-item-label, .fi-breadcrumbs-item-label a { color: var(--iw-text-muted); }
+.fi-breadcrumbs .fi-icon { color: var(--iw-line-strong); }
+.fi-page-header-main-ctn { padding-top: 1.5rem; }
+.fi-page-content { gap: 1.25rem; }
 
 /* --------------------------------------------------------------------------
-   Kartu, section, dan tabel
+   Section & tabel
    -------------------------------------------------------------------------- */
-
 .fi-section:not(.fi-section-not-contained) {
-    border-radius: var(--iw-admin-radius);
-    background-color: var(--iw-admin-surface);
-    box-shadow: var(--iw-admin-shadow);
-    --tw-ring-color: var(--iw-admin-line);
+    border-radius: var(--iw-radius);
+    background: var(--iw-surface);
+    box-shadow: var(--iw-shadow);
+    --tw-ring-color: var(--iw-line);
 }
-
-.fi-section-header-heading {
-    color: var(--iw-admin-text);
-    font-size: 0.98rem;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-}
-
-.fi-section-header-description {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.84rem;
-    line-height: 1.55;
-}
-
-.fi-section-header .fi-icon {
-    color: #1e56fc;
-}
-
-.dark .fi-section-header .fi-icon {
-    color: #7c9bff;
-}
+.fi-section-header-heading { color: var(--iw-text); font-size: 0.92rem; font-weight: 700; letter-spacing: -0.015em; }
+.fi-section-header-description { color: var(--iw-text-muted); font-size: 0.8rem; line-height: 1.5; }
+.fi-section-header .fi-icon { color: #1e56fc; }
+.dark .fi-section-header .fi-icon { color: #7c9bff; }
 
 .fi-ta-ctn {
-    border-radius: var(--iw-admin-radius);
-    background-color: var(--iw-admin-surface);
-    box-shadow: var(--iw-admin-shadow);
-    --tw-ring-color: var(--iw-admin-line);
+    border-radius: var(--iw-radius);
+    background: var(--iw-surface);
+    box-shadow: var(--iw-shadow);
+    --tw-ring-color: var(--iw-line);
 }
-
-.fi-ta-header-heading {
-    color: var(--iw-admin-text);
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-.fi-ta-header-description {
-    color: var(--iw-admin-text-muted);
-}
-
-.fi-ta-table > thead > tr {
-    background-color: var(--iw-admin-surface-muted);
-}
-
-.fi-ta-header-cell {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-}
-
-.fi-ta-table > tbody {
-    background-color: var(--iw-admin-surface);
-}
-
-.fi-ta-row {
-    transition: background-color 160ms ease;
-}
-
+.fi-ta-header-heading { color: var(--iw-text); font-size: 0.95rem; font-weight: 700; letter-spacing: -0.02em; }
+.fi-ta-header-description { color: var(--iw-text-muted); font-size: 0.8rem; }
+.fi-ta-table > thead > tr { background: var(--iw-surface-alt); border-bottom: 1px solid var(--iw-line); }
+.fi-ta-header-cell { color: var(--iw-text-muted); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding-block: 0.65rem; }
+.fi-ta-table > tbody { background: var(--iw-surface); }
+.fi-ta-row { transition: background-color 150ms ease; }
 @media (hover: hover) {
-    .fi-ta-row.fi-clickable:hover {
-        background-color: #f5f8ff;
-    }
-
-    .dark .fi-ta-row.fi-clickable:hover {
-        background-color: rgba(255, 255, 255, 0.035);
-    }
+    .fi-ta-row.fi-clickable:hover { background: #f5f8ff; }
+    .dark .fi-ta-row.fi-clickable:hover { background: rgba(255,255,255,0.03); }
 }
-
-.fi-ta-cell {
-    color: var(--iw-admin-text-secondary);
-}
-
-.fi-ta-cell .fi-ta-text-item-label,
-.fi-ta-cell .fi-ta-text {
-    color: inherit;
-}
+.fi-ta-cell { color: var(--iw-text-secondary); padding-block: 0.65rem; }
+.fi-ta-image { border-radius: 0.5rem; object-fit: cover; }
+.fi-ta-empty-state { padding-block: 2.5rem; }
+.fi-ta-empty-state-icon-ctn { background: var(--iw-surface-soft); color: #1e56fc; }
+.dark .fi-ta-empty-state-icon-ctn { color: #7c9bff; }
+.fi-ta-empty-state-heading { color: var(--iw-text); font-weight: 700; }
+.fi-ta-empty-state-description { color: var(--iw-text-muted); font-size: 0.85rem; }
 
 /* --------------------------------------------------------------------------
-   Statistik & grafik
+   Statistik
    -------------------------------------------------------------------------- */
-
 .fi-wi-stats-overview-stat {
-    overflow: hidden;
-    border-radius: var(--iw-admin-radius);
-    background-color: var(--iw-admin-surface);
-    box-shadow: var(--iw-admin-shadow);
-    --tw-ring-color: var(--iw-admin-line);
-    transition:
-        transform 180ms ease,
-        box-shadow 180ms ease;
+    overflow: hidden; border-radius: var(--iw-radius);
+    background: var(--iw-surface); box-shadow: var(--iw-shadow);
+    --tw-ring-color: var(--iw-line);
+    transition: transform 180ms ease, box-shadow 180ms ease;
 }
-
 @media (hover: hover) {
-    .fi-wi-stats-overview-stat:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--iw-admin-shadow-raised);
-    }
+    .fi-wi-stats-overview-stat:hover { transform: translateY(-2px); box-shadow: var(--iw-shadow-raised); }
 }
-
-.fi-wi-stats-overview-stat-label {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.075em;
-    text-transform: uppercase;
-}
-
-.fi-wi-stats-overview-stat-value {
-    color: var(--iw-admin-text);
-    font-variant-numeric: tabular-nums;
-    font-size: 2rem;
-    letter-spacing: -0.04em;
-}
-
-.fi-wi-stats-overview-stat-description {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.78rem;
-}
-
-.fi-wi-stats-overview-stat-chart {
-    opacity: 0.7;
-}
+.fi-wi-stats-overview-stat-label { color: var(--iw-text-muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.fi-wi-stats-overview-stat-value { color: var(--iw-text); font-variant-numeric: tabular-nums; font-size: 1.85rem; letter-spacing: -0.04em; }
+.fi-wi-stats-overview-stat-description { color: var(--iw-text-muted); font-size: 0.76rem; }
+.fi-wi-stats-overview-stat-label-ctn .fi-icon { width: 1rem; height: 1rem; color: #1e56fc; }
+.dark .fi-wi-stats-overview-stat-label-ctn .fi-icon { color: #7c9bff; }
 
 /* --------------------------------------------------------------------------
-   Kontrol & fokus
+   Form
    -------------------------------------------------------------------------- */
-
-.fi-btn {
-    border-radius: 0.7rem;
-}
-
-.fi-input-wrp {
-    border-radius: 0.7rem;
-}
-
-.fi-fo-field-wrp-label,
-.fi-fo-field-wrp-label > span {
-    color: var(--iw-admin-text-secondary);
-}
-
-:where(
-    a,
-    button,
-    input,
-    select,
-    textarea,
-    summary,
-    [role="button"],
-    [tabindex]:not([tabindex="-1"])
-):focus-visible {
-    outline: 2px solid var(--iw-admin-focus);
-    outline-offset: 2px;
-}
+.fi-btn { border-radius: 0.65rem; }
+.fi-input-wrp { border-radius: 0.65rem; background: var(--iw-surface); transition: box-shadow 150ms ease, border-color 150ms ease; }
+.fi-input-wrp:focus-within { border-color: rgba(30,86,252,0.5); box-shadow: 0 0 0 3px rgba(30,86,252,0.1); }
+.dark .fi-input-wrp:focus-within { border-color: rgba(124,155,255,0.5); box-shadow: 0 0 0 3px rgba(124,155,255,0.12); }
+.fi-fo-field-wrp-label, .fi-fo-field-wrp-label > span { color: var(--iw-text-secondary); font-size: 0.78rem; font-weight: 600; }
+.fi-fo-field-wrp-helper-text { color: var(--iw-text-muted); font-size: 0.73rem; line-height: 1.5; }
+.fi-fo-toggle-buttons .fi-btn { border-radius: 0.55rem; }
 
 /* --------------------------------------------------------------------------
-   Dashboard — hero & aksi cepat
+   Dropdown, modal, notifikasi
    -------------------------------------------------------------------------- */
+.fi-dropdown-panel { border-radius: var(--iw-radius); border: 1px solid var(--iw-line); box-shadow: var(--iw-shadow-raised); }
+.fi-modal-window { border-radius: var(--iw-radius-lg); border: 1px solid var(--iw-line); }
+.fi-notification { border-radius: var(--iw-radius); border: 1px solid var(--iw-line); box-shadow: var(--iw-shadow-raised); }
 
-.iw-dash-section-head {
-    margin: 0.15rem 0 -0.35rem;
-}
+/* --------------------------------------------------------------------------
+   Pagination
+   -------------------------------------------------------------------------- */
+.fi-pagination { border-top: 1px solid var(--iw-line); padding: 0.7rem 1.1rem; }
+.fi-pagination-item-label { font-size: 0.76rem; }
 
-.iw-dash-section-head h3 {
-    margin: 0;
-    color: var(--iw-admin-text);
-    font-size: 1.05rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
+/* --------------------------------------------------------------------------
+   Pencarian global
+   -------------------------------------------------------------------------- */
+.fi-global-search-ctn { flex: 1 1 auto; min-width: 0; max-width: 12rem; }
+.fi-global-search { width: 100%; }
+.fi-global-search .fi-input-wrp { min-height: 2.625rem; border-radius: 999px; background: var(--iw-surface); }
+.fi-global-search .fi-input { font-size: 0.8rem; }
+@media (max-width: 639px) { .fi-global-search-ctn { max-width: 7.5rem; } }
 
-.iw-dash-section-head p {
-    margin: 0.2rem 0 0;
-    color: var(--iw-admin-text-muted);
-    font-size: 0.82rem;
-    line-height: 1.55;
-}
-
+/* --------------------------------------------------------------------------
+   Dashboard hero
+   -------------------------------------------------------------------------- */
 .iw-dash-hero {
-    position: relative;
-    display: grid;
-    gap: 1.5rem;
-    overflow: hidden;
-    border-radius: var(--iw-admin-radius-lg);
-    padding: 1.5rem;
+    position: relative; display: grid; gap: 1.25rem;
+    overflow: hidden; border-radius: var(--iw-radius-lg);
+    padding: 1.4rem;
     background:
-        radial-gradient(
-            circle at 82% -20%,
-            rgba(30, 86, 252, 0.4),
-            transparent 18rem
-        ),
-        radial-gradient(
-            circle at 100% 120%,
-            rgba(96, 165, 250, 0.22),
-            transparent 20rem
-        ),
+        radial-gradient(circle at 82% -10%, rgba(30,86,252,0.38), transparent 18rem),
+        radial-gradient(circle at 100% 120%, rgba(96,165,250,0.2), transparent 20rem),
         linear-gradient(135deg, #0b1120 0%, #111c2f 58%, #17243a 100%);
-    box-shadow: var(--iw-admin-shadow-raised);
-    color: #ffffff;
+    box-shadow: var(--iw-shadow-raised); color: #fff;
 }
-
 .iw-dash-hero::after {
-    position: absolute;
-    inset: 0;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: inherit;
-    content: "";
-    pointer-events: none;
+    position: absolute; inset: 0;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: inherit; content: ""; pointer-events: none;
 }
-
-.iw-dash-hero__content,
-.iw-dash-quick {
-    position: relative;
-    z-index: 1;
-}
+.iw-dash-hero__content, .iw-dash-quick { position: relative; z-index: 1; }
 
 .iw-dash-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin: 0 0 0.9rem;
-    color: #93b0ff;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    margin: 0 0 0.75rem; color: #93b0ff;
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
 }
+.iw-dash-eyebrow .fi-icon { width: 0.9rem; height: 0.9rem; }
 
-.iw-dash-eyebrow .fi-icon {
-    width: 0.95rem;
-    height: 0.95rem;
-}
+.iw-dash-title { margin: 0; color: #fff; font-size: clamp(1.35rem, 1.05rem + 1vw, 2rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.15; text-wrap: balance; }
+.iw-dash-copy { max-width: 36rem; margin: 0.5rem 0 0; color: #b9c6d8; font-size: 0.85rem; line-height: 1.6; }
 
-.iw-dash-title {
-    margin: 0;
-    color: #ffffff;
-    font-size: clamp(1.5rem, 1.15rem + 1.1vw, 2.15rem);
-    font-weight: 800;
-    letter-spacing: -0.045em;
-    line-height: 1.15;
-    text-wrap: balance;
-}
-
-.iw-dash-copy {
-    max-width: 37rem;
-    margin: 0.7rem 0 0;
-    color: #b9c6d8;
-    font-size: 0.9rem;
-    line-height: 1.65;
-}
-
-.iw-dash-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.65rem 1rem;
-    margin-top: 1.2rem;
-}
-
+.iw-dash-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 1rem; }
 .iw-dash-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    min-height: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 999px;
-    padding: 0.35rem 0.75rem;
-    background-color: rgba(255, 255, 255, 0.07);
-    color: #e8eef7;
-    font-size: 0.74rem;
-    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 0.35rem; min-height: 1.875rem;
+    border: 1px solid rgba(255,255,255,0.13); border-radius: 999px;
+    padding: 0.3rem 0.7rem; background: rgba(255,255,255,0.06); color: #e8eef7;
+    font-size: 0.72rem; font-weight: 600;
 }
-
 .iw-dash-pill::before {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 999px;
-    background-color: #4ade80;
-    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.14);
-    content: "";
+    width: 0.4rem; height: 0.4rem; border-radius: 999px;
+    background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.14); content: "";
 }
-
 .iw-dash-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    min-height: 2rem;
-    color: #93b0ff;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-decoration: none;
-    transition: color 160ms ease;
+    display: inline-flex; align-items: center; gap: 0.3rem; min-height: 1.875rem;
+    color: #93b0ff; font-size: 0.76rem; font-weight: 700; text-decoration: none;
+    transition: color 150ms ease;
 }
+.iw-dash-link:hover { color: #c7d4ff; }
+.iw-dash-link .fi-icon { width: 0.85rem; height: 0.85rem; }
 
-.iw-dash-link:hover {
-    color: #c7d4ff;
-}
-
-.iw-dash-link .fi-icon {
-    width: 0.9rem;
-    height: 0.9rem;
-}
-
+/* Aksi cepat */
 .iw-dash-quick {
     align-self: center;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 1rem;
-    padding: 0.9rem;
-    background-color: rgba(255, 255, 255, 0.055);
-    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.11); border-radius: 0.9rem;
+    padding: 0.8rem; background: rgba(255,255,255,0.05); backdrop-filter: blur(6px);
 }
-
-.iw-dash-quick__label {
-    margin: 0 0 0.6rem;
-    padding-inline: 0.25rem;
-    color: #94a3b8;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
+.iw-dash-quick__label { margin: 0 0 0.5rem; padding-inline: 0.2rem; color: #94a3b8; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
 
 .iw-quick-action {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.7rem;
-    border-radius: 0.75rem;
-    padding: 0.65rem;
-    color: #ffffff;
-    text-decoration: none;
-    transition:
-        background-color 160ms ease,
-        transform 160ms ease;
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    border-radius: 0.7rem; padding: 0.6rem; color: #fff; text-decoration: none;
+    transition: background-color 150ms ease, transform 150ms ease;
 }
-
 @media (hover: hover) {
-    .iw-quick-action:hover {
-        background-color: rgba(255, 255, 255, 0.09);
-        transform: translateX(2px);
-    }
+    .iw-quick-action:hover { background: rgba(255,255,255,0.08); transform: translateX(2px); }
 }
-
 .iw-quick-action__icon {
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    flex: 0 0 auto;
-    border-radius: 0.6rem;
-    background-color: rgba(253, 186, 116, 0.16);
-    color: #93b0ff;
+    display: grid; place-items: center; width: 1.875rem; height: 1.875rem; flex: 0 0 auto;
+    border-radius: 0.55rem; background: rgba(253,186,116,0.14); color: #93b0ff;
 }
-
-.iw-quick-action__icon .fi-icon {
-    width: 1rem;
-    height: 1rem;
-}
-
-.iw-quick-action__title {
-    display: block;
-    color: #f8fafc;
-    font-size: 0.82rem;
-    font-weight: 700;
-    line-height: 1.25;
-}
-
-.iw-quick-action__desc {
-    display: block;
-    margin-top: 0.15rem;
-    color: #94a3b8;
-    font-size: 0.7rem;
-    line-height: 1.4;
-}
+.iw-quick-action__icon .fi-icon { width: 0.95rem; height: 0.95rem; }
+.iw-quick-action__title { display: block; color: #f8fafc; font-size: 0.8rem; font-weight: 700; line-height: 1.25; }
+.iw-quick-action__desc { display: block; margin-top: 0.1rem; color: #94a3b8; font-size: 0.68rem; line-height: 1.4; }
 
 @media (min-width: 1024px) {
-    .iw-dash-hero {
-        grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 0.9fr);
-        align-items: center;
-        padding: 1.85rem;
-    }
+    .iw-dash-hero { grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.85fr); align-items: center; padding: 1.75rem; }
 }
 
 /* --------------------------------------------------------------------------
-   Pengaturan — bilah simpan
+   Tutorial checklist — panel baru
    -------------------------------------------------------------------------- */
-
-.iw-settings-footer {
-    position: sticky;
-    z-index: 10;
-    bottom: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-    margin-top: 1.25rem;
-    border: 1px solid var(--iw-admin-line);
-    border-radius: var(--iw-admin-radius);
-    padding: 0.9rem 1rem;
-    background-color: color-mix(
-        in srgb,
-        var(--iw-admin-surface) 92%,
-        transparent
-    );
-    box-shadow: var(--iw-admin-shadow-raised);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-}
-
-.iw-settings-footer__copy {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-}
-
-.iw-settings-footer__title {
-    color: var(--iw-admin-text);
-    font-size: 0.85rem;
-    font-weight: 700;
-}
-
-.iw-settings-footer__hint {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.75rem;
-    line-height: 1.5;
-}
-
-@media (min-width: 640px) {
-    .iw-settings-footer {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    }
-}
-
-/* --------------------------------------------------------------------------
-   Tautan storefront & aksi cepat
-   -------------------------------------------------------------------------- */
-
-.iw-topbar-link {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 0.45rem;
-    min-height: 2.75rem;
-    white-space: nowrap;
-    border: 1px solid var(--iw-admin-line);
-    border-radius: 999px;
-    padding: 0 0.9rem;
-    background-color: var(--iw-admin-surface);
-    color: var(--iw-admin-text-secondary);
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition:
-        background-color 160ms ease,
-        border-color 160ms ease,
-        color 160ms ease;
-}
-
-.iw-topbar-link .fi-icon {
-    width: 0.95rem;
-    height: 0.95rem;
-    color: #1e56fc;
-}
-
-@media (hover: hover) {
-    .iw-topbar-link:hover {
-        border-color: rgba(30, 86, 252, 0.3);
-        background-color: #eef2ff;
-        color: #1746d6;
-    }
-
-    .dark .iw-topbar-link:hover {
-        border-color: rgba(124, 155, 255, 0.32);
-        background-color: rgba(30, 86, 252, 0.16);
-        color: #93b0ff;
-    }
-}
-
-@media (max-width: 640px) {
-    .iw-topbar-link {
-        width: 2.75rem;
-        height: 2.75rem;
-        justify-content: center;
-        padding: 0;
-    }
-
-    .iw-topbar-link span {
-        display: none;
-    }
-}
-
-/* --------------------------------------------------------------------------
-   Penyesuaian komponen Filament
-   -------------------------------------------------------------------------- */
-
-.fi-header-heading {
-    letter-spacing: -0.04em;
-}
-
-.fi-breadcrumbs {
-    font-size: 0.78rem;
-}
-
-.fi-breadcrumbs-item-label,
-.fi-breadcrumbs-item-label a {
-    color: var(--iw-admin-text-muted);
-}
-
-.fi-breadcrumbs .fi-icon {
-    color: var(--iw-admin-line-strong, #cbd5e1);
-}
-
-.fi-section-header {
-    align-items: flex-start;
-}
-
-.fi-section:not(.fi-section-not-contained) .fi-section-header {
-    padding-bottom: 1rem;
-}
-
-.fi-section:not(.fi-section-not-contained)
-    > .fi-section-content-ctn
-    > .fi-section-content {
-    padding-top: 0;
-}
-
-.fi-section-header .fi-icon {
-    flex: 0 0 auto;
-}
-
-.fi-fo-field-wrp-label,
-.fi-fo-field-wrp-label > span {
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.fi-fo-field-wrp-helper-text {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.75rem;
-    line-height: 1.5;
-}
-
-.fi-fo-field-wrp-hint {
-    color: var(--iw-admin-text-muted);
-    font-size: 0.72rem;
-}
-
-.fi-input-wrp {
-    background-color: var(--iw-admin-surface);
-    transition:
-        box-shadow 160ms ease,
-        border-color 160ms ease;
-}
-
-.fi-input-wrp:focus-within {
-    border-color: rgba(30, 86, 252, 0.55);
-    box-shadow: 0 0 0 3px rgba(30, 86, 252, 0.12);
-}
-
-.dark .fi-input-wrp:focus-within {
-    border-color: rgba(124, 155, 255, 0.55);
-    box-shadow: 0 0 0 3px rgba(124, 155, 255, 0.14);
-}
-
-.fi-fo-toggle-buttons .fi-btn {
-    border-radius: 0.6rem;
-}
-
-.fi-ta-ctn {
+.iw-tutorial {
+    border-radius: var(--iw-radius);
+    background: var(--iw-surface);
+    box-shadow: var(--iw-shadow);
+    border: 1px solid var(--iw-line);
     overflow: hidden;
 }
-
-.fi-ta-header {
-    padding: 1.1rem 1.25rem;
+.iw-tutorial__header {
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid var(--iw-line);
+    background: var(--iw-surface-alt);
 }
-
-.fi-ta-header-toolbar {
-    gap: 0.6rem;
+.iw-tutorial__title {
+    margin: 0; font-size: 0.92rem; font-weight: 700; color: var(--iw-text);
+    display: flex; align-items: center; gap: 0.5rem;
 }
+.iw-tutorial__title .fi-icon { width: 1.1rem; height: 1.1rem; color: #1e56fc; }
+.dark .iw-tutorial__title .fi-icon { color: #7c9bff; }
+.iw-tutorial__subtitle { margin: 0.2rem 0 0; font-size: 0.75rem; color: var(--iw-text-muted); }
 
-.fi-ta-table > thead > tr {
-    border-bottom: 1px solid var(--iw-admin-line);
+.iw-tutorial__body { padding: 0.5rem 0; }
+.iw-tutorial__item {
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    padding: 0.65rem 1.15rem;
+    transition: background-color 150ms ease;
+    text-decoration: none; color: inherit;
 }
-
-.fi-ta-header-cell {
-    padding-block: 0.7rem;
+.iw-tutorial__item:hover { background: var(--iw-surface-alt); }
+.iw-tutorial__check {
+    flex: 0 0 auto;
+    width: 1.25rem; height: 1.25rem;
+    border-radius: 0.35rem;
+    border: 1.5px solid var(--iw-line-strong);
+    display: grid; place-items: center;
+    margin-top: 0.1rem;
+    transition: background-color 150ms ease, border-color 150ms ease;
 }
-
-.fi-ta-cell {
-    padding-block: 0.7rem;
-}
-
-.fi-ta-image {
-    border-radius: 0.55rem;
-    object-fit: cover;
-}
-
-.fi-ta-empty-state {
-    padding-block: 3rem;
-}
-
-.fi-ta-empty-state-icon-ctn {
-    background-color: var(--iw-admin-surface-soft);
-    color: #1e56fc;
-}
-
-.dark .fi-ta-empty-state-icon-ctn {
-    color: #7c9bff;
-}
-
-.fi-ta-empty-state-heading {
-    color: var(--iw-admin-text);
-    font-weight: 700;
-}
-
-.fi-ta-empty-state-description {
-    color: var(--iw-admin-text-muted);
-}
-
-.fi-pagination {
-    border-top: 1px solid var(--iw-admin-line);
-    padding: 0.8rem 1.25rem;
-}
-
-.fi-pagination-item-label {
-    font-size: 0.78rem;
-}
-
-/* Statistik */
-.fi-wi-stats-overview {
-    gap: 1rem;
-}
-
-.fi-wi-stats-overview-stat {
-    border: 1px solid transparent;
-}
-
-.fi-wi-stats-overview-stat-label-ctn {
-    gap: 0.5rem;
-}
-
-.fi-wi-stats-overview-stat-label-ctn .fi-icon {
-    width: 1.05rem;
-    height: 1.05rem;
-    color: #1e56fc;
-}
-
-.dark .fi-wi-stats-overview-stat-label-ctn .fi-icon {
-    color: #7c9bff;
-}
-
-.fi-wi-stats-overview-stat-description {
-    gap: 0.3rem;
-}
-
-/* Grafik */
-.fi-wi-chart .fi-section {
-    height: 100%;
-}
-
-.fi-wi-chart canvas {
-    min-height: 15rem;
-}
-
-.fi-wi-chart .fi-section-header-heading {
-    font-size: 1rem;
-}
-
-/* Widget tabel */
-.fi-wi-table .fi-ta-ctn {
-    box-shadow: var(--iw-admin-shadow);
-}
-
-.fi-wi-table .fi-ta-header {
-    padding-top: 1.2rem;
-}
-
-/* Dropdown, modal, dan notifikasi */
-.fi-dropdown-panel {
-    border-radius: var(--iw-admin-radius);
-    border: 1px solid var(--iw-admin-line);
-    box-shadow: var(--iw-admin-shadow-raised);
-}
-
-.fi-modal-window {
-    border-radius: var(--iw-admin-radius-lg);
-    border: 1px solid var(--iw-admin-line);
-}
-
-.fi-notification {
-    border-radius: var(--iw-admin-radius);
-    border: 1px solid var(--iw-admin-line);
-    box-shadow: var(--iw-admin-shadow-raised);
-}
+.iw-tutorial__check.done { background: #1e56fc; border-color: #1e56fc; }
+.dark .iw-tutorial__check.done { background: #7c9bff; border-color: #7c9bff; }
+.iw-tutorial__check .fi-icon { width: 0.8rem; height: 0.8rem; color: #fff; }
+.iw-tutorial__check.done .fi-icon { color: #fff; }
+.iw-tutorial__info { flex: 1; min-width: 0; }
+.iw-tutorial__step { font-size: 0.65rem; font-weight: 700; color: var(--iw-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.iw-tutorial__label { font-size: 0.84rem; font-weight: 600; color: var(--iw-text); line-height: 1.35; }
+.iw-tutorial__hint { font-size: 0.74rem; color: var(--iw-text-muted); line-height: 1.45; margin-top: 0.1rem; }
+.iw-tutorial__arrow { flex: 0 0 auto; color: var(--iw-text-muted); }
+.iw-tutorial__arrow .fi-icon { width: 1rem; height: 1rem; }
 
 /* --------------------------------------------------------------------------
-   Pengaturan — aksi footer
+   Tautan storefront topbar
    -------------------------------------------------------------------------- */
-
-.iw-settings-footer__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.6rem;
-}
-
-.iw-settings-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    min-height: 2.5rem;
-    border: 1px solid var(--iw-admin-line);
-    border-radius: 0.7rem;
-    padding: 0 0.85rem;
-    color: var(--iw-admin-text-secondary);
-    font-size: 0.8rem;
-    font-weight: 600;
+.iw-topbar-link {
+    display: inline-flex; flex-shrink: 0; align-items: center; gap: 0.4rem;
+    min-height: 2.625rem; white-space: nowrap;
+    border: 1px solid var(--iw-line); border-radius: 999px;
+    padding: 0 0.8rem; background: var(--iw-surface);
+    color: var(--iw-text-secondary); font-size: 0.78rem; font-weight: 600;
     text-decoration: none;
-    transition:
-        background-color 160ms ease,
-        color 160ms ease,
-        border-color 160ms ease;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
-
-.iw-settings-link .fi-icon {
-    width: 1rem;
-    height: 1rem;
-}
-
+.iw-topbar-link .fi-icon { width: 0.9rem; height: 0.9rem; color: #1e56fc; }
+.dark .iw-topbar-link .fi-icon { color: #7c9bff; }
 @media (hover: hover) {
-    .iw-settings-link:hover {
-        border-color: var(--iw-admin-line-strong, #cbd5e1);
-        background-color: var(--iw-admin-surface-soft);
-        color: var(--iw-admin-text);
-    }
+    .iw-topbar-link:hover { border-color: rgba(30,86,252,0.28); background: #eef2ff; color: #1746d6; }
+    .dark .iw-topbar-link:hover { border-color: rgba(124,155,255,0.3); background: rgba(30,86,252,0.15); color: #93b0ff; }
 }
-
-@media (max-width: 639px) {
-    .iw-settings-footer__actions {
-        width: 100%;
-    }
-
-    .iw-settings-footer__actions .fi-btn {
-        flex: 1;
-    }
+@media (max-width: 640px) {
+    .iw-topbar-link { width: 2.625rem; height: 2.625rem; justify-content: center; padding: 0; }
+    .iw-topbar-link span { display: none; }
 }
 
 /* --------------------------------------------------------------------------
-   Aksesibilitas & preferensi gerak
+   Settings footer
    -------------------------------------------------------------------------- */
+.iw-settings-footer {
+    position: sticky; z-index: 10; bottom: 1rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    margin-top: 1rem;
+    border: 1px solid var(--iw-line); border-radius: var(--iw-radius);
+    padding: 0.8rem 1rem;
+    background: color-mix(in srgb, var(--iw-surface) 92%, transparent);
+    box-shadow: var(--iw-shadow-raised);
+    backdrop-filter: blur(12px);
+}
+.iw-settings-footer__copy { display: flex; flex-direction: column; gap: 0.1rem; }
+.iw-settings-footer__title { color: var(--iw-text); font-size: 0.82rem; font-weight: 700; }
+.iw-settings-footer__hint { color: var(--iw-text-muted); font-size: 0.72rem; line-height: 1.5; }
+@media (min-width: 640px) {
+    .iw-settings-footer { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+.iw-settings-footer__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.iw-settings-link {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    min-height: 2.375rem; border: 1px solid var(--iw-line);
+    border-radius: 0.65rem; padding: 0 0.75rem;
+    color: var(--iw-text-secondary); font-size: 0.78rem; font-weight: 600;
+    text-decoration: none;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.iw-settings-link .fi-icon { width: 0.95rem; height: 0.95rem; }
+@media (hover: hover) {
+    .iw-settings-link:hover { border-color: var(--iw-line-strong); background: var(--iw-surface-soft); color: var(--iw-text); }
+}
+@media (max-width: 639px) {
+    .iw-settings-footer__actions { width: 100%; }
+    .iw-settings-footer__actions .fi-btn { flex: 1; }
+}
 
+/* --------------------------------------------------------------------------
+   Fokus aksesibilitas
+   -------------------------------------------------------------------------- */
+:is(a, button, input, select, textarea, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--iw-brand); outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion
+   -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
         scroll-behavior: auto !important;
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;

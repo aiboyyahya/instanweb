@@ -12,9 +12,10 @@ class Store extends Model
 
     protected $fillable = [
         'user_id',
-        'store_name',
-        'slug',
+        'store_name',        'slug',
         'address',
+        'latitude',
+        'longitude',
         'logo',
         'banner_1',
         'banner_2',
@@ -46,6 +47,14 @@ class Store extends Model
                 $store->slug = static::uniqueSlug($store->store_name, $store->id);
             }
         });
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'float',
+            'longitude' => 'float',
+        ];
     }
 
     /**

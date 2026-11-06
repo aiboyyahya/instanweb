@@ -8,6 +8,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -22,7 +23,7 @@ class Pengaturan extends Page
     protected static ?string $navigationLabel = 'Pengaturan';
     protected static ?string $title = 'Pengaturan Toko';
 
-    protected ?string $subheading = 'Kelola identitas toko, kanal kontak, pembayaran, dan asal pengiriman.';
+    protected ?string $subheading = 'Kelola identitas toko, kontak, dan asal pengiriman.';
 
     protected string $view = 'filament.pages.pengaturan';
 
@@ -43,7 +44,7 @@ class Pengaturan extends Page
         return $schema
             ->schema([
                 Section::make('Identitas Toko')
-                    ->description('Informasi ini tampil pada storefront, header, dan footer toko.')
+                    ->description('Tampil di header dan footer toko.')
                     ->icon('heroicon-o-building-storefront')
                     ->columns(2)
                     ->schema([
@@ -61,8 +62,8 @@ class Pengaturan extends Page
                             ->columnSpanFull(),
 
                         FileUpload::make('logo')
-                            ->label('Logo Toko')
-                            ->helperText('Gunakan logo persegi atau bulat dengan latar transparan bila tersedia.')
+                            ->label('Logo')
+                            ->helperText('Logo persegi/bulat, latar transparan bila tersedia.')
                             ->disk('public')
                             ->image()
                             ->imageEditor()
@@ -70,14 +71,14 @@ class Pengaturan extends Page
                             ->columnSpanFull(),
 
                         Textarea::make('description')
-                            ->label('Deskripsi Toko')
-                            ->placeholder('Ceritakan singkat produk dan nilai toko Anda.')
+                            ->label('Deskripsi')
+                            ->placeholder('Ceritakan singkat toko Anda.')
                             ->rows(4)
                             ->columnSpanFull(),
                     ]),
 
                 Section::make('Banner Toko')
-                    ->description('Unggah maksimal tiga gambar banner untuk hero carousel storefront. Kosongkan untuk memakai banner bawaan.')
+                    ->description('Maksimal 3 gambar untuk hero carousel. Kosongkan untuk pakai bawaan.')
                     ->icon('heroicon-o-photo')
                     ->columns(3)
                     ->schema([
@@ -109,8 +110,8 @@ class Pengaturan extends Page
                             ->maxSize(10240),
                     ]),
 
-                Section::make('Kontak & Sosial Media')
-                    ->description('Hubungkan pelanggan dengan kanal komunikasi dan marketplace toko.')
+                Section::make('Kontak & Media Sosial')
+                    ->description('Kanal komunikasi dan marketplace toko.')
                     ->icon('heroicon-o-chat-bubble-left-right')
                     ->columns(2)
                     ->schema([
@@ -164,17 +165,38 @@ class Pengaturan extends Page
                 //     ]),
 
                 Section::make('Asal Pengiriman')
-                    ->description('Tentukan lokasi asal agar perhitungan ongkir sesuai.')
+                    ->description('Titik lokasi toko. Ongkir dihitung dari titik ini.')
                     ->icon('heroicon-o-map-pin')
                     ->columns(2)
                     ->schema([
+                        ViewField::make('store_location_map')
+                            ->view('filament.forms.store-map-picker')
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        TextInput::make('latitude')
+                            ->label('Latitude')
+                            ->numeric()
+                            ->minValue(-90)
+                            ->maxValue(90)
+                            ->placeholder('-6.2000000')
+                            ->helperText('Terisi otomatis saat Anda mengklik peta.'),
+
+                        TextInput::make('longitude')
+                            ->label('Longitude')
+                            ->numeric()
+                            ->minValue(-180)
+                            ->maxValue(180)
+                            ->placeholder('106.8166667')
+                            ->helperText('Terisi otomatis saat Anda mengklik peta.'),
+
                         TextInput::make('origin_city_id')
-                            ->label('Origin City ID')
-                            ->helperText('ID kota asal pengiriman dari RajaOngkir.')
+                            ->label('Origin City ID (opsional)')
+                            ->helperText('ID kota asal pengiriman dari RajaOngkir, bila masih digunakan.')
                             ->columnSpanFull(),
 
                         TextInput::make('origin_district_id')
-                            ->label('Origin District ID')
+                            ->label('Origin District ID (opsional)')
                             ->helperText('ID kecamatan asal pengiriman dari RajaOngkir (opsional, lebih spesifik).')
                             ->columnSpanFull(),
                     ]),

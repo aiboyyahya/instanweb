@@ -21,22 +21,22 @@ class OverviewStatsWidget extends BaseWidget
         $orders = $this->orderQuery();
 
         return [
-            Stat::make('Total Produk UMKM', (clone $products)->count())
-                ->description('Produk yang dikelola di toko Anda')
+            Stat::make('Total Produk', (clone $products)->count())
+                ->description('Produk di toko Anda')
                 ->descriptionIcon('heroicon-m-cube')
                 ->color('primary')
                 ->chart($this->dailyTrend($products))
                 ->chartColor('primary'),
 
-            Stat::make('Kategori Produk', (clone $categories)->count())
-                ->description('Kategori untuk memudahkan pencarian')
+            Stat::make('Kategori', (clone $categories)->count())
+                ->description('Pengelompokan produk')
                 ->descriptionIcon('heroicon-m-tag')
                 ->color('info')
                 ->chart($this->dailyTrend($categories))
                 ->chartColor('info'),
 
-            Stat::make('Total Pesanan', (clone $orders)->count())
-                ->description('Transaksi pelanggan untuk toko Anda')
+            Stat::make('Pesanan', (clone $orders)->count())
+                ->description('Transaksi masuk')
                 ->descriptionIcon('heroicon-m-shopping-cart')
                 ->color('success')
                 ->chart($this->dailyTrend($orders))

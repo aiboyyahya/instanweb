@@ -29,7 +29,7 @@ class ArticleForm
         return $schema
             ->components([
                 Section::make('Konten Artikel')
-                    ->description('Tulis informasi, tips, atau cerita yang relevan untuk pelanggan.')
+                    ->description('Tulis informasi atau cerita untuk pelanggan.')
                     ->icon('heroicon-o-document-text')
                     ->columns(2)
                     ->schema([
@@ -55,8 +55,8 @@ class ArticleForm
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Media Artikel')
-                    ->description('Gunakan gambar landscape berkualitas baik untuk tampilan artikel dan daftar artikel.')
+                Section::make('Media')
+                    ->description('Gambar landscape berkualitas baik.')
                     ->icon('heroicon-o-photo')
                     ->columns(2)
                     ->schema([

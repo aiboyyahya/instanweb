@@ -59,13 +59,13 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('17.5rem')
             ->navigationGroups([
-                NavigationGroup::make('Katalog')
+                NavigationGroup::make('Toko')
                     ->icon(Heroicon::OutlinedSquares2x2),
-                NavigationGroup::make('Penjualan')
+                NavigationGroup::make('Pesanan')
                     ->icon(Heroicon::OutlinedShoppingBag),
                 NavigationGroup::make('Konten')
                     ->icon(Heroicon::OutlinedDocumentText),
-                NavigationGroup::make('Sistem')
+                NavigationGroup::make('Lainnya')
                     ->icon(Heroicon::OutlinedCog6Tooth),
             ])
             ->renderHook(

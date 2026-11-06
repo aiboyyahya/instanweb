@@ -153,6 +153,15 @@
                             <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Ongkos kirim</dt>
                             <dd class="mt-1 text-fg">Rp
                                 {{ number_format($transaction->shipping_cost ?? 0, 0, ',', '.') }}</dd>
+                            @if ($transaction->distance_km)
+                                <dd class="mt-0.5 text-xs text-fg-muted">
+                                    ± {{ number_format($transaction->distance_km, 2, ',', '.') }} km dari toko
+                                </dd>
+                            @endif
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium uppercase tracking-wide text-fg-muted">Metode pembayaran</dt>
+                            <dd class="mt-1 text-fg">{{ $transaction->paymentMethodLabel() }}</dd>
                         </div>
                     </dl>
                 </section>

@@ -8,6 +8,7 @@ use App\Models\Store;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
+use App\Services\RegionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -61,6 +62,8 @@ class CheckoutRegionTest extends TestCase
             ->assertSee('Provinsi')
             ->assertSee('Kota/Kabupaten')
             ->assertSee('Kecamatan')
+            ->assertSee('Titik Pengiriman (Peta)')
+            ->assertSee('Metode Pembayaran')
             ->assertSee(route('regions.provinces'), false);
     }
 
@@ -78,7 +81,9 @@ class CheckoutRegionTest extends TestCase
                 'address' => 'Jl. Merdeka No. 10',
                 'postal_code' => '40152',
                 'courier' => 'JNE',
-                'shipping_cost' => 0,
+                'latitude' => -6.914744,
+                'longitude' => 107.609810,
+                'payment_method' => 'transfer_bank',
                 'notes' => 'Titip di pos keamanan.',
             ])
             ->assertRedirect();
@@ -107,7 +112,9 @@ class CheckoutRegionTest extends TestCase
                 'address' => 'Jl. Merdeka No. 10',
                 'postal_code' => '40152',
                 'courier' => 'JNE',
-                'shipping_cost' => 0,
+                'latitude' => -6.914744,
+                'longitude' => 107.609810,
+                'payment_method' => 'transfer_bank',
             ])
             ->assertSessionHasErrors('province_id');
 
@@ -133,7 +140,9 @@ class CheckoutRegionTest extends TestCase
                 'address' => 'Jl. Merdeka No. 10',
                 'postal_code' => '40152',
                 'courier' => 'JNE',
-                'shipping_cost' => 0,
+                'latitude' => -6.914744,
+                'longitude' => 107.609810,
+                'payment_method' => 'transfer_bank',
             ])
             ->assertRedirect();
 
@@ -239,6 +248,71 @@ class CheckoutRegionTest extends TestCase
             ->andReturnTrue();
 
         $this->assertTrue($controller->sendOrderConfirmation($transaction->fresh()));
+    }
+
+    public function test_geocode_endpoint_returns_region_data(): void
+    {
+        $response = $this->postJson(route('regions.geocode'), [
+            'latitude' => -6.9175,
+            'longitude' => 107.6191,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'province_id',
+            'province_name',
+            'city_id',
+            'city_name',
+            'district_id',
+            'district_name',
+            'matched',
+        ]);
+
+        $this->assertSame('32', $response->json('province_id'));
+        $this->assertSame('3273', $response->json('city_id'));
+    }
+
+    public function test_geocode_endpoint_validates_coordinates(): void
+    {
+        $this->postJson(route('regions.geocode'), [
+            'latitude' => 999,
+            'longitude' => 0,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('latitude');
+
+        $this->postJson(route('regions.geocode'), [
+            'latitude' => -6.2,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('longitude');
+    }
+
+    public function test_checkout_accepts_null_address_and_postal_code(): void
+    {
+        [$user, $product] = $this->cartContext(-6.2, 106.816667);
+
+        $this->actingAs($user)
+            ->withSession($this->directCheckout($product))
+            ->post(route('checkout'), [
+                'province_id' => '32',
+                'city_id' => '3273',
+                'district_id' => '327301',
+                'phone_number' => '08123456789',
+                'address' => null,
+                'postal_code' => null,
+                'courier' => 'JNE',
+                'latitude' => -6.914744,
+                'longitude' => 107.609810,
+                'payment_method' => 'transfer_bank',
+            ])
+            ->assertRedirect();
+
+        $transaction = Transaction::firstOrFail();
+
+        $this->assertNull($transaction->address);
+        $this->assertNull($transaction->postal_code);
+        $this->assertEqualsWithDelta(-6.914744, (float) $transaction->latitude, 0.0000001);
     }
 
     /**

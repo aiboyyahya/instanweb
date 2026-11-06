@@ -406,6 +406,14 @@
                                         class="h-12 w-full rounded-field border border-line-strong bg-surface px-3.5 text-sm text-fg placeholder:text-fg-muted">
                                 </x-ui.field>
 
+                                <div class="sm:col-span-2">
+                                    <x-ui.map-picker label="Titik lokasi toko (peta)"
+                                        hint="Tandai lokasi toko pada peta. Ongkos kirim pelanggan dihitung otomatis dari titik ini ke titik pengiriman."
+                                        empty-hint="Klik peta atau gunakan lokasi saya untuk menentukan titik lokasi toko."
+                                        :lat="old('latitude', $store->latitude ?? null)"
+                                        :lng="old('longitude', $store->longitude ?? null)" />
+                                </div>
+
                                 <x-ui.field label="Deskripsi toko" name="description" inputId="store_description"
                                     class="sm:col-span-2">
                                     <textarea id="store_description" name="description" rows="3"

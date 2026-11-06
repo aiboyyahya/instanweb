@@ -18,37 +18,19 @@ class ProductsTable
         return $table
             ->columns([
                 ImageColumn::make('image')
-                    // ->label('Gambar')
-                    // ->disk('public')
-                    // ->visibility('public')
-                    // ->square()
-                    // ->imageSize(55),
-                    ->label('Gambar')
                     ->disk('public')
                     ->visibility('public')
                     ->square()
-                    ->imageSize(55),
+                    ->imageSize(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('product_name')
-                    ->label('Nama Produk')
+                    ->label('Nama')
                     ->searchable()
                     ->sortable()
                     ->weight('semibold')
+                    ->description(fn ($record) => $record->category?->category_name)
                     ->placeholder('Belum diberi nama'),
-
-                TextColumn::make('category.category_name')
-                    ->label('Kategori')
-                    ->badge()
-                    ->color('gray')
-                    ->sortable()
-                    ->searchable()
-                    ->placeholder('Tanpa kategori'),
-
-                TextColumn::make('purchase_price')
-                    ->label('Harga Beli')
-                    ->money('IDR')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('selling_price')
                     ->label('Harga Jual')
@@ -78,12 +60,6 @@ class ProductsTable
                     ->dateTime('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Diperbarui')
-                    ->dateTime('d M Y • H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -99,12 +75,12 @@ class ProductsTable
             ])
             ->defaultSort('created_at', 'desc')
             ->striped()
+            ->paginated(15)
             ->emptyStateIcon('heroicon-o-cube')
             ->emptyStateHeading('Belum ada produk')
-            ->emptyStateDescription('Tambahkan produk pertama agar tampil di storefront toko Anda.')
+            ->emptyStateDescription('Tambahkan produk pertama agar tampil di toko Anda.')
             ->emptyStateActions([
-                CreateAction::make()
-                    ->label('Tambah Produk'),
+                CreateAction::make()->label('Tambah Produk'),
             ]);
     }
 }

@@ -29,7 +29,7 @@ class TransactionsTable
                     ->placeholder('Tanpa nama'),
 
                 TextColumn::make('status')
-                    ->label('Status Pesanan')
+                    ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'pending' => 'Menunggu',
@@ -52,7 +52,7 @@ class TransactionsTable
                     ->label('Pembayaran')
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'pending' => 'Belum dibayar',
+                        'pending' => 'Belum',
                         'settlement', 'paid', 'capture' => 'Lunas',
                         'cancel' => 'Dibatalkan',
                         'expire', 'expired' => 'Kedaluwarsa',
@@ -72,65 +72,23 @@ class TransactionsTable
                     ->sortable()
                     ->weight('semibold'),
 
+                TextColumn::make('courier')
+                    ->label('Kurir')
+                    ->badge()
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('tracking_number')
+                    ->label('Resi')
+                    ->searchable()
+                    ->copyable()
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
                     ->label('Tanggal')
                     ->dateTime('d M Y • H:i')
                     ->sortable(),
-
-                TextColumn::make('payment_method')
-                    ->label('Metode Pembayaran')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'midtrans' => 'Midtrans',
-                        default => ucfirst((string) $state),
-                    })
-                    ->color(fn (?string $state): string => $state === 'midtrans' ? 'primary' : 'gray')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('courier')
-                    ->label('Kurir')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state): string => strtoupper((string) $state))
-                    ->color('gray')
-                    ->toggleable(),
-
-                TextColumn::make('courier_service')
-                    ->label('Layanan Kurir')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('tracking_number')
-                    ->label('Nomor Resi')
-                    ->searchable()
-                    ->copyable()
-                    ->placeholder('Belum tersedia')
-                    ->toggleable(),
-
-                TextColumn::make('shipping_cost')
-                    ->label('Ongkir')
-                    ->money('IDR')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('province')
-                    ->label('Provinsi')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('city')
-                    ->label('Kota')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('district')
-                    ->label('Kecamatan')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('postal_code')
-                    ->label('Kode Pos')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Diperbarui')
-                    ->dateTime('d M Y • H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -145,12 +103,12 @@ class TransactionsTable
             ])
             ->defaultSort('created_at', 'desc')
             ->striped()
+            ->paginated(15)
             ->emptyStateIcon('heroicon-o-shopping-bag')
             ->emptyStateHeading('Belum ada pesanan')
-            ->emptyStateDescription('Pesanan pelanggan akan muncul di sini untuk diproses.')
+            ->emptyStateDescription('Pesanan pelanggan akan muncul di sini.')
             ->emptyStateActions([
-                CreateAction::make()
-                    ->label('Buat Pesanan'),
+                CreateAction::make()->label('Buat Pesanan'),
             ]);
     }
 }

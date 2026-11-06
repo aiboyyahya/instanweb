@@ -11,7 +11,7 @@ class OrderChartWidget extends ChartWidget
 {
     protected ?string $heading = 'Pesanan 7 Hari Terakhir';
 
-    protected ?string $description = 'Jumlah pesanan yang masuk setiap hari.';
+    protected ?string $description = 'Pesanan masuk per hari.';
 
     protected static ?int $sort = 2;
 

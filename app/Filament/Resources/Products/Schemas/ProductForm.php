@@ -33,8 +33,8 @@ class ProductForm
             ->components([
                 $storeField,
 
-                Section::make('Informasi Produk')
-                    ->description('Data utama yang tampil pada katalog dan halaman produk.')
+                Section::make('Informasi')
+                    ->description('Data utama produk.')
                     ->icon('heroicon-o-cube')
                     ->columns(2)
                     ->schema([
@@ -47,7 +47,7 @@ class ProductForm
                         TextInput::make('slug')
                             ->label('Slug')
                             ->placeholder('kopi-arabika-gayo-250-gram')
-                            ->helperText('Alamat unik produk pada tautan storefront.')
+                            ->helperText('Alamat unik produk di toko.')
                             ->required()
                             ->maxLength(255),
 
@@ -66,7 +66,7 @@ class ProductForm
                             ->required(),
 
                         Select::make('status')
-                            ->label('Status Tayang')
+                            ->label('Status')
                             ->options([
                                 'active' => 'Aktif',
                                 'inactive' => 'Nonaktif',
@@ -75,15 +75,15 @@ class ProductForm
                             ->required(),
 
                         Textarea::make('description')
-                            ->label('Deskripsi Produk')
-                            ->placeholder('Jelaskan bahan, ukuran, dan keunggulan produk.')
-                            ->rows(5)
+                            ->label('Deskripsi')
+                            ->placeholder('Jelaskan produk Anda.')
+                            ->rows(4)
                             ->required()
                             ->columnSpanFull(),
                     ]),
 
                 Section::make('Harga & Stok')
-                    ->description('Atur harga jual, harga beli, dan ketersediaan barang.')
+                    ->description('Atur harga dan ketersediaan barang.')
                     ->icon('heroicon-o-banknotes')
                     ->columns(3)
                     ->schema([
@@ -108,18 +108,12 @@ class ProductForm
                             ->required(),
                     ]),
 
-                Section::make('Media Produk')
-                    ->description('Gunakan foto persegi dengan pencahayaan terang agar produk terlihat jelas.')
+                Section::make('Gambar')
+                    ->description('Foto persegi dengan pencahayaan terang.')
                     ->icon('heroicon-o-photo')
                     ->schema([
                         FileUpload::make('image')
-                            // ->label('Gambar Utama Produk')
-                            // ->image()
-                            // ->imageEditor()
-                            // ->disk('public')
-                            // ->required()
-                            // ->columnSpanFull(),
-                            ->label('Gambar Utama Produk')
+                            ->label('Gambar Utama')
                             ->image()
                             ->imageEditor()
                             ->disk('public')

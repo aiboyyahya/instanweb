@@ -136,6 +136,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
             @break
 
+        @case('map-pin')
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            @break
+
         @default
             <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25h.008v.008h-.008V11.25Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0-9h.008v.008h-.008V8.25ZM12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
     @endswitch

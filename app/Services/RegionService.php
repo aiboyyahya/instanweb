@@ -81,6 +81,126 @@ class RegionService
     }
 
     /**
+     * Reverse geocode koordinat menggunakan OpenStreetMap Nominatim.
+     * Mengembalikan array [province, regency, district] yang cocok dengan
+     * data lokal, atau null jika tidak ditemukan.
+     *
+     * @return array{province?: array{id: string, name: string}, regency?: array{id: string, name: string}, district?: array{id: string, name: string}}|null
+     */
+    public function reverseGeocode(float $latitude, float $longitude): ?array
+    {
+        $url = 'https://nominatim.openstreetmap.org/reverse?' . http_build_query([
+            'lat' => $latitude,
+            'lon' => $longitude,
+            'format' => 'json',
+            'addressdetails' => 1,
+            'accept-language' => 'id',
+        ]);
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => [
+                    'User-Agent: instanweb/1.0 (reverse-geocode;UMKM Indonesia)',
+                    'Accept: application/json',
+                ],
+                'timeout' => 5,
+            ],
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+            ],
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+
+        if ($response === false) {
+            return null;
+        }
+
+        $data = json_decode($response, true);
+
+        if (! is_array($data) || ! isset($data['address'])) {
+            return null;
+        }
+
+        $address = $data['address'];
+
+        // provinsi ↔ state / region / city (untuk DKI Jakarta dll)
+        $state = $address['state'] ?? null;
+        $cityVal = $address['city'] ?? null;
+        $province = null;
+
+        foreach (array_filter([$state, $cityVal]) as $label) {
+            foreach ($this->provincesData() as $p) {
+                if (stripos($p['name'], (string) $label) !== false
+                    || stripos((string) $label, $p['name']) !== false) {
+                    $province = $p;
+                    break 2;
+                }
+            }
+        }
+
+        // kabupaten/kota ↔ county / city / municipality
+        $county = $address['county'] ?? null;
+        $city = $address['city'] ?? null;
+        $municipality = $address['municipality'] ?? null;
+        $regency = null;
+
+        foreach (array_filter([$county, $city, $municipality]) as $label) {
+            foreach ($this->regenciesData() as $r) {
+                if (stripos($r['name'], (string) $label) !== false
+                    || stripos((string) $label, $r['name']) !== false) {
+                    $regency = $r;
+                    break 2;
+                }
+            }
+        }
+
+        // kecamatan ↔ village / town / suburb / hamlet / district / neighbourhood
+        $village = $address['village'] ?? null;
+        $town = $address['town'] ?? null;
+        $suburb = $address['suburb'] ?? null;
+        $hamlet = $address['hamlet'] ?? null;
+        $districtLabel = $address['district'] ?? null;
+        $neighbourhood = $address['neighbourhood'] ?? null;
+        $district = null;
+
+        $districtLabels = array_filter([$suburb, $districtLabel, $village, $town, $neighbourhood, $hamlet]);
+        $districtCandidates = $regency
+            ? array_values(array_filter(
+                $this->districtsData(),
+                fn (array $d) => $d['regency_id'] === $regency['id'],
+            ))
+            : $this->districtsData();
+
+        foreach ($districtLabels as $label) {
+            foreach ($districtCandidates as $d) {
+                if (stripos($d['name'], (string) $label) !== false) {
+                    $district = $d;
+                    break 2;
+                }
+            }
+        }
+
+        $result = [];
+
+        if ($province !== null) {
+            $result['province'] = $province;
+        }
+
+        if ($regency !== null) {
+            $result['regency'] = $regency;
+        }
+
+        if ($district !== null) {
+            $result['district'] = $district;
+        }
+
+        return empty($result) ? null : $result;
+    }
+
+    /**
      * @param  array<int, array{id: string, name: string}>  $items
      * @return array<int, array{id: string, name: string}>
      */

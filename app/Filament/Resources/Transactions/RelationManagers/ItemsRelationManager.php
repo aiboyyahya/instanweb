@@ -23,14 +23,19 @@ class ItemsRelationManager extends RelationManager
     /**
      * Rincian item dibatasi pada produk milik toko pemilik yang masuk.
      */
-    protected function getTableQuery(): Builder
+    public static function getEloquentQuery(): Builder
     {
-        $query = parent::getTableQuery();
+        $query = parent::getEloquentQuery();
+
         $store = auth()->user()?->store;
 
-        return $store
-            ? $query->whereHas('product', fn (Builder $query) => $query->where('store_id', $store->id))
-            : $query;
+        if (!$store) {
+            return $query;
+        }
+
+        return $query->whereHas('items.product', function (Builder $query) use ($store) {
+            $query->where('store_id', $store->id);
+        });
     }
 
     public function form(Schema $schema): Schema

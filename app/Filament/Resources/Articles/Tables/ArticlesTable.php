@@ -16,11 +16,11 @@ class ArticlesTable
     {
         return $table
             ->columns([
-                ImageColumn::make('image')
-                    ->label('Gambar')
+                ImageColumn::make('thumbnail')
                     ->disk('public')
                     ->square()
-                    ->imageSize(44),
+                    ->imageSize(44)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('title')
                     ->label('Judul')
@@ -29,26 +29,15 @@ class ArticlesTable
                     ->weight('semibold')
                     ->wrap(),
 
-                TextColumn::make('user.name')
-                    ->label('Penulis')
-                    ->searchable()
-                    ->placeholder('Tanpa penulis'),
-
                 TextColumn::make('category.category_name')
                     ->label('Kategori')
                     ->badge()
                     ->color('gray')
-                    ->placeholder('Tanpa kategori'),
-
-                ImageColumn::make('thumbnail')
-                    ->label('Thumbnail')
-                    ->disk('public')
-                    ->square()
-                    ->imageSize(36)
+                    ->placeholder('Tanpa kategori')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
-                    ->label('Ditulis pada')
+                    ->label('Tanggal')
                     ->dateTime('d M Y')
                     ->sortable(),
             ])
@@ -65,12 +54,12 @@ class ArticlesTable
             ])
             ->defaultSort('created_at', 'desc')
             ->striped()
+            ->paginated(15)
             ->emptyStateIcon('heroicon-o-document-text')
             ->emptyStateHeading('Belum ada artikel')
-            ->emptyStateDescription('Bagikan informasi dan cerita toko melalui artikel.')
+            ->emptyStateDescription('Tulis artikel untuk memperkaya cerita toko Anda.')
             ->emptyStateActions([
-                CreateAction::make()
-                    ->label('Tulis Artikel'),
+                CreateAction::make()->label('Tulis Artikel'),
             ]);
     }
 }

@@ -17,14 +17,14 @@ class CategoriesTable
         return $table
             ->columns([
                 ImageColumn::make('icon')
-                    ->label('Ikon')
                     ->disk('public')
                     ->square()
                     ->imageSize(36)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('—'),
 
                 TextColumn::make('category_name')
-                    ->label('Nama Kategori')
+                    ->label('Nama')
                     ->searchable()
                     ->sortable()
                     ->weight('semibold'),
@@ -33,22 +33,17 @@ class CategoriesTable
                     ->label('Slug')
                     ->searchable()
                     ->copyable()
-                    ->color('gray'),
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('products_count')
-                    ->label('Jumlah Produk')
+                    ->label('Produk')
                     ->counts('products')
                     ->badge()
                     ->color('info'),
 
                 TextColumn::make('id')
                     ->label('#')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -65,12 +60,12 @@ class CategoriesTable
             ])
             ->defaultSort('category_name', 'asc')
             ->striped()
+            ->paginated(15)
             ->emptyStateIcon('heroicon-o-tag')
             ->emptyStateHeading('Belum ada kategori')
-            ->emptyStateDescription('Kelompokkan produk dengan kategori agar pelanggan mudah menemukannya.')
+            ->emptyStateDescription('Kelompokkan produk agar pelanggan mudah mencari.')
             ->emptyStateActions([
-                CreateAction::make()
-                    ->label('Tambah Kategori'),
+                CreateAction::make()->label('Tambah Kategori'),
             ]);
     }
 }

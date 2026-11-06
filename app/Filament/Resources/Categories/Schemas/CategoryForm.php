@@ -30,7 +30,7 @@ class CategoryForm
         return $schema
             ->components([
                 Section::make('Detail Kategori')
-                    ->description('Kategori membantu pelanggan menemukan produk dengan cepat.')
+                    ->description('Kelompokkan produk agar pelanggan mudah mencari.')
                     ->icon('heroicon-o-tag')
                     ->columns(2)
                     ->schema([

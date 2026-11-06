@@ -21,5 +21,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'Jaka',
             'role' => 'admin',
         ]);
+
+        $this->call([
+            DummyDataSeeder::class,
+        ]);
     }
 }

@@ -96,6 +96,7 @@ if (!function_exists('store_context')) {
                 'profil',
                 'cart',
                 'checkout.page',
+                'checkout.shipping-estimate',
                 'checkout.payment',
                 'checkout.success',
                 'orders',

@@ -24,13 +24,11 @@ class ProductResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon ='heroicon-s-cube';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Katalog';
+    protected static string|UnitEnum|null $navigationGroup = 'Toko';
     protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationLabel = 'Produk';
-
     protected static ?string $pluralModelLabel = 'Produk';
-    
     protected static ?string $recordTitleAttribute = 'id';
 
     public static function form(Schema $schema): Schema
