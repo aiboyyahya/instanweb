@@ -481,7 +481,7 @@
                     );
                 });
             }
-
+            
             if (latInput && lngInput && latInput.value !== '' && lngInput.value !== '') {
                 requestEstimate(parseFloat(latInput.value), parseFloat(lngInput.value));
             }
