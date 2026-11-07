@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
         ], [
             'name' => 'Jaka',
             'role' => 'admin',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            'email_verified_at' => now(),
+            'phone_verified_at' => now(),
         ]);
 
         $this->call([

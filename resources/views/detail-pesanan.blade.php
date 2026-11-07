@@ -247,9 +247,14 @@
 
                     <div class="mt-5 space-y-2">
                         @if ($transaction->payment_status === 'pending' && $transaction->status !== 'done' && ! $isCancelled)
-                            <x-ui.button :href="route('checkout.payment', $transaction->id)" block size="lg">
-                                Bayar Sekarang
+                            <x-ui.button :href="route('checkout.payment', $transaction->id)" block size="lg" variant="secondary">
+                                Lihat Cara Pembayaran
                             </x-ui.button>
+                        @elseif ($transaction->payment_status === 'paid')
+                            <div class="inline-flex items-center gap-2 rounded-card bg-success-soft px-4 py-2 text-sm font-medium text-success">
+                                <x-ui.icon name="check-circle" class="h-4 w-4" />
+                                Sudah Lunas
+                            </div>
                         @endif
 
                         <x-ui.button :href="route('orders')" variant="outline" block>

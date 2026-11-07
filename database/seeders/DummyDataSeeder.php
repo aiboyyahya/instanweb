@@ -47,10 +47,12 @@ class DummyDataSeeder extends Seeder
                 [
                     'name' => $cust['name'],
                     'phone_number' => $cust['phone_number'],
+                    'phone' => $cust['phone_number'],
                     'address' => $cust['address'],
                     'password' => Hash::make('password'),
                     'role' => 'user',
                     'email_verified_at' => now(),
+                    'phone_verified_at' => now(),
                 ]
             );
         }
@@ -160,10 +162,12 @@ class DummyDataSeeder extends Seeder
                 [
                     'name' => ucwords(str_replace(['&', '-'], ['dan', ' '], $storeData['store_name'])),
                     'phone_number' => '0812-XXXX-XXXX',
+                    'phone' => '0812-XXXX-XXXX',
                     'address' => $storeData['address'],
                     'password' => Hash::make('password'),
                     'role' => 'admin',
                     'email_verified_at' => now(),
+                    'phone_verified_at' => now(),
                 ]
             );
 

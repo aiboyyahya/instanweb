@@ -6,8 +6,10 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransactionsTable
 {
@@ -94,7 +96,27 @@ class TransactionsTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->label('Edit Pesanan')
+                    ->icon('heroicon-o-pencil'),
+                \Filament\Actions\Action::make('markPaid')
+                    ->label('Tandai Lunas')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation(fn ($record) => $record->payment_status !== 'paid')
+                    ->visible(fn ($record) => $record->payment_status === 'pending')
+                    ->action(function ($record) {
+                        $record->update(['payment_status' => 'paid']);
+                    }),
+                \Filament\Actions\Action::make('markPendingPayment')
+                    ->label('Kembalikan ke Belum Dibayar')
+                    ->icon('heroicon-o-clock')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(fn ($record) => $record->payment_status === 'paid')
+                    ->action(function ($record) {
+                        $record->update(['payment_status' => 'pending']);
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

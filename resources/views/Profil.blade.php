@@ -54,7 +54,7 @@
 
                     <div class="min-w-0">
                         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">Akun saya</p>
-                        <h1 id="ringkasan-akun" class="mt-1 truncate text-2xl font-bold tracking-tight sm:text-3xl">
+                        <h1 id="ringkasan-akun" class="mt-1 truncate text-2xl font-bold tracking-tight sm:text-3xl text-white">
                             {{ $user->name }}
                         </h1>
                         <p class="mt-1 truncate text-sm text-white/60">{{ $user->email }}</p>

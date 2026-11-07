@@ -75,11 +75,31 @@ class TransactionForm
                                 'cod' => 'Bayar di Tempat (COD)',
                                 'qris' => 'QRIS / E-Wallet',
                                 'manual' => 'Konfirmasi Manual',
-                                'midtrans' => 'Midtrans (Online)',
                             ])
-                            ->default('manual')
                             ->disabled()
                             ->required(),
+
+                        Section::make('Status Pembayaran')
+                            ->description('Tandai apakah pembayaran sudah diterima penjual.')
+                            ->icon('heroicon-o-credit-card')
+                            ->schema([
+                                ToggleButtons::make('payment_status')
+                                    ->label('Status Pembayaran')
+                                    ->inline()
+                                    ->options([
+                                        'pending' => 'Belum Dibayar',
+                                        'paid' => 'Lunas',
+                                    ])
+                                    ->icons([
+                                        'pending' => 'heroicon-o-clock',
+                                        'paid' => 'heroicon-o-check-circle',
+                                    ])
+                                    ->colors([
+                                        'pending' => 'warning',
+                                        'paid' => 'success',
+                                    ])
+                                    ->required(),
+                            ]),
                     ]),
 
                 Section::make('Alamat & Kurir')

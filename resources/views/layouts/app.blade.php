@@ -108,7 +108,7 @@
                     <x-brand-wordmark size="xl" />
                 @endif
             </a>
-            @if (!request()->routeIs(['selamatdatang', 'welcome', 'home']))
+            @if (!request()->routeIs(['selamatdatang', 'welcome', 'home', 'profil']))
 
                 {{-- Navigasi desktop --}}
                 <nav class="ml-2 hidden items-center gap-1 lg:flex" aria-label="Navigasi utama">
@@ -124,9 +124,8 @@
                     @endforeach
                 </nav>
             @endif
-
             <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
-                @if (!request()->routeIs(['selamatdatang', 'welcome']))
+                @if (!request()->routeIs(['selamatdatang', 'welcome', 'profil', 'orders']))
                     {{-- Pencarian (tablet & desktop) --}}
                     <form action="{{ $searchUrl }}" method="GET" role="search"
                         class="hidden items-center md:flex">
@@ -142,7 +141,6 @@
                         </div>
                     </form>
                 @endif
-
                 {{-- Toggle tema --}}
                 <button type="button" data-theme-toggle aria-pressed="false" title="Ganti mode tampilan"
                     class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-fg-secondary transition hover:bg-surface-soft hover:text-fg">

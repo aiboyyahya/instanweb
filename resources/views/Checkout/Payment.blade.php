@@ -159,46 +159,60 @@
                 {{-- Panel pembayaran --}}
                 <section class="rounded-panel border border-line bg-surface p-5 shadow-sm sm:p-6"
                     aria-labelledby="panel-pembayaran">
-                    <h2 id="panel-pembayaran" class="text-lg font-semibold text-fg">Selesaikan Pembayaran</h2>
+                    <h2 id="panel-pembayaran" class="text-lg font-semibold text-fg">Cara Pembayaran</h2>
 
-                    <div id="payment-error" class="mt-4 hidden">
-                        <x-ui.alert variant="danger" title="Pembayaran online belum dapat dimulai">
-                            Silakan coba lagi, atau konfirmasi langsung ke penjual melalui WhatsApp.
+                    @if ($isPaid)
+                        <x-ui.alert variant="success" title="Pembayaran diterima">
+                            Pembayaran pesanan ini sudah tercatat lunas. Penjual akan memproses pengiriman.
                         </x-ui.alert>
-                    </div>
+                    @elseif (in_array($transaction->status, ['done', 'cancelled'], true))
+                        <x-ui.alert variant="{{ $transaction->status === 'done' ? 'info' : 'warning' }}"
+                            title="{{ $transaction->status === 'done' ? 'Pesanan selesai' : 'Pesanan dibatalkan' }}">
+                            {{ $transaction->status === 'done'
+                                ? 'Pesanan ini sudah selesai diproses oleh penjual.'
+                                : 'Pesanan ini sudah dibatalkan. Hubungi penjual jika ada pertanyaan.' }}
+                        </x-ui.alert>
+                    @else
+                        <p class="mt-2 text-sm text-fg-muted">
+                            Konfirmasi pembayaran Anda ke penjual melalui channel berikut setelah melakukan transfer atau siap menerima barang.
+                        </p>
 
-                    <div id="payment-ready" class="mt-4 space-y-3">
-                        @if ($isPaid)
-                            <x-ui.alert variant="success" title="Pembayaran diterima">
-                                Pembayaran pesanan ini sudah tercatat lunas. Penjual akan memproses pengiriman.
-                            </x-ui.alert>
-                        @else
-                            <x-ui.alert variant="info" title="Menunggu konfirmasi pembayaran">
-                                Pesanan sudah dibuat. Penjual akan mengirim rincian pembayaran melalui WhatsApp.
-                            </x-ui.alert>
-
-                            <button type="button" id="manual-pay-btn"
-                                class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field bg-cta px-4 text-sm font-semibold text-on-cta shadow-sm transition hover:bg-cta-hover">
-                                <x-ui.icon name="check-circle" class="h-4 w-4" />
-                                Coba Bayar Online
-                            </button>
-
-                            @if ($whatsappNumber)
-                                <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $confirmMessage }}"
-                                    target="_blank" rel="noopener noreferrer"
-                                    class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-field border border-line-strong bg-surface px-4 text-sm font-semibold text-fg transition hover:bg-surface-soft">
-                                    <x-ui.icon name="chat" class="h-4 w-4" /> Konfirmasi via WhatsApp
-                                </a>
-                            @endif
-                        @endif
-                    </div>
-
-                    <div id="payment-loading" class="mt-4 hidden items-center justify-center gap-3 rounded-card bg-surface-muted p-4 text-sm text-fg-secondary">
-                        <span
-                            class="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-cta"
-                            aria-hidden="true"></span>
-                        Menyiapkan pembayaran...
-                    </div>
+                        <div class="mt-4 space-y-3 rounded-card border border-line bg-surface-muted p-4 text-sm">
+                            @switch($transaction->payment_method)
+                                @case('transfer_bank')
+                                    <div>
+                                        <p class="font-semibold text-fg">Transfer Bank</p>
+                                        <p class="mt-1 text-fg-secondary">
+                                            Silakan transfer ke rekening penjual, lalu kirim bukti transfer melalui WhatsApp.
+                                        </p>
+                                    </div>
+                                @break
+                                @case('qris')
+                                    <div>
+                                        <p class="font-semibold text-fg">QRIS / E-Wallet</p>
+                                        <p class="mt-1 text-fg-secondary">
+                                            Scanner kode QRIS yang dikirim penjual melalui WhatsApp untuk melakukan pembayaran.
+                                        </p>
+                                    </div>
+                                @break
+                                @case('cod')
+                                    <div>
+                                        <p class="font-semibold text-fg">Bayar di Tempat (COD)</p>
+                                        <p class="mt-1 text-fg-secondary">
+                                            Bayar tunai saat barang diterima oleh kurir atau penjual. Status pembayaran akan dikonfirmasi otomatis setelah barang sampai.
+                                        </p>
+                                    </div>
+                                @break
+                                @default
+                                    <div>
+                                        <p class="font-semibold text-fg">Konfirmasi Manual</p>
+                                        <p class="mt-1 text-fg-secondary">
+                                            Hubungi penjual untuk instruksi pembayaran dan kirim bukti pembayaran melalui WhatsApp.
+                                        </p>
+                                    </div>
+                            @endswitch
+                        </div>
+                    @endif
 
                     <div class="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
                         <x-ui.button :href="route('orders')" variant="ghost" size="sm">Lihat Pesanan</x-ui.button>
@@ -209,85 +223,3 @@
         </div>
     </div>
 @endsection
-
-@push('scripts')
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
-        data-client-key="{{ config('services.midtrans.client_key') }}"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const button = document.getElementById('manual-pay-btn');
-            const loading = document.getElementById('payment-loading');
-            const errorBox = document.getElementById('payment-error');
-            const ready = document.getElementById('payment-ready');
-
-            if (!button) {
-                return;
-            }
-
-            function setLoading(isLoading) {
-                loading?.classList.toggle('hidden', !isLoading);
-                loading?.classList.toggle('flex', isLoading);
-                button.disabled = isLoading;
-                button.classList.toggle('opacity-60', isLoading);
-            }
-
-            function triggerPayment() {
-                errorBox?.classList.add('hidden');
-                setLoading(true);
-
-                fetch("{{ route('transaction.getSnapToken', $transaction->id) }}", {
-                        method: 'GET',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute(
-                                'content') || '',
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(function (response) {
-                        if (!response.ok) {
-                            throw new Error('HTTP ' + response.status);
-                        }
-
-                        return response.json();
-                    })
-                    .then(function (data) {
-                        if (!data.snap_token) {
-                            throw new Error('Snap token tidak tersedia.');
-                        }
-
-                        if (typeof window.snap === 'undefined') {
-                            throw new Error('Snap.js belum termuat.');
-                        }
-
-                        window.snap.pay(data.snap_token, {
-                            onSuccess: function () {
-                                window.location.href =
-                                    "{{ route('checkout.success', $transaction->id) }}";
-                            },
-                            onPending: function () {
-                                window.location.href =
-                                    "{{ route('checkout.success', $transaction->id) }}";
-                            },
-                            onError: function () {
-                                errorBox?.classList.remove('hidden');
-                            },
-                            onClose: function () {
-                                setLoading(false);
-                            }
-                        });
-                    })
-                    .catch(function (error) {
-                        console.error(error);
-                        errorBox?.classList.remove('hidden');
-                    })
-                    .finally(function () {
-                        setLoading(false);
-                    });
-            }
-
-            button.addEventListener('click', triggerPayment);
-        });
-    </script>
-@endpush

@@ -21,9 +21,6 @@ use Illuminate\Validation\ValidationException;
 
 class HomeController extends Controller
 {
-    protected $midtransService;
-    protected $apiUrl;
-    protected $token;
 
 
 
@@ -618,41 +615,6 @@ class HomeController extends Controller
         });
 
         return redirect()->route('orders')->with('success', 'Pesanan berhasil dibatalkan.');
-    }
-
-    public function getSnapToken($id)
-    {
-        $transaction = Transaction::with('items.product')->findOrFail($id);
-
-        if ($transaction->customer_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        if ($transaction->snap_token) {
-            return response()->json(['snap_token' => $transaction->snap_token]);
-        }
-
-        try {
-            $customer = [
-                'name' => Auth::user()->name,
-                'email' => Auth::user()->email,
-                'phone' => Auth::user()->phone ?? '',
-            ];
-
-            $result = $this->midtransService->createTransaction($transaction, $customer);
-            $snapToken = $result['token'] ?? null;
-
-            if (!$snapToken) {
-                throw new \Exception('Snap token not found in Midtrans response');
-            }
-
-            $transaction->update(['snap_token' => $snapToken]);
-
-            return response()->json(['snap_token' => $snapToken]);
-        } catch (\Exception $e) {
-            Log::error('Midtrans Snap Token creation failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create snap token'], 500);
-        }
     }
 
     public function sendMessage($phone_number, $message)

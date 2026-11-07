@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfilController;
-use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\RajaOngkirController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\RegionController;
@@ -80,7 +79,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/checkout/ongkir', [HomeController::class, 'shippingEstimate'])->name('checkout.shipping-estimate');
         Route::get('/checkout/payment/{id}', [HomeController::class, 'checkoutPayment'])->name('checkout.payment');
         Route::get('/checkout/success/{id}', [HomeController::class, 'checkoutSuccess'])->name('checkout.success');
-        Route::get('/transaction/{id}/snap-token', [HomeController::class, 'getSnapToken'])->name('transaction.getSnapToken');
     });
     Route::get('/pesanan', [HomeController::class, 'orders'])->name('orders');
     Route::get('/pesanan/{id}', [HomeController::class, 'orderDetail'])->name('order.detail');

@@ -103,7 +103,7 @@
             </div>
 
             <p class="relative text-xs text-white/50">
-                &copy; {{ date('Y') }} {{ $authStoreName }}
+                &copy; {{ date('Y') }} GTNIC Web Development.
             </p>
         </aside>
 
