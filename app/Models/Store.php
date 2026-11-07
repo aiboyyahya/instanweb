@@ -13,6 +13,7 @@ class Store extends Model
     protected $fillable = [
         'user_id',
         'store_name',        'slug',
+        'referral_code',
         'address',
         'latitude',
         'longitude',
@@ -45,6 +46,14 @@ class Store extends Model
         static::saving(function (Store $store) {
             if (blank($store->slug)) {
                 $store->slug = static::uniqueSlug($store->store_name, $store->id);
+            }
+
+            // Generate referral code otomatis bila belum ada.
+            if (blank($store->referral_code)) {
+                do {
+                    $code = \Illuminate\Support\Str::random(8);
+                } while (static::where('referral_code', $code)->exists());
+                $store->referral_code = $code;
             }
         });
     }
@@ -100,6 +109,33 @@ class Store extends Model
             ->filter()
             ->values()
             ->all();
+    }
+
+    /**
+     * Tautan referral singkat toko ini.
+     */
+    public function getReferralUrlAttribute(): ?string
+    {
+        if (blank($this->referral_code)) {
+            return null;
+        }
+
+        return route('store.referral', $this->referral_code);
+    }
+
+    /**
+     * Generate kode referral unik bila belum ada.
+     */
+    public static function ensureReferralCode(self $store): void
+    {
+        if (blank($store->referral_code)) {
+            do {
+                $code = Str::random(8);
+            } while (static::where('referral_code', $code)->exists());
+
+            $store->referral_code = $code;
+            $store->save();
+        }
     }
 
     public static function uniqueSlug(?string $name, ?int $ignoreId = null): string

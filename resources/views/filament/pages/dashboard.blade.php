@@ -25,6 +25,50 @@
                     <x-filament::icon icon="heroicon-m-arrow-right" />
                 </a>
             </div>
+
+            @if (isset($referralUrl) && $referralUrl)
+                <div class="iw-dash-referral" aria-label="Tautan referral toko">
+                    <p class="iw-dash-referral__label">
+                        <x-filament::icon icon="heroicon-m-link" />
+                        Tautan Referral
+                    </p>
+                    <div class="iw-dash-referral__row">
+                        <code id="iw-referral-code">{{ $referralUrl }}</code>
+                        <button
+                            type="button"
+                            id="iw-copy-referral-btn"
+                            class="iw-dash-copy-btn"
+                            data-url="{{ $referralUrl }}"
+                            title="Salin tautan"
+                            aria-label="Salin tautan referral"
+                        >
+                            <x-filament::icon icon="heroicon-o-clipboard" />
+                            <span>Salin</span>
+                        </button>
+                    </div>
+                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var btn = document.getElementById('iw-copy-referral-btn');
+                        if (!btn) return;
+                        btn.addEventListener('click', function () {
+                            var url = btn.getAttribute('data-url');
+                            navigator.clipboard.writeText(url).then(function () {
+                                btn.classList.add('copied');
+                                var label = btn.querySelector('span');
+                                var original = label.textContent;
+                                label.textContent = 'Tersalin';
+                                btn.setAttribute('title', 'Tersalin');
+                                setTimeout(function () {
+                                    btn.classList.remove('copied');
+                                    label.textContent = original;
+                                    btn.setAttribute('title', 'Salin tautan');
+                                }, 2000);
+                            });
+                        });
+                    });
+                </script>
+            @endif
         </div>
 
         <div class="iw-dash-quick" aria-label="Aksi cepat">

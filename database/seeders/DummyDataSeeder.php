@@ -176,6 +176,9 @@ class DummyDataSeeder extends Seeder
                 [...$storeData, 'user_id' => $adminUser->id]
             );
         }
+
+        // Pastikan semua toko memiliki kode referral unik.
+        \App\Models\Store::query()->whereNull('referral_code')->each(fn (\App\Models\Store $s) => \App\Models\Store::ensureReferralCode($s));
     }
 
     private function seedCategories(): void

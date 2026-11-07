@@ -91,6 +91,7 @@ class Dashboard extends BaseDashboard
             'firstName'     => $firstName !== '' ? $firstName : 'Admin',
             'storeName'     => $store?->store_name,
             'storeUrl'      => $store ? route('store.show', $store) : route('home'),
+            'referralUrl'   => $store?->referral_url,
             'tutorialSteps' => $allDone ? [] : $tutorialSteps,
             'quickActions'  => [
                 [

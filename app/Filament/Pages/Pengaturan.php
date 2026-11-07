@@ -36,6 +36,8 @@ class Pengaturan extends Page
 
         if ($store) {
             $this->form->fill($store->toArray());
+            // Tautan referral bersifat baca-saja; tidak disimpan ke database.
+            $this->data['referral_url'] = $store->referral_url ?? route('home');
         }
     }
 
@@ -141,6 +143,29 @@ class Pengaturan extends Page
                         TextInput::make('tokopedia')
                             ->label('Toko Tokopedia')
                             ->prefixIcon('heroicon-o-shopping-bag'),
+                    ]),
+
+                Section::make('Tautan Referral')
+                    ->description('Bagi tautan ini ke pelanggan agar mereka langsung membuka toko Anda.')
+                    ->icon('heroicon-o-link')
+                    ->columns(1)
+                    ->schema([
+                        TextInput::make('referral_url')
+                            ->label('Tautan Toko')
+                            ->disabled()
+                            ->suffixAction(
+                                \Filament\Actions\Action::make('copyReferral')
+                                    ->icon('heroicon-o-clipboard')
+                                    ->action(function () {
+                                        $url = $this->data['referral_url'] ?? route('home');
+                                        \Filament\Notifications\Notification::make('referral-copied')
+                                            ->title('Tautan berhasil disalin!')
+                                            ->body($url)
+                                            ->success()
+                                            ->send();
+                                    })
+                            )
+                            ->columnSpanFull(),
                     ]),
 
                 // Section::make('Pembayaran Online')

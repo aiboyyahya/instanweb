@@ -13,6 +13,17 @@ Route::get('/beranda', [HomeController::class, 'index'])->name('home');
 
 // Storefront mandiri untuk setiap pemilik toko.
 Route::get('/toko/{store:slug}', [HomeController::class, 'storeShow'])->name('store.show');
+
+// Redirect tautan referral ke storefront toko.
+Route::get('/r/{code}', function (string $code) {
+    $store = \App\Models\Store::where('referral_code', $code)->first();
+
+    if (!$store) {
+        abort(404);
+    }
+
+    return redirect()->route('store.show', $store);
+})->name('store.referral');
 Route::get('/toko/{store:slug}/produk', [HomeController::class, 'storeProducts'])->name('store.products');
 Route::get('/toko/{store:slug}/artikel', [ArticleController::class, 'storeIndex'])->name('store.articles.index');
 Route::get('/toko/{store:slug}/artikel/{article:slug}', [ArticleController::class, 'storeShow'])->name('store.articles.show');
