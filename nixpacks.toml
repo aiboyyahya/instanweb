@@ -8,4 +8,4 @@ commands = ["composer install --no-dev --optimize-autoloader", "npm install", "n
 commands = ["php artisan optimize:clear"]
 
 [start]
-cmd = "php -S 0.0.0.0:$PORT -t /app/public"
+cmd = "php -S 0.0.0.0:$PORT -t /app/public /app/public/index.php" 
