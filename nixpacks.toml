@@ -2,10 +2,10 @@
 install = "apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip git unzip curl"
 
 [phases.install]
-commands = ["composer install --no-dev --optimize-autoloader", "npm install", "npm run build"]
+commands = ["composer install --no-dev --optimize-autoloader", "npm install", "node --max-old-space-size=400 ./node_modules/vite/bin/vite.js build"]
 
 [phases.build]
 commands = ["php artisan optimize:clear"]
 
 [start]
-cmd = "php-fpm -F"
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
