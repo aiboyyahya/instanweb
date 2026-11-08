@@ -1,7 +1,7 @@
-public/index.php
 .env
 .git
-.gitignore
+.github
+.opencode
 node_modules
 vendor
 storage/framework/cache/*
@@ -9,15 +9,5 @@ storage/framework/sessions/*
 storage/framework/views/*
 storage/logs/*
 *.log
-npm-debug.log*
-.yarn-debug.log*
-.yarn-*.log
-test/
-tests/
-.github/
-.opencode/
-.plan/
+tests
 .DS_Store
-Thumbs.db
-*.sql
-*.sqlite
