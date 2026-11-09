@@ -34,6 +34,7 @@ class SmsService
             'http' => $this->sendViaHttp($phoneNumber, $message),
             'twilio' => $this->sendViaTwilio($phoneNumber, $message),
             'vonage' => $this->sendViaVonage($phoneNumber, $message),
+            'textbelt' => $this->sendViaTextbelt($phoneNumber, $message),
             default => throw new RuntimeException('Driver SMS tidak dikenal: '.$driver),
         };
     }
@@ -102,22 +103,30 @@ class SmsService
         $sid = (string) config('services.sms.twilio.sid');
         $token = (string) config('services.sms.twilio.token');
         $from = (string) config('services.sms.twilio.from');
+        $messagingServiceSid = (string) config('services.sms.twilio.messaging_service_sid');
 
-        if ($sid === '' || $token === '' || $from === '') {
+        if ($sid === '' || $token === '' || ($from === '' && $messagingServiceSid === '')) {
             throw new RuntimeException(
-                'Kredensial Twilio belum lengkap. Isi TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, dan TWILIO_FROM.'
+                'Kredensial Twilio belum lengkap. Isi TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, lalu TWILIO_FROM atau TWILIO_MESSAGING_SERVICE_SID.'
             );
+        }
+
+        $payload = [
+            'To' => '+'.$phoneNumber,
+            'Body' => $message,
+        ];
+
+        if ($messagingServiceSid !== '') {
+            $payload['MessagingServiceSid'] = $messagingServiceSid;
+        } else {
+            $payload['From'] = $from;
         }
 
         try {
             $response = $this->request()
                 ->withBasicAuth($sid, $token)
                 ->asForm()
-                ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
-                    'To' => '+'.$phoneNumber,
-                    'From' => $from,
-                    'Body' => $message,
-                ]);
+                ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", $payload);
 
             if (! $response->successful()) {
                 throw new RuntimeException(
@@ -168,6 +177,45 @@ class SmsService
             }
         } catch (Throwable $exception) {
             $this->logFailure('vonage', $phoneNumber, $exception);
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * Textbelt: opsi uji gratis (key "textbelt" = 1 SMS/hari).
+     * Dokumentasi: https://docs.textbelt.com
+     */
+    protected function sendViaTextbelt(string $phoneNumber, string $message): void
+    {
+        $key = (string) config('services.sms.textbelt.key', 'textbelt');
+
+        if ($key === '') {
+            throw new RuntimeException('TEXTBELT_KEY belum dikonfigurasi.');
+        }
+
+        $payload = [
+            'phone' => '+'.$phoneNumber,
+            'message' => $message,
+            'key' => $key,
+        ];
+
+        if (filled($sender = config('services.sms.sender'))) {
+            $payload['sender'] = $sender;
+        }
+
+        try {
+            $response = $this->request()
+                ->asForm()
+                ->post('https://textbelt.com/text', $payload);
+
+            if (! $response->successful() || $response->json('success') !== true) {
+                throw new RuntimeException(
+                    'Textbelt menolak permintaan (HTTP '.$response->status().'): '.Str::limit((string) $response->json('error'), 200)
+                );
+            }
+        } catch (Throwable $exception) {
+            $this->logFailure('textbelt', $phoneNumber, $exception);
 
             throw $exception;
         }

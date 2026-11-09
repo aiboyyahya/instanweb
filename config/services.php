@@ -40,7 +40,7 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
     'sms' => [
-        // Driver: log | http | twilio | vonage
+        // Driver: log | http | twilio | vonage | textbelt
         // "log" hanya untuk lokal. Di produksi driver log akan ditolak.
         'driver' => env('SMS_DRIVER', 'log'),
         'endpoint' => env('SMS_ENDPOINT'),
@@ -54,12 +54,18 @@ return [
             'sid' => env('TWILIO_ACCOUNT_SID'),
             'token' => env('TWILIO_AUTH_TOKEN'),
             'from' => env('TWILIO_FROM'),
+            'messaging_service_sid' => env('TWILIO_MESSAGING_SERVICE_SID'),
         ],
 
         'vonage' => [
             'key' => env('VONAGE_API_KEY'),
             'secret' => env('VONAGE_API_SECRET'),
             'from' => env('VONAGE_FROM'),
+        ],
+
+        'textbelt' => [
+            // "textbelt" = key gratis (1 SMS/hari). Isi key berbayar untuk volume.
+            'key' => env('TEXTBELT_KEY', 'textbelt'),
         ],
     ],
     'rajaongkir' => [

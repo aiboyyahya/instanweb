@@ -84,6 +84,70 @@ class VerificationDeliveryTest extends TestCase
         });
     }
 
+    public function test_twilio_driver_uses_messaging_service_when_configured(): void
+    {
+        config([
+            'services.sms.driver' => 'twilio',
+            'services.sms.twilio.sid' => 'AC123',
+            'services.sms.twilio.token' => 'twilio-token',
+            'services.sms.twilio.from' => null,
+            'services.sms.twilio.messaging_service_sid' => 'MG123',
+        ]);
+
+        Http::fake([
+            'api.twilio.com/*' => Http::response(['sid' => 'SM123']),
+        ]);
+
+        (new SmsService)->send('081234567890', 'Halo pelanggan');
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), '/2010-04-01/Accounts/AC123/Messages.json')
+                && $request['To'] === '+6281234567890'
+                && $request['MessagingServiceSid'] === 'MG123'
+                && $request['Body'] === 'Halo pelanggan'
+                && ! isset($request['From']);
+        });
+    }
+
+    public function test_textbelt_driver_sends_expected_request(): void
+    {
+        config([
+            'services.sms.driver' => 'textbelt',
+            'services.sms.textbelt.key' => 'textbelt',
+            'services.sms.sender' => 'Toko Uji',
+        ]);
+
+        Http::fake([
+            'textbelt.com/*' => Http::response(['success' => true, 'quotaRemaining' => 0]),
+        ]);
+
+        (new SmsService)->send('081234567890', 'Halo pelanggan');
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://textbelt.com/text'
+                && $request['phone'] === '+6281234567890'
+                && $request['message'] === 'Halo pelanggan'
+                && $request['key'] === 'textbelt'
+                && $request['sender'] === 'Toko Uji';
+        });
+    }
+
+    public function test_textbelt_quota_error_is_reported(): void
+    {
+        config([
+            'services.sms.driver' => 'textbelt',
+            'services.sms.textbelt.key' => 'textbelt',
+        ]);
+
+        Http::fake([
+            'textbelt.com/*' => Http::response(['success' => false, 'error' => 'Out of quota']),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+
+        (new SmsService)->send('081234567890', 'Halo');
+    }
+
     public function test_vonage_driver_sends_expected_request(): void
     {
         config([
