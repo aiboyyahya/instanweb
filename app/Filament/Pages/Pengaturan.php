@@ -69,6 +69,9 @@ class Pengaturan extends Page
                             ->disk('public')
                             ->image()
                             ->imageEditor()
+                            ->imageResizeTargetWidth(512)
+                            ->imageResizeMode('contain')
+                            ->maxSize(10240)
                             ->directory('logos')
                             ->columnSpanFull(),
 
@@ -89,6 +92,8 @@ class Pengaturan extends Page
                             ->disk('public')
                             ->image()
                             ->imageEditor()
+                            ->imageResizeTargetWidth(1920)
+                            ->imageResizeMode('contain')
                             ->directory('store-banners')
                             ->visibility('public')
                             ->maxSize(10240),
@@ -98,6 +103,8 @@ class Pengaturan extends Page
                             ->disk('public')
                             ->image()
                             ->imageEditor()
+                            ->imageResizeTargetWidth(1920)
+                            ->imageResizeMode('contain')
                             ->directory('store-banners')
                             ->visibility('public')
                             ->maxSize(10240),
@@ -107,6 +114,8 @@ class Pengaturan extends Page
                             ->disk('public')
                             ->image()
                             ->imageEditor()
+                            ->imageResizeTargetWidth(1920)
+                            ->imageResizeMode('contain')
                             ->directory('store-banners')
                             ->visibility('public')
                             ->maxSize(10240),

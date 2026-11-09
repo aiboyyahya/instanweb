@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Pengaturan;
+use App\Filament\Resources\Categories\Pages\CreateCategory;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
@@ -11,6 +12,8 @@ use App\Models\User;
 use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsIconAlias;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -162,6 +165,61 @@ class AdminPagesTest extends TestCase
         $this->actingAs($admin)->get("/admin/products/{$product->id}")->assertOk();
         $this->actingAs($admin)->get("/admin/categories/{$category->id}/edit")->assertOk();
         $this->actingAs($admin)->get("/admin/transactions/{$transaction->id}/edit")->assertOk();
+    }
+
+    public function test_category_create_page_does_not_offer_create_another(): void
+    {
+        $this->actingAs($this->admin())
+            ->get('/admin/categories/create')
+            ->assertOk()
+            ->assertDontSee('buat lainnya');
+    }
+
+    public function test_category_icon_accepts_common_image_formats_and_rejects_documents_and_scripts(): void
+    {
+        Storage::fake('public');
+
+        $owner = User::factory()->create(['role' => 'admin']);
+        Store::create([
+            'user_id' => $owner->id,
+            'store_name' => 'Toko Uji Ikon',
+        ]);
+
+        $this->actingAs($owner);
+
+        $accepted = [
+            'icon.png' => 'image/png',
+            'icon.jpg' => 'image/jpeg',
+            'icon.jpeg' => 'image/jpeg',
+            'icon.webp' => 'image/webp',
+        ];
+
+        foreach ($accepted as $fileName => $mimeType) {
+            Livewire::test(CreateCategory::class)
+                ->fillForm([
+                    'category_name' => 'Kategori '.pathinfo($fileName, PATHINFO_EXTENSION),
+                    'icon' => [UploadedFile::fake()->create($fileName, 100, $mimeType)],
+                ])
+                ->call('create')
+                ->assertHasNoFormErrors(['icon']);
+        }
+
+        $rejected = [
+            'dokumen.pdf' => 'application/pdf',
+            'dokumen.docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'skrip.svg' => 'image/svg+xml',
+            'skrip.php' => 'image/png',
+        ];
+
+        foreach ($rejected as $fileName => $mimeType) {
+            Livewire::test(CreateCategory::class)
+                ->fillForm([
+                    'category_name' => 'Ditolak '.str_replace('.', '-', $fileName),
+                    'icon' => [UploadedFile::fake()->create($fileName, 100, $mimeType)],
+                ])
+                ->call('create')
+                ->assertHasFormErrors(['icon']);
+        }
     }
 
     public function test_non_admin_cannot_open_admin_panel(): void

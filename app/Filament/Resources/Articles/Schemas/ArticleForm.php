@@ -64,6 +64,9 @@ class ArticleForm
                             ->label('Gambar Utama')
                             ->image()
                             ->imageEditor()
+                            ->imageResizeTargetWidth(1600)
+                            ->imageResizeMode('contain')
+                            ->maxSize(10240)
                             ->disk('public')
                             ->required(),
 
@@ -71,6 +74,9 @@ class ArticleForm
                             ->label('Thumbnail')
                             ->image()
                             ->imageEditor()
+                            ->imageResizeTargetWidth(600)
+                            ->imageResizeMode('contain')
+                            ->maxSize(10240)
                             ->disk('public')
                             ->required(),
                     ]),

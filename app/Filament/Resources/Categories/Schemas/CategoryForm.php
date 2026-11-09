@@ -53,10 +53,19 @@ class CategoryForm
 
                         FileUpload::make('icon')
                             ->label('Ikon Kategori')
-                            ->helperText('Unggah ikon persegi agar tampil rapi pada filter katalog.')
-                            ->image()
+                            ->helperText('Format gambar: PNG, JPG, JPEG, atau WEBP. Maksimal 5 MB. Ikon persegi tampil paling rapi.')
+                            ->acceptedFileTypes([
+                                'image/png',
+                                'image/jpeg',
+                                'image/webp',
+                            ])
+                            ->rules(['mimes:png,jpg,jpeg,webp'])
+                            ->imageResizeTargetWidth(512)
+                            ->imageResizeMode('contain')
+                            ->maxSize(5120)
                             ->directory('categories')
                             ->disk('public')
+                            ->visibility('public')
                             ->columnSpanFull(),
                     ]),
             ]);

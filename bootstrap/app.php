@@ -13,6 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn () => route('login.form'));
 
+        // Produksi berjalan di balik reverse proxy (Railway/Heroku/Nginx).
+        // Tanpa trusted proxy, Laravel menganggap request masih HTTP sehingga
+        // URL bertanda tangan untuk upload Livewire/Filament gagal divalidasi
+        // (401) dan file selalu "failed to upload".
+        if ($trustedProxies = env('TRUSTED_PROXIES')) {
+            $middleware->trustProxies(
+                at: $trustedProxies === '*' ? '*' : explode(',', $trustedProxies),
+            );
+        } elseif (app()->environment('production')) {
+            $middleware->trustProxies(at: '*');
+        }
+
         $middleware->alias([
             'contact.verified' => \App\Http\Middleware\EnsureContactVerified::class,
         ]);

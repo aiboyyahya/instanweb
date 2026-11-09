@@ -65,7 +65,9 @@ class CategoriesTable
             ->emptyStateHeading('Belum ada kategori')
             ->emptyStateDescription('Kelompokkan produk agar pelanggan mudah mencari.')
             ->emptyStateActions([
-                CreateAction::make()->label('Tambah Kategori'),
+                CreateAction::make()
+                    ->label('Tambah Kategori')
+                    ->disableCreateAnother(),
             ]);
     }
 }
