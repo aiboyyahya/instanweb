@@ -40,13 +40,27 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
     'sms' => [
+        // Driver: log | http | twilio | vonage
+        // "log" hanya untuk lokal. Di produksi driver log akan ditolak.
         'driver' => env('SMS_DRIVER', 'log'),
         'endpoint' => env('SMS_ENDPOINT'),
         'token' => env('SMS_TOKEN'),
         'sender' => env('SMS_SENDER'),
         'auth_header' => env('SMS_AUTH_HEADER', 'Authorization'),
         'auth_scheme' => env('SMS_AUTH_SCHEME', 'Bearer'),
-        'timeout' => env('SMS_TIMEOUT', 10),
+        'timeout' => max(1, (int) env('SMS_TIMEOUT', 10)),
+
+        'twilio' => [
+            'sid' => env('TWILIO_ACCOUNT_SID'),
+            'token' => env('TWILIO_AUTH_TOKEN'),
+            'from' => env('TWILIO_FROM'),
+        ],
+
+        'vonage' => [
+            'key' => env('VONAGE_API_KEY'),
+            'secret' => env('VONAGE_API_SECRET'),
+            'from' => env('VONAGE_FROM'),
+        ],
     ],
     'rajaongkir' => [
         'key' => env('RAJAONGKIR_API_KEY'),

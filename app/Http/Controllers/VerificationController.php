@@ -6,15 +6,12 @@ use App\Models\User;
 use App\Services\ContactVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class VerificationController extends Controller
 {
-    public function __construct(protected ContactVerificationService $verification)
-    {
-    }
+    public function __construct(protected ContactVerificationService $verification) {}
 
     public function notice()
     {
@@ -36,13 +33,13 @@ class VerificationController extends Controller
         $user = Auth::user();
         $phone = $this->normalizePhone($validated['phone_number']);
 
-        if ($phone === '') {
+        if ($phone === '' || strlen($phone) < 8 || strlen($phone) > 15) {
             throw ValidationException::withMessages([
-                'phone_number' => 'Nomor telepon tidak valid.',
+                'phone_number' => 'Nomor telepon tidak valid. Contoh: 08123456789.',
             ]);
         }
 
-        $changed = $user->phone_number !== $validated['phone_number'];
+        $changed = $this->normalizePhone((string) $user->phone_number) !== $phone;
 
         $user->forceFill([
             'phone_number' => $validated['phone_number'],
@@ -75,13 +72,13 @@ class VerificationController extends Controller
         try {
             $this->verification->sendEmailCode($user);
 
-            return back()->with('success', 'Kode verifikasi telah dikirim ke ' . $this->maskEmail($user->email) . '.');
+            return back()->with('success', 'Kode verifikasi telah dikirim ke '.$this->maskEmail($user->email).'.');
         } catch (ValidationException $exception) {
             return back()->withErrors($exception->errors());
         } catch (Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'Kode gagal dikirim. Periksa konfigurasi email lalu coba lagi.');
+            return back()->with('error', 'Kode verifikasi gagal dikirim. Silakan coba lagi beberapa saat lagi atau hubungi admin.');
         }
     }
 
@@ -127,7 +124,7 @@ class VerificationController extends Controller
         } catch (Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'Kode SMS gagal dikirim. Periksa konfigurasi gateway SMS lalu coba lagi.');
+            return back()->with('error', 'Kode SMS gagal dikirim. Silakan coba lagi beberapa saat lagi atau hubungi admin.');
         }
     }
 
@@ -162,6 +159,6 @@ class VerificationController extends Controller
 
         $visible = mb_substr($name, 0, 2);
 
-        return $visible . str_repeat('*', max(mb_strlen($name) - 2, 1)) . '@' . $domain;
+        return $visible.str_repeat('*', max(mb_strlen($name) - 2, 1)).'@'.$domain;
     }
 }

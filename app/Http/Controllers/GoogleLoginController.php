@@ -7,12 +7,12 @@ use App\Models\Store;
 use App\Models\User;
 use App\Services\ContactVerificationService;
 use App\Services\StoreBannerService;
-use Illuminate\Support\Facades\DB;
-use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
 class GoogleLoginController extends Controller
@@ -20,8 +20,7 @@ class GoogleLoginController extends Controller
     public function __construct(
         protected ContactVerificationService $verification,
         protected StoreBannerService $storeBanners,
-    ) {
-    }
+    ) {}
 
     public function redirectToGoogle()
     {
@@ -47,8 +46,9 @@ class GoogleLoginController extends Controller
         }
 
         $user = User::where('email', $googleUser->email)->first();
+        $emailVerifiedByGoogle = (bool) data_get($googleUser->user, 'verified_email', false);
 
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
                 'name' => $googleUser->name,
                 'email' => $googleUser->email,
@@ -56,10 +56,12 @@ class GoogleLoginController extends Controller
                 'role' => 'user',
             ]);
 
-            // Email dari Google sudah diverifikasi oleh penyedia identitas.
-            $user->forceFill(['email_verified_at' => now()])->save();
-        } elseif (! $user->hasVerifiedEmail()) {
-            // Email dari Google sudah diverifikasi oleh penyedia identitas.
+            // Tandai terverifikasi hanya jika Google menyatakan email valid.
+            if ($emailVerifiedByGoogle) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+        } elseif (! $user->hasVerifiedEmail() && $emailVerifiedByGoogle) {
+            // Google sudah memverifikasi email ini; tidak perlu kode OTP.
             $user->forceFill(['email_verified_at' => now()])->save();
         }
 
@@ -75,10 +77,12 @@ class GoogleLoginController extends Controller
     public function logout()
     {
         Auth::logout();
+
         return redirect('/')->with('success', 'Berhasil logout.');
     }
+
     public function loginform()
-       {
+    {
         if (Auth::check()) {
             return Auth::user()->role === 'admin'
                 ? redirect('/admin')
@@ -92,7 +96,7 @@ class GoogleLoginController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
         if (Auth::attempt($request->only('email', 'password'))) {
@@ -139,12 +143,12 @@ class GoogleLoginController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'nullable|string|max:20',
-            'password' => 'required|min:8|confirmed'
+            'password' => 'required|min:8|confirmed',
         ],
-        [
-            'password.min'=> 'Password minimal 8 karakter',
-        ]
-    );
+            [
+                'password.min' => 'Password minimal 8 karakter',
+            ]
+        );
 
         $user = User::create([
             'name' => $request->name,

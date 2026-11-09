@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Throwable;
 
 class ContactVerificationService
@@ -15,9 +16,7 @@ class ContactVerificationService
 
     public const RESEND_COOLDOWN_SECONDS = 60;
 
-    public function __construct(protected SmsService $sms)
-    {
-    }
+    public function __construct(protected SmsService $sms) {}
 
     public function sendEmailCode(User $user): void
     {
@@ -25,6 +24,7 @@ class ContactVerificationService
             return;
         }
 
+        $this->ensureEmailDeliveryIsConfigured();
         $this->ensureCanResend($user->email_verification_sent_at);
 
         $code = $this->generateCode();
@@ -73,8 +73,8 @@ class ContactVerificationService
         try {
             $this->sms->send(
                 $user->phone_number,
-                'Kode verifikasi nomor ' . config('app.name', 'instanweb') . ': ' . $code
-                    . '. Berlaku ' . self::CODE_TTL_MINUTES . ' menit. Jangan bagikan kode ini.'
+                'Kode verifikasi nomor '.config('app.name', 'instanweb').': '.$code
+                    .'. Berlaku '.self::CODE_TTL_MINUTES.' menit. Jangan bagikan kode ini.'
             );
         } catch (Throwable $exception) {
             $user->forceFill([
@@ -145,6 +145,25 @@ class ContactVerificationService
         }
     }
 
+    /**
+     * Cegah kode verifikasi "terkirim" secara palsu di produksi ketika
+     * MAIL_MAILER masih log/array (kode hanya masuk ke file log).
+     */
+    protected function ensureEmailDeliveryIsConfigured(): void
+    {
+        if (! app()->isProduction()) {
+            return;
+        }
+
+        $mailer = (string) config('mail.default');
+
+        if (in_array($mailer, ['log', 'array'], true)) {
+            throw new RuntimeException(
+                'MAIL_MAILER masih "'.$mailer.'" di produksi. Atur SMTP Gmail (MAIL_MAILER=smtp, MAIL_HOST=smtp.gmail.com, MAIL_PORT=587, MAIL_USERNAME, MAIL_PASSWORD berupa App Password) lalu jalankan php artisan config:clear.'
+            );
+        }
+    }
+
     protected function ensureCanResend($sentAt): void
     {
         if (! $sentAt) {
@@ -155,7 +174,7 @@ class ContactVerificationService
 
         if ($secondsLeft > 0) {
             throw ValidationException::withMessages([
-                'verification' => 'Tunggu ' . $secondsLeft . ' detik sebelum mengirim kode lagi.',
+                'verification' => 'Tunggu '.$secondsLeft.' detik sebelum mengirim kode lagi.',
             ]);
         }
     }
