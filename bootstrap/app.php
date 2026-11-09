@@ -17,13 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Tanpa trusted proxy, Laravel menganggap request masih HTTP sehingga
         // URL bertanda tangan untuk upload Livewire/Filament gagal divalidasi
         // (401) dan file selalu "failed to upload".
-        if ($trustedProxies = env('TRUSTED_PROXIES')) {
-            $middleware->trustProxies(
-                at: $trustedProxies === '*' ? '*' : explode(',', $trustedProxies),
-            );
-        } elseif (app()->environment('production')) {
-            $middleware->trustProxies(at: '*');
-        }
+        //
+        // Penting: callback ini dijalankan SEBELUM bootstrap container selesai,
+        // jadi jangan memakai app()/config() di sini. Cukup env() atau nilai statis.
+        $trustedProxies = env('TRUSTED_PROXIES') ?: '*';
+
+        $middleware->trustProxies(
+            at: $trustedProxies === '*' ? '*' : array_map('trim', explode(',', $trustedProxies)),
+        );
 
         $middleware->alias([
             'contact.verified' => \App\Http\Middleware\EnsureContactVerified::class,
