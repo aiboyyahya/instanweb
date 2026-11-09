@@ -74,8 +74,21 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->role === 'admin';
     }
 
+    public function hasVerifiedEmail(): bool
+    {
+        if (! config('verification.enabled', false)) {
+            return true;
+        }
+
+        return ! is_null($this->email_verified_at);
+    }
+
     public function hasVerifiedPhone(): bool
     {
+        if (! config('verification.enabled', false)) {
+            return true;
+        }
+
         return ! is_null($this->phone_verified_at);
     }
 

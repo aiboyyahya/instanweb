@@ -41,7 +41,9 @@
                     <p class="mt-2 max-w-xl text-sm leading-relaxed text-fg-muted">
                         {{ $isExistingUser
                             ? 'Akun Anda akan ditingkatkan menjadi pemilik toko. Lengkapi informasi toko di bawah ini.'
-                            : 'Isi data akun dan informasi toko. Setelah selesai, Anda langsung masuk ke panel pengelolaan toko. Kode verifikasi email dan SMS akan dikirim untuk mengamankan akun.' }}
+                            : (config('verification.enabled', false)
+                                ? 'Isi data akun dan informasi toko. Setelah selesai, Anda langsung masuk ke panel pengelolaan toko. Kode verifikasi email dan SMS akan dikirim untuk mengamankan akun.'
+                                : 'Isi data akun dan informasi toko. Setelah selesai, Anda langsung masuk ke panel pengelolaan toko.') }}
                     </p>
                 </div>
 
@@ -129,7 +131,7 @@
                             </x-ui.field>
 
                             <x-ui.field label="Nomor telepon" name="phone_number"
-                                hint="Opsional. Kode verifikasi SMS dikirim ke nomor ini.">
+                                hint="{{ config('verification.enabled', false) ? 'Opsional. Kode verifikasi SMS dikirim ke nomor ini.' : 'Opsional.' }}">
                                 <input type="tel" id="phone_number" name="phone_number"
                                     value="{{ old('phone_number') }}" autocomplete="tel" inputmode="tel"
                                     placeholder="08123456789"

@@ -10,7 +10,11 @@
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">Akun baru</p>
             <h1 class="mt-1 text-2xl font-bold tracking-tight text-fg">Buat akun pembeli</h1>
             <p class="mt-2 text-sm leading-relaxed text-fg-muted">
-                Cukup isi nama, email, dan password. Kami akan mengirim kode verifikasi untuk mengamankan akun Anda.
+                @if (config('verification.enabled', false))
+                    Cukup isi nama, email, dan password. Kami akan mengirim kode verifikasi untuk mengamankan akun Anda.
+                @else
+                    Cukup isi nama, email, dan password untuk mulai berbelanja.
+                @endif
             </p>
 
             {{-- Pilihan jenis akun --}}
@@ -69,7 +73,7 @@
                 </x-ui.field>
 
                 <x-ui.field label="Nomor telepon" name="phone_number"
-                    hint="Opsional. Kode verifikasi SMS dikirim ke nomor ini.">
+                    hint="{{ config('verification.enabled', false) ? 'Opsional. Kode verifikasi SMS dikirim ke nomor ini.' : 'Opsional.' }}">
                     <input type="tel" id="phone_number" name="phone_number" value="{{ old('phone_number') }}"
                         autocomplete="tel" inputmode="tel" placeholder="08123456789"
                         @error('phone_number') aria-invalid="true" aria-describedby="phone_number-error" @enderror

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\VerificationCodeMail;
 use App\Models\Category;
+use App\Services\ContactVerificationService;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
@@ -191,5 +192,28 @@ class StorefrontAndVerificationTest extends TestCase
             ->assertRedirect(route('verification.notice'));
 
         $this->assertTrue($user->fresh()->hasVerifiedPhone());
+    }
+
+    public function test_contact_verification_can_be_disabled_for_testing(): void
+    {
+        config(['verification.enabled' => false]);
+        Mail::fake();
+
+        $user = User::factory()->unverified()->create([
+            'role' => 'user',
+            'phone_number' => '081234567890',
+            'phone_verified_at' => null,
+        ]);
+
+        $this->assertTrue($user->hasVerifiedEmail());
+        $this->assertTrue($user->hasVerifiedPhone());
+
+        app(ContactVerificationService::class)->sendEmailCode($user);
+
+        Mail::assertNothingSent();
+
+        $this->actingAs($user)
+            ->get(route('checkout.page'))
+            ->assertRedirect(route('cart'));
     }
 }

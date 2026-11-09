@@ -163,7 +163,11 @@ class GoogleLoginController extends Controller
 
         $this->sendVerificationCodes($user);
 
-        return redirect('/')->with('success', 'Akun berhasil dibuat dan Anda telah masuk. Lengkapi verifikasi email untuk mulai bertransaksi.');
+        $message = config('verification.enabled', false)
+            ? 'Akun berhasil dibuat dan Anda telah masuk. Lengkapi verifikasi email untuk mulai bertransaksi.'
+            : 'Akun berhasil dibuat dan Anda telah masuk.';
+
+        return redirect('/')->with('success', $message);
     }
 
     /**
