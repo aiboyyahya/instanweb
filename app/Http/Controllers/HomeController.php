@@ -54,7 +54,7 @@ class HomeController extends Controller
                 'id' => $product->id,
                 'product_name' => $product->product_name,
                 'category_name' => $product->category->category_name ?? '',
-                'purchase_price' => $product->purchase_price,
+                'selling_price' => $product->selling_price,
                 'image_url' => asset('storage/' . $product->image),
                 'avgRating' => $ratings->has($product->id) ? (float) $ratings[$product->id]->avg_rating : null,
                 'ratingCount' => $ratings->has($product->id) ? (int) $ratings[$product->id]->rating_count : 0,
@@ -216,7 +216,7 @@ class HomeController extends Controller
         } else {
             $cart[$request->product_id] = [
                 'name' => $product->product_name,
-                'price' => $product->purchase_price,
+                'price' => $product->selling_price,
                 'quantity' => $request->quantity,
                 'image' => $product->image,
                 'store_id' => $product->store_id,
@@ -275,7 +275,7 @@ class HomeController extends Controller
             $directCheckout = [
                 $request->product_id => [
                     'name' => $product->product_name,
-                    'price' => $product->purchase_price,
+                    'price' => $product->selling_price,
                     'quantity' => (int) $request->quantity,
                     'image' => $product->image,
                     'weight' => $product->weight ?? 1000,
@@ -464,7 +464,7 @@ class HomeController extends Controller
                     }
 
                     // Harga selalu diambil dari database, bukan dari session/keranjang.
-                    $unitPrice = (float) $product->purchase_price;
+                    $unitPrice = (float) $product->selling_price;
                     $total += $unitPrice * $quantity;
 
                     $preparedItems[] = [

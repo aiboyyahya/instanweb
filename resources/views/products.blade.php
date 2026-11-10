@@ -198,7 +198,7 @@
             function productCardHtml(product) {
                 const ratingCount = Number(product.ratingCount || 0);
                 const image = product.image_url || '{{ asset('images/gambar3.jpeg') }}';
-                const price = Number(product.purchase_price || 0).toLocaleString('id-ID');
+                const price = Number(product.selling_price || 0).toLocaleString('id-ID');
 
                 return `
                     <article class="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">

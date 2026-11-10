@@ -50,7 +50,7 @@ class CheckoutRegionTest extends TestCase
                 'cart' => [
                     $product->id => [
                         'name' => $product->product_name,
-                        'price' => $product->purchase_price,
+                        'price' => $product->selling_price,
                         'quantity' => 1,
                         'image' => $product->image,
                         'weight' => 1000,
@@ -148,8 +148,8 @@ class CheckoutRegionTest extends TestCase
 
         $transaction = Transaction::with('items')->firstOrFail();
 
-        $this->assertEquals(10000, (float) $transaction->total);
-        $this->assertEquals(10000, (float) $transaction->items->first()->price);
+        $this->assertEquals(15000, (float) $transaction->total);
+        $this->assertEquals(15000, (float) $transaction->items->first()->price);
     }
 
     public function test_checkout_pages_are_scoped_to_the_authenticated_customer(): void
@@ -355,7 +355,7 @@ class CheckoutRegionTest extends TestCase
             'direct_checkout' => [
                 $product->id => [
                     'name' => $product->product_name,
-                    'price' => $product->purchase_price,
+                    'price' => $product->selling_price,
                     'quantity' => 1,
                     'image' => $product->image,
                     'weight' => 1000,

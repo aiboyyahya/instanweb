@@ -30,7 +30,7 @@
                         <p class="font-semibold text-fg">{{ $product->product_name }}</p>
                         <p class="mt-0.5 line-clamp-2 text-sm text-fg-muted">{{ $product->description ?? '-' }}</p>
                         <p class="mt-1.5 text-base font-bold text-cta">
-                            Rp {{ number_format($product->purchase_price ?? 0, 0, ',', '.') }}
+                            Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}
                         </p>
                     </div>
                 </div>

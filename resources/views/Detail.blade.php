@@ -5,7 +5,7 @@
 @section('content')
     @php
         $stock = (int) ($product->stock ?? 0);
-        $price = $product->purchase_price ?? 0;
+        $price = $product->selling_price ?? 0;
         $avg = (float) ($avgRating ?? 0);
         $count = (int) ($ratingCount ?? 0);
         $mainImage = $product->image ? asset('storage/' . $product->image) : asset('images/gambar3.jpeg');

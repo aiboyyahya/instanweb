@@ -51,7 +51,7 @@ class CheckoutShippingTest extends TestCase
         $this->assertSame($estimate['shipping_cost'], (int) $transaction->shipping_cost);
         $this->assertGreaterThan(0, $transaction->shipping_cost);
         $this->assertEqualsWithDelta(
-            $product->purchase_price + $estimate['shipping_cost'],
+            $product->selling_price + $estimate['shipping_cost'],
             (float) $transaction->total,
             0.01,
         );
@@ -236,7 +236,7 @@ class CheckoutShippingTest extends TestCase
 
         $this->assertSame(0.0, $transaction->shipping_cost);
         $this->assertNull($transaction->distance_km);
-        $this->assertEqualsWithDelta($product->purchase_price, (float) $transaction->total, 0.01);
+        $this->assertEqualsWithDelta($product->selling_price, (float) $transaction->total, 0.01);
     }
 
     public function test_checkout_requires_destination_coordinates(): void
@@ -326,7 +326,7 @@ class CheckoutShippingTest extends TestCase
             'direct_checkout' => [
                 $product->id => [
                     'name' => $product->product_name,
-                    'price' => $product->purchase_price,
+                    'price' => $product->selling_price,
                     'quantity' => 1,
                     'image' => $product->image,
                     'weight' => 1000,

@@ -44,7 +44,7 @@ class StorefrontAndVerificationTest extends TestCase
 
         $category = Category::create(['category_name' => 'Minuman']);
 
-        Product::create([
+        $productA = Product::create([
             'store_id' => $storeA->id,
             'product_name' => 'Kopi A',
             'slug' => 'kopi-a',
@@ -79,7 +79,19 @@ class StorefrontAndVerificationTest extends TestCase
         $this->get(route('store.products', $storeA))
             ->assertOk()
             ->assertSee('Kopi A')
+            ->assertSee('Rp 15.000')
+            ->assertDontSee('Rp 10.000')
             ->assertDontSee('Teh B');
+
+        $this->get(route('product.show', $productA))
+            ->assertOk()
+            ->assertSee('Rp 15.000')
+            ->assertDontSee('Rp 10.000');
+
+        $this->getJson(route('products.search', ['q' => 'Kopi A']))
+            ->assertOk()
+            ->assertJsonFragment(['selling_price' => 15000])
+            ->assertJsonMissing(['purchase_price' => 10000]);
     }
 
     public function test_store_owner_can_upload_three_banners_from_profile(): void

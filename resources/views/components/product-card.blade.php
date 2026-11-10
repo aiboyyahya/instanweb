@@ -1,10 +1,9 @@
 @props(['product'])
 
 @php
-    // Catatan: harga yang dipakai keranjang & checkout saat ini berasal dari
-    // purchase_price (lihat analisisweb.md H1). Tampilan disamakan dengan
-    // nilai transaksi agar tidak menampilkan harga yang berbeda saat checkout.
-    $price = $product->purchase_price ?? 0;
+    // Harga yang ditampilkan ke pembeli adalah harga jual produk.
+    // Nilai ini juga dipakai keranjang & checkout agar konsisten.
+    $price = $product->selling_price ?? 0;
     $stock = (int) ($product->stock ?? 0);
     $image = $product->image ? asset('storage/' . $product->image) : asset('images/gambar3.jpeg');
     $ratingCount = (int) ($product->ratingCount ?? 0);
